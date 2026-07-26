@@ -7,10 +7,15 @@ st.set_page_config(page_title="Medicare Compass 醫保指南針", page_icon="�
 st.title("🧭 Medicare Compass 醫保指南針")
 st.caption("您的美國醫療保險隨身顧問 | 協助您避開罰款、清楚掌握申辦步驟")
 
-# 2. 側邊欄：輸入 API Key
+# 2. 自動取得後台設定的 API Key（若後台沒設定，則允許手動輸入）
+api_key = st.secrets.get("GEMINI_API_KEY")
+
 with st.sidebar:
     st.header("⚙️ 系統設定")
-    api_key = st.text_input("請輸入您的 Gemini API Key：", type="password")
+    if not api_key:
+        api_key = st.text_input("請輸入您的 Gemini API Key：", type="password")
+    else:
+        st.success("✅ 系統服務已就緒，可直接開始對話！")
     st.markdown("---")
     st.write("💡 **說明**：本工具由 Gemini AI 提供支援，保護您的隱私，不會儲存個人敏感情資。")
 
