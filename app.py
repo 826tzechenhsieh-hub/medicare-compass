@@ -7,8 +7,8 @@ st.set_page_config(page_title="Medicare Compass 醫保指南針", page_icon="�
 st.title("🧭 Medicare Compass 醫保指南針")
 st.caption("您的美國醫療保險隨身顧問 | 協助您避開罰款、清楚掌握申辦步驟")
 
-# 2. 自動取得後台設定的 API Key（若後台沒設定，則允許手動輸入）
-api_key = st.secrets.get("GEMINI_API_KEY")
+# 2. 抓取 API Key (優先讀取 Secrets，若無則顯示輸入框)
+api_key = st.secrets.get("GEMINI_API_KEY", None)
 
 with st.sidebar:
     st.header("⚙️ 系統設定")
@@ -72,23 +72,28 @@ if prompt := st.chat_input("請輸入您的回答或疑問..."):
     if not api_key:
         st.error("請先在左側邊欄輸入您的 Gemini API Key 才能開始對話喔！")
     else:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=SYSTEM_INSTRUCTION
-        )
-        
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        try:
+            clean_key = str(api_key).strip().strip('"').strip("'")
+            genai.configure(api_key=clean_key)
+            # 精確對應您在 AI Studio 使用的 gemini-3.6-flash 模型
+            model = genai.GenerativeModel(
+                model_name="gemini-3.6-flash",
+                system_instruction=SYSTEM_INSTRUCTION
+            )
+            
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Medicare Compass 正在為您思考中..."):
-                chat = model.start_chat(history=[
-                    {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-                    for m in st.session_state.messages[:-1]
-                ])
-                response = chat.send_message(prompt)
-                st.markdown(response.text)
-                
-        st.session_state.messages.append({"role": "assistant", "content": response.text})
+            with st.chat_message("assistant"):
+                with st.spinner("Medicare Compass 正在為您思考中..."):
+                    chat = model.start_chat(history=[
+                        {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
+                        for m in st.session_state.messages[:-1]
+                    ])
+                    response = chat.send_message(prompt)
+                    st.markdown(response.text)
+                    
+            st.session_state.messages.append({"role": "assistant", "content": response.text})
+        except Exception as e:
+            st.error(f"連線發生錯誤，請檢查設定。詳細訊息: {e}")
