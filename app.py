@@ -30,7 +30,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 照片上傳區塊（移至左側 Sidebar，標註 Optional 選填，不佔據主畫面）
+    # 照片上傳區塊（收納於左側 Sidebar）
     st.header("📸 " + (
         "Document Photo (Optional)" if current_lang == "English" else
         "Foto de Documento (Opcional)" if current_lang == "Español" else
@@ -190,18 +190,6 @@ else:
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
-
-# 💡 貼心語音朗讀提示卡（引導長者使用手機/電腦原生極順暢的語音功能）
-if current_lang == "English":
-    st.info("💡 **Tip**: You can select any text to listen using your device's built-in read aloud option.")
-elif current_lang == "Español":
-    st.info("💡 **Consejo**: Puede seleccionar cualquier texto para escucharlo con la función de voz de su dispositivo.")
-elif current_lang == "한국어":
-    st.info("💡 **팁**: 기기의 음성 읽기 기능을 사용해 텍스트를 선택하여 들으실 수 있습니다.")
-elif current_lang == "繁體中文":
-    st.info("💡 **小貼心**：手機或電腦長按選取文字，即可使用系統內建的「朗讀」功能，聽得更清楚喔！")
-else:
-    st.info("💡 **小贴心**：手机或电脑长按选取文字，即可使用系统内置的「朗读」功能，听得更清楚喔！")
 
 # 7. 顯示過往對話
 for message in st.session_state.messages:
