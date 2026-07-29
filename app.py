@@ -1,6 +1,7 @@
 import streamlit as st
 import google.generativeai as genai
 import streamlit.components.v1 as components
+import re
 from PIL import Image
 
 # 1. 頁面標題與配置設定
@@ -154,36 +155,36 @@ Whenever answering a user for the first time or giving a guidance summary, ALWAY
 4. Language Matching: Respond fluently in the selected language (English, Spanish, Korean, Traditional Chinese, Simplified Chinese).
 """
 
-# 6. 開場白對話紀錄與動態多語言語音變數（徹底修復語言錯置問題）
+# 6. 開場白對話紀錄初始化
 if current_lang == "English":
     welcome_msg = "Hello and welcome! I am your Medicare Compass guide. Navigating Medicare for the first time can feel overwhelming, but don't worry—I will take you through it step-by-step across 3 clear phases:\n\n• **Step 1**: Find the best plan fit.\n• **Step 2**: Calculate your timeline & avoid late penalties.\n• **Step 3**: Manage premiums & payments.\n\nTo begin Step 1, which state do you live in, and what is your birth month and year?"
-    voice_msg_text = "Hello and welcome! I am your Medicare Compass guide. I will take you through Medicare step by step across three phases: Step 1, find the best plan fit. Step 2, calculate your timeline and avoid penalties. Step 3, manage premiums and payments. To begin, which state do you live in, and what is your birth month and year?"
     voice_lang = "en-US"
-    button_label = "🔊 Listen to Welcome Message"
-    playing_label = "▶️ Reading in English..."
+    btn_label_initial = "🔊 Listen to Welcome Message"
+    btn_label_latest = "🔊 Listen to Latest Response"
+    playing_label = "▶️ Reading..."
 elif current_lang == "Español":
     welcome_msg = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Entender Medicare por primera vez puede ser confuso, pero lo guiaré en 3 sencillos pasos:\n\n• **Paso 1**: Elegir el mejor plan.\n• **Paso 2**: Calcular su calendario y evitar multas.\n• **Paso 3**: Manejar primas y pagos.\n\nPara comenzar el Paso 1, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
-    voice_msg_text = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Lo guiaré en 3 sencillos pasos: Paso 1, elegir el mejor plan. Paso 2, calcular su calendario y evitar multas. Paso 3, manejar primas y pagos. Para comenzar, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
     voice_lang = "es-ES"
-    button_label = "🔊 Escuchar mensaje de bienvenida"
-    playing_label = "▶️ Leyendo en español..."
+    btn_label_initial = "🔊 Escuchar mensaje de bienvenida"
+    btn_label_latest = "🔊 Escuchar última respuesta"
+    playing_label = "▶️ Leyendo..."
 elif current_lang == "한국어":
     welcome_msg = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 처음 접하시면 복잡하게 느껴지실 수 있지만, 3단계에 걸쳐 쉽게 안내해 드리겠습니다:\n\n• **1단계**: 나에게 맞는 플랜 찾기\n• **2단계**: 신청 기한 확인 및 벌금 예방\n• **3단계**: 보험료 및 납부 관리\n\n1단계를 시작하기 위해, 현재 거주하시는 주와 생년월일을 알려주시겠어요?"
-    voice_msg_text = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 3단계에 걸쳐 쉽게 안내해 드리겠습니다. 1단계 나에게 맞는 플랜 찾기, 2단계 신청 기한 확인 및 벌금 예방, 3단계 보험료 및 납부 관리. 먼저 현재 거주하시는 주와 생년월일을 알려주시겠어요?"
     voice_lang = "ko-KR"
-    button_label = "🔊 환영 메시지 듣기"
+    btn_label_initial = "🔊 환영 메시지 듣기"
+    btn_label_latest = "🔊 답변 읽어듣기"
     playing_label = "▶️ 한국어로 읽는 중..."
 elif current_lang == "繁體中文":
     welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分三個步驟帶您一步步了解：\n\n• **第一步**：評估 Traditional Medicare 與 Advantage 哪種適合您。\n• **第二步**：算出您的黃金申辦時間軸，避開遲辦罰款。\n• **第三步**：教您處理保費與 Deductible 繳費。\n\n我們就從第一步開始！請問您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？"
-    voice_msg_text = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分三個步驟帶您一步步了解：第一步，評估哪種方案適合您。第二步，算出黃金申辦時間軸避開罰款。第三步，教您處理保費與繳費。我們就從第一步開始！請問您目前居住在哪一個州？以及您的出生年月是什麼時候呢？"
     voice_lang = "zh-TW"
-    button_label = "🔊 點擊收聽親切語音導覽"
+    btn_label_initial = "🔊 點擊收聽親切語音導覽"
+    btn_label_latest = "🔊 點擊收聽最新解說"
     playing_label = "▶️ 正在朗讀中..."
 else:
     welcome_msg = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分三个步骤带您一步步了解：\n\n• **第一步**：评估 Traditional Medicare 与 Advantage 哪种适合您。\n• **第二步**：算出您的黄金申办时间轴，避开迟办罚款。\n• **第三步**：教您处理保费与 Deductible 缴费。\n\n我们就从第一步开始！请问您目前居住在哪一个州（或 Zip Code）？以及您的出生年月是什么时候呢？"
-    voice_msg_text = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分三个步骤带您一步步了解：第一步，评估哪种方案适合您。第二步，算出黄金申办时间轴避开罚款。第三步，教您处理保费与缴费。我们就从第一步开始！请问您目前居住在哪一个州？以及您的出生年月是什么时候呢？"
     voice_lang = "zh-CN"
-    button_label = "🔊 点击收聽亲切语音导览"
+    btn_label_initial = "🔊 点击收聽亲切语音导览"
+    btn_label_latest = "🔊 点击收聽最新解说"
     playing_label = "▶️ 正在朗读中..."
 
 if "messages" not in st.session_state:
@@ -194,7 +195,20 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 8. 徹底解決語言錯置：動態帶入該語言的專屬文字與語音腳本
+# 8. 關鍵修復：動態朗讀對話中的「最新一條 AI 回答」
+# 抓取對話紀錄中最後一條來自 assistant 的回答
+latest_assistant_msg = welcome_msg
+for m in reversed(st.session_state.messages):
+    if m["role"] == "assistant":
+        latest_assistant_msg = m["content"]
+        break
+
+# 清除 Markdown 格式符號以利朗讀
+clean_speech_text = re.sub(r'[*_#`\-]', '', latest_assistant_msg).replace("\n", " ")
+
+# 判斷目前是初次問候還是最新回答
+button_display_label = btn_label_initial if len(st.session_state.messages) <= 1 else btn_label_latest
+
 tts_html = f"""
 <div style="margin-bottom: 15px;">
     <button id="speak-btn" onclick="playSpeech()" style="
@@ -211,7 +225,7 @@ tts_html = f"""
         align-items: center;
         gap: 8px;
     ">
-        {button_label}
+        {button_display_label}
     </button>
 </div>
 
@@ -219,7 +233,7 @@ tts_html = f"""
 function playSpeech() {{
     if ('speechSynthesis' in window) {{
         window.speechSynthesis.cancel();
-        var text = "{voice_msg_text}";
+        var text = "{clean_speech_text}";
         var utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "{voice_lang}";
         utterance.rate = 0.9;
@@ -230,12 +244,12 @@ function playSpeech() {{
         btn.style.backgroundColor = "#1565C0";
         
         utterance.onend = function() {{
-            btn.innerText = "{button_label}";
+            btn.innerText = "{button_display_label}";
             btn.style.backgroundColor = "#2E7D32";
         }};
         
         utterance.onerror = function() {{
-            btn.innerText = "{button_label}";
+            btn.innerText = "{button_display_label}";
             btn.style.backgroundColor = "#2E7D32";
         }};
 
@@ -266,17 +280,19 @@ if uploaded_file:
     img_data = Image.open(uploaded_file)
     st.image(img_data, caption="Loaded", use_column_width=True)
 
-# 10. 對話輸入框
+# 10. 動態對話輸入框 (關鍵修復：輸入完住址生日後，提示字自動推進)
+has_user_replied = len(st.session_state.messages) > 1
+
 if current_lang == "English":
-    input_placeholder = "Type your state/birthdate or reply here..."
+    input_placeholder = "Type your question or reply here..." if has_user_replied else "Type your state/birthdate or reply here..."
 elif current_lang == "Español":
-    input_placeholder = "Escriba su estado/fecha de nacimiento aquí..."
+    input_placeholder = "Escriba su pregunta o respuesta aquí..." if has_user_replied else "Escriba su estado/fecha de nacimiento aquí..."
 elif current_lang == "한국어":
-    input_placeholder = "거주 주 및 생년월일을 입력해 주세요..."
+    input_placeholder = "질문이나 답변을 입력해 주세요..." if has_user_replied else "거주 주 및 생년월일을 입력해 주세요..."
 elif current_lang == "繁體中文":
-    input_placeholder = "請輸入您的居住州與出生年月，或點選手機麥克風 🎙️..."
+    input_placeholder = "請輸入您的問題，或點選手機麥克風 🎙️ 語音發問..." if has_user_replied else "請輸入您的居住州與出生年月，或點選手機麥克風 🎙️..."
 else:
-    input_placeholder = "请输入您的居住州与出生年月，或点击手机麦克风 🎙️..."
+    input_placeholder = "请输入您的问题，或点击手机麦克风 🎙️ 语音发问..." if has_user_replied else "请输入您的居住州与出生年月，或点击手机麦克风 🎙️..."
 
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
