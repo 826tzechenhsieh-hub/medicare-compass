@@ -219,13 +219,20 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # ✨ 徹底修復：使用 100% 正確相容的 gemini-1.5-flash 調用名稱
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=SYSTEM_INSTRUCTION
-            )
+           # 🛡️ 智慧備援：自動嘗試最相容的模型名稱
+            available_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+            model = None
             
-            user_content = prompt if prompt else "Please analyze this uploaded document."
+            for m_name in available_models:
+                try:
+                    model = genai.GenerativeModel(model_name=m_name, system_instruction=SYSTEM_INSTRUCTION)
+                    break
+                except Exception:
+                    continue
+            
+            if not model:
+                model = genai.GenerativeModel(model_name="gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
+    user_content = prompt if prompt else "Please analyze this uploaded document."
             
             st.session_state.messages.append({"role": "user", "content": user_content})
             with st.chat_message("user"):
