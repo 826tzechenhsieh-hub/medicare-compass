@@ -31,7 +31,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 將問題按鈕與 3-Step Roadmap 深度結合
+    # 問題按鈕與 3-Step Roadmap 結合（去掉硬梆梆字眼）
     quick_prompt = None
     
     if current_lang == "English":
@@ -84,15 +84,15 @@ with st.sidebar:
 
     elif current_lang == "繁體中文":
         st.header("🗺️ 申辦三大階段指引")
-        st.caption("📍 第一步：方案探索")
+        st.caption("第一步：方案探索")
         if st.button("❓ 什麼是 Medigap 補充保險？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
             
-        st.caption("📍 第二步：時間軸與申辦")
+        st.caption("第二步：時間軸與申辦")
         if st.button("💼 65歲還在工作要辦 Part B 嗎？"):
             quick_prompt = "我今年 65 歲但還在公司全職工作，公司有提供醫療保險，我需要現在申請 Part B 嗎？會不會有罰款？"
             
-        st.caption("📍 第三步：保費與調降")
+        st.caption("第三步：保費與調降")
         if st.button("📝 什麼是 IRMAA 附加費？"):
             quick_prompt = "請解釋什麼是 IRMAA 保費附加費？如果我退休後收入變少，可以申請調降嗎？"
             
@@ -100,15 +100,15 @@ with st.sidebar:
 
     else: # 简体中文
         st.header("🗺️ 申办三大阶段指引")
-        st.caption("📍 第一步：方案探索")
+        st.caption("第一步：方案探索")
         if st.button("❓ 什么是 Medigap 补充保险？"):
             quick_prompt = "请用最通俗的方式告诉我，什么是 Medigap？为什么只买 Medicare Original 还不够？"
             
-        st.caption("📍 第二步：时间轴与申办")
+        st.caption("第二步：时间轴与申办")
         if st.button("💼 65岁还在工作要办 Part B 吗？"):
             quick_prompt = "我今年 65 岁但还在公司全职工作，公司有提供医疗保险，我需要现在申请 Part B 吗？会不会有罚款？"
             
-        st.caption("📍 第三步：保费与调降")
+        st.caption("第三步：保费与调降")
         if st.button("📝 什么是 IRMAA 附加费？"):
             quick_prompt = "请解释什么是 IRMAA 保费附加费？如果我退休后收入变少，可以申请调降吗？"
             
@@ -136,7 +136,7 @@ else:
     st.title("🧭 Medicare Compass 医保指南针")
     st.caption("您的美国医疗保险随身顾问 | 陪伴您三步骤轻松了解申办流程")
 
-# 5. 系統指令 (System Instruction) - 融入 3-Step 導引骨架
+# 5. 系統指令 (System Instruction)
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
@@ -154,27 +154,32 @@ Whenever answering a user for the first time or giving a guidance summary, ALWAY
 4. Language Matching: Respond fluently in the selected language (English, Spanish, Korean, Traditional Chinese, Simplified Chinese).
 """
 
-# 6. 開場白對話紀錄與動態語音 Code (HTML Web Speech API)
+# 6. 開場白對話紀錄（純淨自然無圖釘字眼）
 if current_lang == "English":
-    welcome_msg = "Hello and welcome! I am your Medicare Compass guide. Navigating Medicare for the first time can feel overwhelming, but don't worry—I will take you through it step-by-step across 3 clear phases:\n\n📍 **Step 1**: Find the best plan fit.\n📍 **Step 2**: Calculate your timeline & avoid late penalties.\n📍 **Step 3**: Manage premiums & payments.\n\nTo begin Step 1, which state do you live in, and what is your birth month and year?"
+    welcome_msg = "Hello and welcome! I am your Medicare Compass guide. Navigating Medicare for the first time can feel overwhelming, but don't worry—I will take you through it step-by-step across 3 clear phases:\n\n• **Step 1**: Find the best plan fit.\n• **Step 2**: Calculate your timeline & avoid late penalties.\n• **Step 3**: Manage premiums & payments.\n\nTo begin Step 1, which state do you live in, and what is your birth month and year?"
+    voice_msg_text = "Hello and welcome! I am your Medicare Compass guide. I will take you through Medicare step by step across three phases: Step 1, find the best plan fit. Step 2, calculate your timeline and avoid penalties. Step 3, manage premiums and payments. To begin, which state do you live in, and what is your birth month and year?"
     voice_lang = "en-US"
-    button_label = "🔊 Click to Listen Welcome Message (English)"
+    button_label = "🔊 Listen to Welcome Message"
 elif current_lang == "Español":
-    welcome_msg = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Entender Medicare por primera vez puede ser confuso, pero lo guiaré en 3 sencillos pasos:\n\n📍 **Paso 1**: Elegir el mejor plan.\n📍 **Paso 2**: Calcular su calendario y evitar multas.\n📍 **Paso 3**: Manejar primas y pagos.\n\nPara comenzar el Paso 1, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
+    welcome_msg = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Entender Medicare por primera vez puede ser confuso, pero lo guiaré en 3 sencillos pasos:\n\n• **Paso 1**: Elegir el mejor plan.\n• **Paso 2**: Calcular su calendario y evitar multas.\n• **Paso 3**: Manejar primas y pagos.\n\nPara comenzar el Paso 1, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
+    voice_msg_text = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Lo guiaré en 3 sencillos pasos: Paso 1, elegir el mejor plan. Paso 2, calcular su calendario y evitar multas. Paso 3, manejar primas y pagos. Para comenzar, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
     voice_lang = "es-ES"
-    button_label = "🔊 Escuchar mensaje de bienvenida (Español)"
+    button_label = "🔊 Escuchar mensaje de bienvenida"
 elif current_lang == "한국어":
-    welcome_msg = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 처음 접하시면 복잡하게 느껴지실 수 있지만, 3단계에 걸쳐 쉽게 안내해 드리겠습니다:\n\n📍 **1단계**: 나에게 맞는 플랜 찾기\n📍 **2단계**: 신청 기한 확인 및 벌금 예방\n📍 **3단계**: 보험료 및 납부 관리\n\n1단계를 시작하기 위해, 현재 거주하시는 주와 생년월일(년/월)을 알려주시겠어요?"
+    welcome_msg = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 처음 접하시면 복잡하게 느껴지실 수 있지만, 3단계에 걸쳐 쉽게 안내해 드리겠습니다:\n\n• **1단계**: 나에게 맞는 플랜 찾기\n• **2단계**: 신청 기한 확인 및 벌금 예방\n• **3단계**: 보험료 및 납부 관리\n\n1단계를 시작하기 위해, 현재 거주하시는 주와 생년월일을 알려주시겠어요?"
+    voice_msg_text = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 3단계에 걸쳐 쉽게 안내해 드리겠습니다. 1단계 나에게 맞는 플랜 찾기, 2단계 신청 기한 확인 및 벌금 예방, 3단계 보험료 및 납부 관리. 먼저 현재 거주하시는 주와 생년월일을 알려주시겠어요?"
     voice_lang = "ko-KR"
-    button_label = "🔊 환영 메시지 듣기 (한국어)"
+    button_label = "🔊 환영 메시지 듣기"
 elif current_lang == "繁體中文":
-    welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分 **3 個步驟** 牽著您的手一步步走：\n\n📍 **第一步**：評估 Traditional Medicare 與 Advantage 哪種適合您。\n📍 **第二步**：算出您的黃金申辦時間軸，避開遲辦罰款。\n📍 **第三步**：教您處理保費與 Deductible 繳費。\n\n我們就從 **第一步** 開始！請問您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？"
+    welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分三個步驟帶您一步步了解：\n\n• **第一步**：評估 Traditional Medicare 與 Advantage 哪種適合您。\n• **第二步**：算出您的黃金申辦時間軸，避開遲辦罰款。\n• **第三步**：教您處理保費與 Deductible 繳費。\n\n我們就從第一步開始！請問您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？"
+    voice_msg_text = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分三個步驟帶您一步步了解：第一步，評估哪種方案適合您。第二步，算出黃金申辦時間軸避開罰款。第三步，教您處理保費與繳費。我們就從第一步開始！請問您目前居住在哪一個州？以及您的出生年月是什麼時候呢？"
     voice_lang = "zh-TW"
-    button_label = "🔊 點擊收聽親切語音導覽（中文）"
+    button_label = "🔊 點擊收聽親切語音導覽"
 else:
-    welcome_msg = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分 **3 个步骤** 牵着您的手一步步走：\n\n📍 **第一步**：评估 Traditional Medicare 与 Advantage 哪种适合您。\n📍 **第二步**：算出您的黄金申办时间轴，避开迟办罚款。\n📍 **第三步**：教您处理保费与 Deductible 缴费。\n\n我们就从 **第一步** 开始！请问您目前居住在哪一个州（或 Zip Code）？以及您的出生年月是什么时候呢？"
+    welcome_msg = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分三个步骤带您一步步了解：\n\n• **第一步**：评估 Traditional Medicare 与 Advantage 哪种适合您。\n• **第二步**：算出您的黄金申办时间轴，避开迟办罚款。\n• **第三步**：教您处理保费与 Deductible 缴费。\n\n我们就从第一步开始！请问您目前居住在哪一个州（或 Zip Code）？以及您的出生年月是什么时候呢？"
+    voice_msg_text = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分三个步骤带您一步步了解：第一步，评估哪种方案适合您。第二步，算出黄金申办时间轴避开罚款。第三步，教您处理保费与缴费。我们就从第一步开始！请问您目前居住在哪一个州？以及您的出生年月是什么时候呢？"
     voice_lang = "zh-CN"
-    button_label = "🔊 点击收聽亲切语音导览（中文）"
+    button_label = "🔊 点击收聽亲切语音导览"
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
@@ -184,32 +189,59 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 8. 亮點功能：原生 Web 語音朗讀按鈕 (Verbal Explanation)
-clean_welcome_msg = welcome_msg.replace("\n", " ").replace("*", "")
-tts_code = f"""
+# 8. 全新修復版：極速穩定型 語音播放按鈕 JavaScript (完全相容手機/電腦)
+tts_html = f"""
+<div style="margin-bottom: 15px;">
+    <button id="speak-btn" onclick="playSpeech()" style="
+        background-color: #2E7D32;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        font-size: 15px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    ">
+        {button_label}
+    </button>
+</div>
+
 <script>
-function speakWelcome() {{
-    var msg = new SpeechSynthesisUtterance('{clean_welcome_msg}');
-    msg.lang = '{voice_lang}';
-    msg.rate = 0.95; // 稍微放慢語速，適合長者
-    window.speechSynthesis.speak(msg);
+function playSpeech() {{
+    if ('speechSynthesis' in window) {{
+        window.speechSynthesis.cancel(); // 停止先前的朗讀
+        var text = "{voice_msg_text}";
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "{voice_lang}";
+        utterance.rate = 0.9; // 語速稍微放慢，適合長者
+        utterance.pitch = 1.0;
+        
+        var btn = document.getElementById('speak-btn');
+        btn.innerText = "▶️ 正在朗讀中...";
+        btn.style.backgroundColor = "#1565C0";
+        
+        utterance.onend = function() {{
+            btn.innerText = "{button_label}";
+            btn.style.backgroundColor = "#2E7D32";
+        }};
+        
+        utterance.onerror = function() {{
+            btn.innerText = "{button_label}";
+            btn.style.backgroundColor = "#2E7D32";
+        }};
+
+        window.speechSynthesis.speak(utterance);
+    }} else {{
+        alert("您的瀏覽器暫不支援語音朗讀功能");
+    }}
 }}
 </script>
-<button onclick="speakWelcome()" style="
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 10px 18px;
-    font-size: 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-">
-{button_label}
-</button>
 """
-components.html(tts_code, height=65)
+components.html(tts_html, height=70)
 
 # 9. 圖片上傳區塊
 if current_lang == "English":
