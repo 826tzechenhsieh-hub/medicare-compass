@@ -1,7 +1,5 @@
 import streamlit as st
 import google.generativeai as genai
-import streamlit.components.v1 as components
-import re
 from PIL import Image
 
 # 1. 頁面標題與配置設定
@@ -10,7 +8,7 @@ st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="cent
 # 2. 抓取 API Key
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# 3. 側邊欄（Sidebar）：語言與 3-Step 階段化指南
+# 3. 側邊欄（Sidebar）：語言、照片上傳(選填)與 3-Step 指南
 with st.sidebar:
     st.header("🌐 Language / 語言設定")
     
@@ -29,6 +27,29 @@ with st.sidebar:
         if "messages" in st.session_state:
             del st.session_state["messages"]
         st.rerun()
+
+    st.markdown("---")
+    
+    # 照片上傳區塊（移至左側 Sidebar，標註 Optional 選填，不佔據主畫面）
+    st.header("📸 " + (
+        "Document Photo (Optional)" if current_lang == "English" else
+        "Foto de Documento (Opcional)" if current_lang == "Español" else
+        "서류 사진 업로드 (선택)" if current_lang == "한국어" else
+        "保單/信件拍照（選填）" if current_lang == "繁體中文" else "保单/信件拍照（选填）"
+    ))
+    
+    upload_label = (
+        "Upload Medicare card or SSA letter:" if current_lang == "English" else
+        "Subir tarjeta o carta de SSA:" if current_lang == "Español" else
+        "메디케어 카드/서류 사진:" if current_lang == "한국어" else
+        "若有看不懂的官方信件可拍照上傳：" if "中文" in current_lang else "若有看不懂的官方信件可拍照上传："
+    )
+    
+    uploaded_file = st.file_uploader(upload_label, type=["jpg", "jpeg", "png"])
+    img_data = None
+    if uploaded_file:
+        img_data = Image.open(uploaded_file)
+        st.image(img_data, caption="Loaded", use_column_width=True)
 
     st.markdown("---")
     
@@ -158,129 +179,36 @@ Whenever answering a user for the first time or giving a guidance summary, ALWAY
 # 6. 開場白對話紀錄初始化
 if current_lang == "English":
     welcome_msg = "Hello and welcome! I am your Medicare Compass guide. Navigating Medicare for the first time can feel overwhelming, but don't worry—I will take you through it step-by-step across 3 clear phases:\n\n• **Step 1**: Find the best plan fit.\n• **Step 2**: Calculate your timeline & avoid late penalties.\n• **Step 3**: Manage premiums & payments.\n\nTo begin Step 1, which state do you live in, and what is your birth month and year?"
-    voice_lang = "en-US"
-    btn_label_initial = "🔊 Listen to Welcome Message"
-    btn_label_latest = "🔊 Listen to Latest Response"
-    playing_label = "▶️ Reading..."
 elif current_lang == "Español":
     welcome_msg = "¡Hola y bienvenido! Soy su guía de Medicare Compass. Entender Medicare por primera vez puede ser confuso, pero lo guiaré en 3 sencillos pasos:\n\n• **Paso 1**: Elegir el mejor plan.\n• **Paso 2**: Calcular su calendario y evitar multas.\n• **Paso 3**: Manejar primas y pagos.\n\nPara comenzar el Paso 1, ¿en qué estado vive y cuál es su mes y año de nacimiento?"
-    voice_lang = "es-ES"
-    btn_label_initial = "🔊 Escuchar mensaje de bienvenida"
-    btn_label_latest = "🔊 Escuchar última respuesta"
-    playing_label = "▶️ Leyendo..."
 elif current_lang == "한국어":
     welcome_msg = "안녕하세요! 당신의 메디케어 나침반 가이드입니다. 메디케어를 처음 접하시면 복잡하게 느껴지실 수 있지만, 3단계에 걸쳐 쉽게 안내해 드리겠습니다:\n\n• **1단계**: 나에게 맞는 플랜 찾기\n• **2단계**: 신청 기한 확인 및 벌금 예방\n• **3단계**: 보험료 및 납부 관리\n\n1단계를 시작하기 위해, 현재 거주하시는 주와 생년월일을 알려주시겠어요?"
-    voice_lang = "ko-KR"
-    btn_label_initial = "🔊 환영 메시지 듣기"
-    btn_label_latest = "🔊 답변 읽어듣기"
-    playing_label = "▶️ 한국어로 읽는 중..."
 elif current_lang == "繁體中文":
     welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。第一次接觸 Medicare 覺得複雜很正常，請放心，我會分三個步驟帶您一步步了解：\n\n• **第一步**：評估 Traditional Medicare 與 Advantage 哪種適合您。\n• **第二步**：算出您的黃金申辦時間軸，避開遲辦罰款。\n• **第三步**：教您處理保費與 Deductible 繳費。\n\n我們就從第一步開始！請問您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？"
-    voice_lang = "zh-TW"
-    btn_label_initial = "🔊 點擊收聽親切語音導覽"
-    btn_label_latest = "🔊 點擊收聽最新解說"
-    playing_label = "▶️ 正在朗讀中..."
 else:
     welcome_msg = "您好！我是您的 Medicare 智慧导览助手。第一次接触 Medicare 觉得复杂很正常，请放心，我会分三个步骤带您一步步了解：\n\n• **第一步**：评估 Traditional Medicare 与 Advantage 哪种适合您。\n• **第二步**：算出您的黄金申办时间轴，避开迟办罚款。\n• **第三步**：教您处理保费与 Deductible 缴费。\n\n我们就从第一步开始！请问您目前居住在哪一个州（或 Zip Code）？以及您的出生年月是什么时候呢？"
-    voice_lang = "zh-CN"
-    btn_label_initial = "🔊 点击收聽亲切语音导览"
-    btn_label_latest = "🔊 点击收聽最新解说"
-    playing_label = "▶️ 正在朗读中..."
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
+
+# 💡 貼心語音朗讀提示卡（引導長者使用手機/電腦原生極順暢的語音功能）
+if current_lang == "English":
+    st.info("💡 **Tip**: You can select any text to listen using your device's built-in read aloud option.")
+elif current_lang == "Español":
+    st.info("💡 **Consejo**: Puede seleccionar cualquier texto para escucharlo con la función de voz de su dispositivo.")
+elif current_lang == "한국어":
+    st.info("💡 **팁**: 기기의 음성 읽기 기능을 사용해 텍스트를 선택하여 들으실 수 있습니다.")
+elif current_lang == "繁體中文":
+    st.info("💡 **小貼心**：手機或電腦長按選取文字，即可使用系統內建的「朗讀」功能，聽得更清楚喔！")
+else:
+    st.info("💡 **小贴心**：手机或电脑长按选取文字，即可使用系统内置的「朗读」功能，听得更清楚喔！")
 
 # 7. 顯示過往對話
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 8. 關鍵修復：動態朗讀對話中的「最新一條 AI 回答」
-# 抓取對話紀錄中最後一條來自 assistant 的回答
-latest_assistant_msg = welcome_msg
-for m in reversed(st.session_state.messages):
-    if m["role"] == "assistant":
-        latest_assistant_msg = m["content"]
-        break
-
-# 清除 Markdown 格式符號以利朗讀
-clean_speech_text = re.sub(r'[*_#`\-]', '', latest_assistant_msg).replace("\n", " ")
-
-# 判斷目前是初次問候還是最新回答
-button_display_label = btn_label_initial if len(st.session_state.messages) <= 1 else btn_label_latest
-
-tts_html = f"""
-<div style="margin-bottom: 15px;">
-    <button id="speak-btn" onclick="playSpeech()" style="
-        background-color: #2E7D32;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        font-size: 15px;
-        font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    ">
-        {button_display_label}
-    </button>
-</div>
-
-<script>
-function playSpeech() {{
-    if ('speechSynthesis' in window) {{
-        window.speechSynthesis.cancel();
-        var text = "{clean_speech_text}";
-        var utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "{voice_lang}";
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        
-        var btn = document.getElementById('speak-btn');
-        btn.innerText = "{playing_label}";
-        btn.style.backgroundColor = "#1565C0";
-        
-        utterance.onend = function() {{
-            btn.innerText = "{button_display_label}";
-            btn.style.backgroundColor = "#2E7D32";
-        }};
-        
-        utterance.onerror = function() {{
-            btn.innerText = "{button_display_label}";
-            btn.style.backgroundColor = "#2E7D32";
-        }};
-
-        window.speechSynthesis.speak(utterance);
-    }} else {{
-        alert("Speech synthesis is not supported in this browser.");
-    }}
-}}
-</script>
-"""
-components.html(tts_html, height=70)
-
-# 9. 圖片上傳區塊
-if current_lang == "English":
-    upload_label = "📸 Upload photo of Medicare card, policy, or SSA letter (optional):"
-elif current_lang == "Español":
-    upload_label = "📸 Subir foto de tarjeta de Medicare o carta de SSA (opcional):"
-elif current_lang == "한국어":
-    upload_label = "📸 메디케어 카드, 편지, 또는 서류 사진 업로드 (선택 사항):"
-elif current_lang == "繁體中文":
-    upload_label = "📸 拍照或上傳 Medicare 保單 / SSA 官方信件照片（選填）："
-else:
-    upload_label = "📸 拍照或上传 Medicare 保单 / SSA 官方信件照片（选填）："
-
-uploaded_file = st.file_uploader(upload_label, type=["jpg", "jpeg", "png"])
-img_data = None
-if uploaded_file:
-    img_data = Image.open(uploaded_file)
-    st.image(img_data, caption="Loaded", use_column_width=True)
-
-# 10. 動態對話輸入框 (關鍵修復：輸入完住址生日後，提示字自動推進)
+# 8. 動態對話輸入框
 has_user_replied = len(st.session_state.messages) > 1
 
 if current_lang == "English":
@@ -334,7 +262,7 @@ if prompt or uploaded_file:
         except Exception as e:
             st.error(f"Error: {e}")
 
-# 11. 下載紀錄
+# 9. 下載紀錄
 if len(st.session_state.messages) > 1:
     st.markdown("---")
     chat_history_text = "【Medicare Compass - Consultation Summary】\n\n"
