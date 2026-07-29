@@ -158,7 +158,7 @@ else:
     st.title("🧭 Medicare Compass 医保指南针")
     st.caption("您的美国医疗保险随身顾问 | 陪伴您三步骤轻松了解申办流程")
 
-# 5. 系統指令 (System Instruction) - 新增：精簡長度與好閱讀格式
+# 5. 系統指令 (System Instruction)
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
@@ -226,20 +226,26 @@ if prompt or uploaded_file:
             with st.chat_message("user"):
                 st.markdown(user_content)
 
-            # ✨ 關鍵升級：打字機流式輸出 (Stream Output)，字詞順暢生成，不再視覺爆發
+            # ✨ 徹底修復：提取流式文字片段的 Generator Function
+            def stream_text_generator(response_stream):
+                for chunk in response_stream:
+                    if chunk.text:
+                        yield chunk.text
+
             with st.chat_message("assistant"):
                 spinner_text = "Medicare Compass is analyzing..." if current_lang in ["English", "Español", "한국어"] else "Medicare Compass 正在為您分析思考中..."
                 with st.spinner(spinner_text):
                     if img_data:
                         response = model.generate_content([user_content, img_data], stream=True)
-                        full_text = st.write_stream(response)
                     else:
                         chat = model.start_chat(history=[
                             {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
                             for m in st.session_state.messages[:-1]
                         ])
                         response = chat.send_message(user_content, stream=True)
-                        full_text = st.write_stream(response)
+                    
+                    # 使用提取器，100% 只印出純文字打字效果
+                    full_text = st.write_stream(stream_text_generator(response))
                     
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             st.rerun()
