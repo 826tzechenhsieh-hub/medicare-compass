@@ -6,10 +6,9 @@ from PIL import Image
 # 1. 頁面標題與配置設定
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
-# 🔠 1. 貼心優化：長者友善大字體與高對比 CSS 樣式
+# 🔠 1. 長者友善大字體與高對比 CSS 樣式
 st.markdown("""
     <style>
-    /* 放大對話與全局字體，提升閱讀舒適度 */
     html, body, [class*="css"] {
         font-size: 19px !important;
     }
@@ -17,13 +16,11 @@ st.markdown("""
         font-size: 20px !important;
         line-height: 1.6 !important;
     }
-    /* 放大按鈕文字與內邊距 */
     .stButton>button {
         font-size: 18px !important;
         padding: 10px 20px !important;
         border-radius: 8px !important;
     }
-    /* 放大輸入框文字 */
     .stChatInput input {
         font-size: 19px !important;
     }
@@ -33,9 +30,9 @@ st.markdown("""
 # 2. 抓取 API Key
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# 3. 側邊欄（Sidebar）：語言設定、Reset 按鈕、3-Step 階段推進、照片解惑區
+# 3. 側邊欄（Sidebar）：清爽化，只保留 3-Step 核心問題與 Reset / 上傳
 with st.sidebar:
-    # 🔄 2. 貼心優化：一鍵重來 Reset 按鈕（提供心理安全感）
+    # 🔄 Reset 按鈕
     if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
         if "messages" in st.session_state:
             del st.session_state["messages"]
@@ -62,36 +59,23 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 📍 3-Step 階段推進按鈕與精華問題
+    # 📍 3-Step 階段精華問題（簡化左側，不放混淆按鈕）
     quick_prompt = None
     
     if current_lang == "English":
-        st.header("🗺️ 3-Step Navigation")
+        st.header("🗺️ 3-Step Quick Questions")
         
-        # 👨‍👩‍👧 3. 貼心優化：子女快速入口
-        if st.button("👨‍👩‍👧 I'm helping my parents (Caregiver Mode)"):
-            quick_prompt = "I am helping my elderly parents navigate Medicare. Please give me a clear, structured checklist of what key options and deadlines we need to prepare."
-
-        if st.button("▶️ Start Step 1: Plan Exploration", type="primary"):
-            quick_prompt = "Hello! I am ready to start Step 1: Plan Exploration. Please guide me through."
-            
         st.subheader("📍 Step 1: Plan Exploration")
         if st.button("❓ What is Medigap & why need it?"):
             quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
         if st.button("🩺 Are my doctors covered?"):
             quick_prompt = "How do I check if my current doctors and prescriptions are covered under Part D or Advantage?"
 
-        st.markdown("---")
-        if st.button("➡️ Move to Step 2: Timeline & Penalties", type="primary"):
-            quick_prompt = "I'm ready for Step 2! Please guide me through my enrollment timeline and how to avoid late penalties."
-
-        st.subheader("📍 Step 2: Timeline & Enrollment")
+        st.subheader("📍 Step 2: Timeline & Penalties")
         if st.button("💼 Working past 65 & Part B?"):
             quick_prompt = "I'm turning 65 but still working with employer insurance. Do I need Part B now, and will I face penalties?"
-        
-        st.markdown("---")
-        if st.button("➡️ Move to Step 3: Premiums & IRMAA", type="primary"):
-            quick_prompt = "I'm ready for Step 3! Please explain Part B costs, deductibles, and how IRMAA adjustments work."
+        if st.button("📅 What is my IEP timeline?"):
+            quick_prompt = "When is my Initial Enrollment Period (IEP), and what happens if I miss it?"
 
         st.subheader("📍 Step 3: Premiums & Financials")
         if st.button("💵 Part B Cost & Payment?"):
@@ -100,32 +84,19 @@ with st.sidebar:
             quick_prompt = "What is the IRMAA Medicare surcharge, and how can I appeal it if my income dropped after retirement?"
 
     elif current_lang == "繁體中文":
-        st.header("🗺️ 申辦三步驟導航")
+        st.header("🗺️ 申辦三步驟核心問題")
         
-        # 👨‍👩‍👧 3. 貼心優化：子女快速入口
-        if st.button("👨‍👩‍👧 我是幫父母查詢的子女 (Caregiver)"):
-            quick_prompt = "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
-
-        if st.button("▶️ 開始【第一步：方案探索】", type="primary"):
-            quick_prompt = "您好！我準備好開始【第一步：方案探索】了，請帶我一步步了解！"
-            
         st.subheader("📍 第一步：方案探索")
         if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
         if st.button("🩺 常看的醫生與慢性病藥物有給付嗎？"):
             quick_prompt = "如何確認我平時看診的醫生以及在吃的慢性病藥物有沒有在 Medicare 的給付範圍內？"
 
-        st.markdown("---")
-        if st.button("➡️ 進入【第二步：時間軸與避開罰款】", type="primary"):
-            quick_prompt = "第一步我了解了！請帶我進入【第二步】，幫我計算黃金申辦時間軸，並告訴我如何避開終身罰款。"
-
         st.subheader("📍 第二步：時間軸與避開罰款")
         if st.button("💼 65歲還在工作有公司保險，要辦 Part B 嗎？"):
             quick_prompt = "我今年 65 歲但還在公司全職工作，公司有提供醫療保險，我需要現在申請 Part B 嗎？會不會有罰款？"
-        
-        st.markdown("---")
-        if st.button("➡️ 進入【第三步：保費與費用調降】", type="primary"):
-            quick_prompt = "第二步我了解了！請帶我進入【第三步】，教我了解 Part B 保費、自付額以及 IRMAA 費用如何調降。"
+        if st.button("📅 我的黃金申辦期 (IEP) 是什麼時候？"):
+            quick_prompt = "請幫我算算我的 Initial Enrollment Period (IEP) 黃金申辦期是哪幾個月？錯過會有罰款嗎？"
 
         st.subheader("📍 第三步：保費與費用調降")
         if st.button("💵 Part B 保費多少？如何繳費？"):
@@ -134,17 +105,16 @@ with st.sidebar:
             quick_prompt = "請解釋什麼是 IRMAA 保費附加費？如果我退休後收入變少，可以申請調降嗎？"
 
     else:
-        st.header("🗺️ 3-Step Navigation / 申導指南")
-        if st.button("👨‍👩‍👧 For Caregivers / 帮父母查询"):
-            quick_prompt = "I am helping my parents. Please provide a clear checklist for caregivers."
-        if st.button("▶️ Start Step 1 / 开始第一步", type="primary"):
-            quick_prompt = "Hello! I am ready to start Step 1."
-        st.subheader("📍 Step 1 / 第一步")
-        if st.button("➡️ Move to Step 2 / 进入第二步", type="primary"):
-            quick_prompt = "Please guide me through Step 2: Timeline & Avoiding Penalties."
-        st.subheader("📍 Step 2 / 第二步")
-        if st.button("➡️ Move to Step 3 / 进入第三步", type="primary"):
-            quick_prompt = "Please guide me through Step 3: Premiums & IRMAA adjustments."
+        st.header("🗺️ 3-Step Navigation")
+        st.subheader("📍 Step 1")
+        if st.button("❓ What is Medigap?"):
+            quick_prompt = "Can you explain Medigap simply?"
+        st.subheader("📍 Step 2")
+        if st.button("💼 Working past 65 & Part B?"):
+            quick_prompt = "I'm turning 65 but still working. Do I need Part B?"
+        st.subheader("📍 Step 3")
+        if st.button("📝 What is IRMAA surcharge?"):
+            quick_prompt = "What is the IRMAA surcharge?"
 
     st.markdown("---")
     
@@ -188,18 +158,18 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 【Core Principles】
 1. Keep responses CONCISE and short (2-3 brief paragraphs maximum). Use bold keywords for easy scanning.
 2. Phase Transition Check: At the end of answering Phase 1 or Phase 2 topics, ALWAYS ask: 
-   "Do you have any more questions about this step? If you feel ready, click the button in the left sidebar to move to the next step!"
+   "Do you have any more questions about this step? If you feel ready, ask your next question or pick from the left sidebar!"
 3. Demystify the 80/20 myth early: Clarify that Original Medicare only covers 80% with NO out-of-pocket maximum.
 4. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. 開場白初始化
+# 6. 開場白初始化 (直接在主畫面提供身分對話選擇)
 if current_lang == "English":
-    welcome_msg = "Hello and welcome! I am your Medicare Compass guide.\n\nClick the **▶️ Start Step 1** button in the left sidebar (or type/speak below) with your state and birth year to begin!"
+    welcome_msg = "Hello and welcome! I am your Medicare Compass guide. We will guide you step-by-step through Medicare.\n\nTo begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"
 elif current_lang == "繁體中文":
-    welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。\n\n請點擊左側欄的 **▶️ 開始【第一步：方案探索】** 按鈕（或直接在下方用語音/打字輸入您的居住州與出生年月），我們立刻開始為您解說！"
+    welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。我們會陪伴您分三步驟輕鬆了解 Medicare。\n\n為了幫您展開 **第一步：方案探索**，請告訴我：**您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？**"
 else:
-    welcome_msg = "Hello! I am your Medicare Compass guide. Click Start Step 1 in sidebar to begin!"
+    welcome_msg = "Hello! I am your Medicare Compass guide. Which state do you live in, and what is your birth month and year?"
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
@@ -209,7 +179,18 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 💊 4. 貼心優化：動態「點擊發問小卡」（Clickable Quick Pills）
+# 💡 主畫面快速啟動按鈕 (一進來就呈現在右邊對話框下方，不再迷路)
+if len(st.session_state.messages) == 1:
+    st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
+    col_start1, col_start2 = st.columns(2)
+    with col_start1:
+        if st.button("👴 " + ("I'm applying for myself" if current_lang == "English" else "我是長者本人（開始 3 步驟導覽）")):
+            quick_prompt = "您好！我是長者本人，準備開始了解 Medicare 申辦流程。我住在紐約州，今年剛滿 65 歲。"
+    with col_start2:
+        if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（查看快速對照清單）")):
+            quick_prompt = "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
+
+# 💊 對話進行中的「發問小卡」
 if len(st.session_state.messages) > 1:
     st.caption("💡 " + ("Quick Questions (Click to ask):" if current_lang in ["English", "Español", "한국어"] else "點擊下方小卡直接發問："))
     col_pill1, col_pill2 = st.columns(2)
@@ -220,7 +201,7 @@ if len(st.session_state.messages) > 1:
         if st.button("💡 " + ("How to avoid penalties?" if current_lang == "English" else "如何完全避開遲辦罰款？")):
             quick_prompt = "請告訴我最關鍵的黃金申辦期限，我該如何確保完全不被罰款？"
 
-# 🎙️ 5. 貼心優化：醒目的麥克風語音輸入提示
+# 🎙️ 醒目的麥克風語音輸入提示
 has_user_replied = len(st.session_state.messages) > 1
 
 if current_lang == "English":
@@ -241,8 +222,9 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
+            # ✨ 使用官方 100% 穩定支援的 gemini-1.5-flash，解決 404 錯誤
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
+                model_name="gemini-1.5-flash",
                 system_instruction=SYSTEM_INSTRUCTION
             )
             
@@ -284,7 +266,6 @@ if len(st.session_state.messages) > 1:
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
         role_title = "Compass Advisor" if m["role"] == "assistant" else "User"
-        chat_role = "AI" if m["role"] == "assistant" else "User"
         full_log_text += f"[{role_title}]:\n{m['content']}\n\n------------------------\n\n"
 
     short_summary_text = "【Medicare Compass - 1-Page Key Takeaways / 1頁重點摘要】\n\n"
