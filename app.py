@@ -219,7 +219,7 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-           # 🛡️ 智慧備援：自動嘗試最相容的模型名稱
+            # 🛡️ 智慧備援機制：自動嘗試相容模型
             available_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
             model = None
             
@@ -232,7 +232,8 @@ if prompt or uploaded_file:
             
             if not model:
                 model = genai.GenerativeModel(model_name="gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
-    user_content = prompt if prompt else "Please analyze this uploaded document."
+
+            user_content = prompt if prompt else "Please analyze this uploaded document."
             
             st.session_state.messages.append({"role": "user", "content": user_content})
             with st.chat_message("user"):
