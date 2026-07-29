@@ -53,7 +53,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 問題按鈕與 3-Step Roadmap 結合
+    # 問題按鈕與 3-Step Roadmap 結合（包含處方藥與醫生網絡補充）
     quick_prompt = None
     
     if current_lang == "English":
@@ -61,6 +61,8 @@ with st.sidebar:
         st.caption("Step 1: Plan Exploration")
         if st.button("❓ What is Medigap & Supplement?"):
             quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
+        if st.button("🩺 Doctor & Prescription Drug Coverage?"):
+            quick_prompt = "How do I check if my doctors and prescription drugs are covered under Part D or Advantage?"
             
         st.caption("Step 2: Enrollment & Timeline")
         if st.button("💼 Working past 65 & Part B?"):
@@ -77,6 +79,8 @@ with st.sidebar:
         st.caption("Paso 1: Exploración de planes")
         if st.button("❓ ¿Qué es Medigap?"):
             quick_prompt = "¿Puede explicarme qué es Medigap y por qué no basta solo con Medicare Original?"
+        if st.button("🩺 ¿Médicos y Medicamentos?"):
+            quick_prompt = "¿Cómo puedo saber si mis médicos y medicamentos están cubiertos?"
             
         st.caption("Paso 2: Inscripción y Fechas")
         if st.button("💼 ¿Trabaja a los 65 años?"):
@@ -93,6 +97,8 @@ with st.sidebar:
         st.caption("1단계: 플랜 탐색")
         if st.button("❓ 메디갭(Medigap)이란?"):
             quick_prompt = "메디갭(Medigap)이 무엇인지, 왜 오리지널 메디케어만으로는 부족한지 알기 쉽게 설명해 주세요."
+        if st.button("🩺 의사 및 처방약 커버리지?"):
+            quick_prompt = "내 주치의와 복용 중인 약이 보장되는지 어떻게 확인하나요?"
             
         st.caption("2단계: 신청 절차 및 기한")
         if st.button("💼 65세 이후에도 일하는 경우?"):
@@ -109,6 +115,8 @@ with st.sidebar:
         st.caption("第一步：方案探索")
         if st.button("❓ 什麼是 Medigap 補充保險？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
+        if st.button("🩺 常用藥物與看診醫生有給付嗎？"):
+            quick_prompt = "如何確認我平時看診的醫生以及在吃的慢性病藥物有沒有在 Medicare 的給付範圍內？"
             
         st.caption("第二步：時間軸與申辦")
         if st.button("💼 65歲還在工作要辦 Part B 嗎？"):
@@ -125,6 +133,8 @@ with st.sidebar:
         st.caption("第一步：方案探索")
         if st.button("❓ 什么是 Medigap 补充保险？"):
             quick_prompt = "请用最通俗的方式告诉我，什么是 Medigap？为什么只买 Medicare Original 还不够？"
+        if st.button("🩺 常用药物与看诊医生有给付吗？"):
+            quick_prompt = "如何确认我平时看诊的医生以及在吃的慢性病药物有没有在 Medicare 的给付范围内？"
             
         st.caption("第二步：时间轴与申办")
         if st.button("💼 65岁还在工作要办 Part B 吗？"):
@@ -158,7 +168,7 @@ else:
     st.title("🧭 Medicare Compass 医保指南针")
     st.caption("您的美国医疗保险随身顾问 | 陪伴您三步骤轻松了解申办流程")
 
-# 5. 系統指令 (System Instruction)
+# 5. 系統指令 (System Instruction) - 柔性多選與開放式引導
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
@@ -167,7 +177,9 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 1. Keep responses CONCISE and short (2-3 brief paragraphs maximum). Avoid long walls of text so seniors don't have to scroll excessively.
 2. Use bullet points and bold keywords to make reading effortless.
 3. Demystify the 80/20 myth early: Clarify that Original Medicare only covers 80% with NO out-of-pocket maximum.
-4. Active Next-Step Guidance: At the end of every response, suggest 1 or 2 clear next options.
+4. Flexible Next-Step Guidance (CRITICAL):
+   At the end of EVERY response, never force a strict 1-or-2 choice. Instead, warmly provide 2 suggested direction options, AND explicitly mention:
+   "You are welcome to ask about any of these options, or simply type any other questions you have on your mind!"
 5. Language Matching: Respond fluently in the selected language (English, Spanish, Korean, Traditional Chinese, Simplified Chinese).
 """
 
@@ -226,7 +238,7 @@ if prompt or uploaded_file:
             with st.chat_message("user"):
                 st.markdown(user_content)
 
-            # ✨ 徹底修復：提取流式文字片段的 Generator Function
+            # 提取流式文字片段的 Generator Function
             def stream_text_generator(response_stream):
                 for chunk in response_stream:
                     if chunk.text:
@@ -244,7 +256,6 @@ if prompt or uploaded_file:
                         ])
                         response = chat.send_message(user_content, stream=True)
                     
-                    # 使用提取器，100% 只印出純文字打字效果
                     full_text = st.write_stream(stream_text_generator(response))
                     
             st.session_state.messages.append({"role": "assistant", "content": full_text})
