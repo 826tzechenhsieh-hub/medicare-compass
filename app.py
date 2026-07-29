@@ -6,7 +6,7 @@ from PIL import Image
 # 1. 頁面標題與配置設定
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
-# 🔠 1. 長者友善大字體與高對比 CSS 樣式
+# 🔠 長者友善大字體樣式
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -30,7 +30,7 @@ st.markdown("""
 # 2. 抓取 API Key
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# 3. 側邊欄（Sidebar）：清爽化，只保留 3-Step 核心問題與 Reset / 上傳
+# 3. 側邊栏（Sidebar）
 with st.sidebar:
     # 🔄 Reset 按鈕
     if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
@@ -48,7 +48,6 @@ with st.sidebar:
         key="selected_language"
     )
     
-    # 切換語言時自動重置歷史對話
     if "previous_language" not in st.session_state:
         st.session_state.previous_language = current_lang
     elif st.session_state.previous_language != current_lang:
@@ -59,7 +58,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 📍 3-Step 階段精華問題（簡化左側，不放混淆按鈕）
     quick_prompt = None
     
     if current_lang == "English":
@@ -118,7 +116,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # 照片上傳解惑區
     st.header("📸 " + ("Document Assistant" if current_lang in ["English", "Español", "한국어"] else "看不懂英文信件/保單？"))
     
     with st.expander("ℹ️ " + ("Why upload photo?" if current_lang in ["English", "Español", "한국어"] else "為什麼要拍照上傳？")):
@@ -139,7 +136,7 @@ with st.sidebar:
     else:
         st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
 
-# 4. 主畫面標題與固定式宣導橫幅
+# 4. 主畫面標題與宣導橫幅
 if current_lang == "English":
     st.title("🧭 Medicare Compass")
     st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps, avoiding late penalties and demystifying confusing letters.")
@@ -163,7 +160,7 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 4. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. 開場白初始化 (直接在主畫面提供身分對話選擇)
+# 6. 開場白初始化
 if current_lang == "English":
     welcome_msg = "Hello and welcome! I am your Medicare Compass guide. We will guide you step-by-step through Medicare.\n\nTo begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"
 elif current_lang == "繁體中文":
@@ -179,29 +176,29 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 💡 主畫面快速啟動按鈕 (一進來就呈現在右邊對話框下方，不再迷路)
+# 💡 主畫面快速啟動按鈕
 if len(st.session_state.messages) == 1:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
     col_start1, col_start2 = st.columns(2)
     with col_start1:
         if st.button("👴 " + ("I'm applying for myself" if current_lang == "English" else "我是長者本人（開始 3 步驟導覽）")):
-            quick_prompt = "您好！我是長者本人，準備開始了解 Medicare 申辦流程。我住在紐約州，今年剛滿 65 歲。"
+            quick_prompt = "Hello! I am applying for myself. I turn 65 this year and live in NY. Please guide me through Step 1." if current_lang == "English" else "您好！我是長者本人，準備開始了解 Medicare 申辦流程。我住在紐約州，今年剛滿 65 歲。"
     with col_start2:
         if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（查看快速對照清單）")):
-            quick_prompt = "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
+            quick_prompt = "I am helping my elderly parents with Medicare. Please provide a clear checklist of deadlines and options." if current_lang == "English" else "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
 
-# 💊 對話進行中的「發問小卡」
+# 💊 發問小卡
 if len(st.session_state.messages) > 1:
     st.caption("💡 " + ("Quick Questions (Click to ask):" if current_lang in ["English", "Español", "한국어"] else "點擊下方小卡直接發問："))
     col_pill1, col_pill2 = st.columns(2)
     with col_pill1:
         if st.button("💡 " + ("Tell me about Part B costs" if current_lang == "English" else "了解 Part B 保費細節")):
-            quick_prompt = "請詳細告訴我 Part B 的保費與 Deductible 是多少？"
+            quick_prompt = "Please tell me about Part B premium and deductible." if current_lang == "English" else "請詳細告訴我 Part B 的保費與 Deductible 是多少？"
     with col_pill2:
         if st.button("💡 " + ("How to avoid penalties?" if current_lang == "English" else "如何完全避開遲辦罰款？")):
-            quick_prompt = "請告訴我最關鍵的黃金申辦期限，我該如何確保完全不被罰款？"
+            quick_prompt = "How can I avoid all Medicare late penalties?" if current_lang == "English" else "請告訴我最關鍵的黃金申辦期限，我該如何確保完全不被罰款？"
 
-# 🎙️ 醒目的麥克風語音輸入提示
+# 🎙️ 語音輸入提示
 has_user_replied = len(st.session_state.messages) > 1
 
 if current_lang == "English":
@@ -222,9 +219,9 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # ✨ 使用官方 100% 穩定支援的 gemini-1.5-flash，解決 404 錯誤
+            # ✨ 徹底修復：使用 100% 正確相容的 gemini-1.5-flash 調用名稱
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash-latest",
+                model_name="gemini-1.5-flash",
                 system_instruction=SYSTEM_INSTRUCTION
             )
             
@@ -258,8 +255,8 @@ if prompt or uploaded_file:
         except Exception as e:
             st.error(f"Error: {e}")
 
-# 9. 結案打包工具箱：雙版本 + 一鍵寄至 Email
-if len(st.session_state.messages) > 1:
+# 9. 結案打包工具箱：對話達 3 條以上才呈現，避免過早跳出
+if len(st.session_state.messages) >= 3:
     st.markdown("---")
     st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮詢紀錄打包與分享"))
     
@@ -282,8 +279,8 @@ if len(st.session_state.messages) > 1:
     tab1, tab2 = st.tabs(["⚡ 1-Page Summary (1頁精簡版)", "📄 Full Log (完整紀錄版)"])
     
     with tab1:
-        st.caption("适合发给子女或 Line/WeChat 微信快速查看 (Great for family sharing)")
-        st.text_area("Preview (內容預覽):", value=short_summary_text, height=150)
+        st.caption("Great for sending to family via Email or WeChat")
+        st.text_area("Preview:", value=short_summary_text, height=150)
         
         col1, col2 = st.columns(2)
         with col1:
@@ -306,13 +303,13 @@ if len(st.session_state.messages) > 1:
                         cursor: pointer;
                         width: 100%;
                     ">
-                        📧 Send to My Email (寄給自己/家人)
+                        📧 Send to My Email
                     </button>
                 </a>
             ''', unsafe_allow_html=True)
 
     with tab2:
-        st.caption("包含今天所有詳細對話問答紀錄 (Complete Q&A History)")
+        st.caption("Complete Q&A History")
         st.download_button(
             label="📥 Download Full Log (TXT)",
             data=full_log_text,
