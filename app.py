@@ -224,7 +224,7 @@ if prompt or uploaded_file:
             
             # ✨ 使用官方 100% 穩定支援的 gemini-1.5-flash，解決 404 錯誤
             model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
+                model_name="gemini-1.5-flash-latest",
                 system_instruction=SYSTEM_INSTRUCTION
             )
             
