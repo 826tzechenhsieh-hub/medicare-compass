@@ -3,10 +3,10 @@ import google.generativeai as genai
 import urllib.parse
 from PIL import Image
 
-# 1. 頁面標題與配置設定
+# 1. Page Config
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
-# 🔠 長者友善大字體樣式
+# Senior-friendly typography
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -27,12 +27,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. 抓取 API Key
+# 2. Get API Key
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# 3. 側邊栏（Sidebar）
+# 3. Sidebar
 with st.sidebar:
-    # 🔄 Reset 按鈕
     if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
         if "messages" in st.session_state:
             del st.session_state["messages"]
@@ -62,7 +61,6 @@ with st.sidebar:
     
     if current_lang == "English":
         st.header("🗺️ 3-Step Quick Questions")
-        
         st.subheader("📍 Step 1: Plan Exploration")
         if st.button("❓ What is Medigap & why need it?"):
             quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
@@ -83,7 +81,6 @@ with st.sidebar:
 
     elif current_lang == "繁體中文":
         st.header("🗺️ 申辦三步驟核心問題")
-        
         st.subheader("📍 第一步：方案探索")
         if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
@@ -136,7 +133,7 @@ with st.sidebar:
     else:
         st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
 
-# 4. 主畫面標題與宣導橫幅
+# 4. Main Header & Announcement Banner
 if current_lang == "English":
     st.title("🧭 Medicare Compass")
     st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps, avoiding late penalties and demystifying confusing letters.")
@@ -147,7 +144,7 @@ else:
     st.title("🧭 Medicare Compass")
     st.info("📢 Designed to help seniors navigate US Medicare smoothly across 3 clear steps.")
 
-# 5. 系統指令 (System Instruction)
+# 5. System Instructions
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
@@ -160,7 +157,7 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 4. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. 開場白初始化
+# 6. Greeting Initialization
 if current_lang == "English":
     welcome_msg = "Hello and welcome! I am your Medicare Compass guide. We will guide you step-by-step through Medicare.\n\nTo begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"
 elif current_lang == "繁體中文":
@@ -171,12 +168,12 @@ else:
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
 
-# 7. 顯示對話歷史
+# 7. Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 💡 主畫面快速啟動按鈕
+# Quick Start Options
 if len(st.session_state.messages) == 1:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
     col_start1, col_start2 = st.columns(2)
@@ -187,7 +184,7 @@ if len(st.session_state.messages) == 1:
         if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（查看快速對照清單）")):
             quick_prompt = "I am helping my elderly parents with Medicare. Please provide a clear checklist of deadlines and options." if current_lang == "English" else "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
 
-# 💊 發問小卡
+# Quick Cards during conversation
 if len(st.session_state.messages) > 1:
     st.caption("💡 " + ("Quick Questions (Click to ask):" if current_lang in ["English", "Español", "한국어"] else "點擊下方小卡直接發問："))
     col_pill1, col_pill2 = st.columns(2)
@@ -198,7 +195,7 @@ if len(st.session_state.messages) > 1:
         if st.button("💡 " + ("How to avoid penalties?" if current_lang == "English" else "如何完全避開遲辦罰款？")):
             quick_prompt = "How can I avoid all Medicare late penalties?" if current_lang == "English" else "請告訴我最關鍵的黃金申辦期限，我該如何確保完全不被罰款？"
 
-# 🎙️ 語音輸入提示
+# Input Bar
 has_user_replied = len(st.session_state.messages) > 1
 
 if current_lang == "English":
@@ -211,6 +208,7 @@ else:
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
+# 8. Execution Logic with Failover Model Loading
 if prompt or uploaded_file:
     if not api_key:
         st.error("Please set API Key in sidebar.")
@@ -219,20 +217,15 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 🛡️ 智慧備援機制：自動嘗試相容模型
-            available_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
-            model = None
-            
-            for m_name in available_models:
+            # Smart Model Fallback to guarantee no 404
+            try:
+                model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION)
+            except Exception:
                 try:
-                    model = genai.GenerativeModel(model_name=m_name, system_instruction=SYSTEM_INSTRUCTION)
-                    break
+                    model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_INSTRUCTION)
                 except Exception:
-                    continue
+                    model = genai.GenerativeModel("gemini-1.5-pro", system_instruction=SYSTEM_INSTRUCTION)
             
-            if not model:
-                model = genai.GenerativeModel(model_name="gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
-
             user_content = prompt if prompt else "Please analyze this uploaded document."
             
             st.session_state.messages.append({"role": "user", "content": user_content})
@@ -260,10 +253,11 @@ if prompt or uploaded_file:
                     
             st.session_state.messages.append({"role": "assistant", "content": full_text})
             st.rerun()
+            
         except Exception as e:
             st.error(f"Error: {e}")
 
-# 9. 結案打包工具箱：對話達 3 條以上才呈現，避免過早跳出
+# 9. Summary Section (Only shows after 3+ turns)
 if len(st.session_state.messages) >= 3:
     st.markdown("---")
     st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮詢紀錄打包與分享"))
