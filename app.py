@@ -128,7 +128,7 @@ with st.sidebar:
             
         st.caption("第二步：时间轴与申办")
         if st.button("💼 65岁还在工作要办 Part B 吗？"):
-            quick_prompt = "我今年 65 岁但还在公司全职工作，公司有提供医疗保险，我需要现在申请 Part B 吗？会不会有罚款？"
+            quick_prompt = "我今年 65 岁 capitalization 还在公司全职工作，公司有提供医疗保险，我需要现在申请 Part B 吗？会不会有罚款？"
             
         st.caption("第三步：保费与调降")
         if st.button("📝 什么是 IRMAA 附加费？"):
@@ -158,22 +158,17 @@ else:
     st.title("🧭 Medicare Compass 医保指南针")
     st.caption("您的美国医疗保险随身顾问 | 陪伴您三步骤轻松了解申办流程")
 
-# 5. 系統指令 (System Instruction)
+# 5. 系統指令 (System Instruction) - 新增：精簡長度與好閱讀格式
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
 
-【Core Framework - 3-Step Roadmap Integration】
-Whenever answering a user for the first time or giving a guidance summary, ALWAYS structure your response around these 3 clear steps:
-1. Step 1: Plan Exploration (Traditional Medicare vs. Advantage & Medigap supplement)
-2. Step 2: Timeline & Enrollment (Key IEP dates & penalty avoidance)
-3. Step 3: Premiums & Financial Adjustments (Part B costs, Deductibles, IRMAA)
-
-【Core Principles】
-1. Be encouraging, clear, and reassuring. Avoid dense jargon; use simple everyday analogies.
-2. Demystify the 80/20 myth early: Clarify that Original Medicare only covers 80% with NO out-of-pocket maximum.
-3. Active Next-Step Guidance: At the end of every response, suggest 2 clear next questions/options to keep the momentum going effortlessly.
-4. Language Matching: Respond fluently in the selected language (English, Spanish, Korean, Traditional Chinese, Simplified Chinese).
+【Core Principles for Senior-Friendly Formatting】
+1. Keep responses CONCISE and short (2-3 brief paragraphs maximum). Avoid long walls of text so seniors don't have to scroll excessively.
+2. Use bullet points and bold keywords to make reading effortless.
+3. Demystify the 80/20 myth early: Clarify that Original Medicare only covers 80% with NO out-of-pocket maximum.
+4. Active Next-Step Guidance: At the end of every response, suggest 1 or 2 clear next options.
+5. Language Matching: Respond fluently in the selected language (English, Spanish, Korean, Traditional Chinese, Simplified Chinese).
 """
 
 # 6. 開場白對話紀錄初始化
@@ -231,21 +226,22 @@ if prompt or uploaded_file:
             with st.chat_message("user"):
                 st.markdown(user_content)
 
+            # ✨ 關鍵升級：打字機流式輸出 (Stream Output)，字詞順暢生成，不再視覺爆發
             with st.chat_message("assistant"):
                 spinner_text = "Medicare Compass is analyzing..." if current_lang in ["English", "Español", "한국어"] else "Medicare Compass 正在為您分析思考中..."
                 with st.spinner(spinner_text):
                     if img_data:
-                        response = model.generate_content([user_content, img_data])
+                        response = model.generate_content([user_content, img_data], stream=True)
+                        full_text = st.write_stream(response)
                     else:
                         chat = model.start_chat(history=[
                             {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
                             for m in st.session_state.messages[:-1]
                         ])
-                        response = chat.send_message(user_content)
+                        response = chat.send_message(user_content, stream=True)
+                        full_text = st.write_stream(response)
                     
-                    st.markdown(response.text)
-                    
-            st.session_state.messages.append({"role": "assistant", "content": response.text})
+            st.session_state.messages.append({"role": "assistant", "content": full_text})
             st.rerun()
         except Exception as e:
             st.error(f"Error: {e}")
