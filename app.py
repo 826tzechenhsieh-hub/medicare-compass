@@ -202,7 +202,7 @@ st.markdown("---")
         🏛️ **非官方聲明**：Medicare Compass™（powered by Care Compass™）為獨立輔助導航應用，不代表美國政府或社會安全局 (SSA) 官方機構。
         """)
 
-            st.markdown("---")
+    st.markdown("---")
 
     # 5. 最底部：重置對話按鈕 (Reset Conversation - 置底安全收尾)
         reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
