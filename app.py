@@ -56,30 +56,42 @@ def generate_clean_response(user_input):
     if not keys_to_try:
         raise ValueError("NO_API_KEY")
 
+    last_exception = None
+
     for current_key in keys_to_try:
         try:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            # 自動嘗試各種格式的模型名稱，徹底解決 API Connection Error
+            available_models = ["models/gemini-1.5-flash", "gemini-1.5-flash", "models/gemini-1.5-pro", "gemini-1.5-pro"]
             
-            # 建立無污染的背景提示 Context
-            system_context = [
-                {"role": "user", "parts": ["You are Medicare Compass, a warm, concise Medicare advisor. Speak directly to the senior. Never output thinking process, goals, constraints, or lists of instructions. Always follow Step 1 (ask birth date/state -> calculate IEP), Step 2 (compare coverage), Step 3 (application steps)."]},
-                {"role": "model", "parts": ["Understood. I am Medicare Compass. I will assist warmly and directly without any internal notes."]}
-            ]
-            
-            # 載入歷史對話
-            for m in st.session_state.messages[:-1]:
-                role = "user" if m["role"] == "user" else "model"
-                system_context.append({"role": role, "parts": [m["content"]]})
-                
-            chat = model.start_chat(history=system_context)
-            response = chat.send_message(user_input, stream=True)
-            return response
-        except Exception:
+            for m_name in available_models:
+                try:
+                    model = genai.GenerativeModel(m_name)
+                    
+                    # 乾淨無污染的情境設定
+                    system_context = [
+                        {"role": "user", "parts": ["You are Medicare Compass, a warm, concise Medicare advisor. Speak directly to the senior. Never output thinking process, goals, constraints, or lists of instructions. Always follow Step 1 (ask birth date/state -> calculate IEP), Step 2 (compare coverage), Step 3 (application steps)."]},
+                        {"role": "model", "parts": ["Understood. I am Medicare Compass. I will assist warmly and directly without any internal notes."]}
+                    ]
+                    
+                    for m in st.session_state.messages[:-1]:
+                        role = "user" if m["role"] == "user" else "model"
+                        system_context.append({"role": role, "parts": [m["content"]]})
+                        
+                    chat = model.start_chat(history=system_context)
+                    response = chat.send_message(user_input, stream=True)
+                    return response
+                except Exception as inner_e:
+                    last_exception = inner_e
+                    continue
+        except Exception as outer_e:
+            last_exception = outer_e
             continue
-    raise RuntimeError("API Connection Error. Please try again.")
+
+    if last_exception:
+        raise last_exception
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
