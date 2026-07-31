@@ -69,7 +69,7 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
             genai.configure(api_key=clean_key)
             
             # Smart Model Detection (Filters out unsupported prefixes)
-            working_model_name = "gemini-1.5-flash"
+            working_model_name = "gemini-flash"
                             
             model = genai.GenerativeModel(working_model_name, system_instruction=system_instruction)
             
