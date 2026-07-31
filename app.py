@@ -79,7 +79,9 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
             
     raise last_exception
 
-# 3. Sidebar
+# -------------------------------------------------------------------
+# 3. Sidebar Setup
+# -------------------------------------------------------------------
 with st.sidebar:
     # 1. 置頂品牌大標題 (方案 A) 與宗旨 Banner
     if current_lang in ["English", "Español", "한국어"]:
@@ -90,130 +92,53 @@ with st.sidebar:
         st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
         st.caption("##### *powered by Care Compass™*")
         st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
-    
+
     st.markdown("---")
+
+    # 2. 語言選擇器
     st.header("🌐 Language / 語言設定")
-    
     current_lang = st.radio(
-        "Select Language / 選擇語言:", 
-        ["English", "Español", "繁體中文", "简体中文", "한국어"], 
+        "Select Language / 選擇語言:",
+        ["English", "Español", "繁體中文", "簡體中文", "한국어"],
         index=0,
         key="selected_language"
     )
-    
-    if "previous_language" not in st.session_state:
-        st.session_state.previous_language = current_lang
-    elif st.session_state.previous_language != current_lang:
-        st.session_state.previous_language = current_lang
-        if "messages" in st.session_state:
-            del st.session_state["messages"]
-        st.rerun()
 
     st.markdown("---")
+
+    # 3. 安全警示與 API 密碼
+    st.markdown("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
     
-    quick_prompt = None
-    
-    if current_lang == "English":
-        st.header("🗺️ 3-Step Quick Questions")
-        
-        st.subheader("📍 Step 0: General Overview")
-        if st.button("🗺️ Traditional Medicare vs Advantage?"):
-            quick_prompt = "Can you explain the basic framework of Medicare (Parts A, B, C, D, and Medigap) in simple terms?"
-
-        st.subheader("📍 Step 1: Plan Exploration")
-        if st.button("❓ What is Medigap & why need it?"):
-            quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
-        if st.button("🩺 Are my doctors in-network & prescriptions covered?"):
-            quick_prompt = "How do I check if my current doctors are in-network and if my prescriptions are covered under Part D or Advantage?"
-
-        st.subheader("📍 Step 2: Timeline & Penalties")
-        if st.button("💼 Working past 65 with employer coverage?"):
-            quick_prompt = "I'm turning 65 but still working with employer insurance. Do I need Part B now, and will I face penalties?"
-        if st.button("📅 When is my 7-Month Enrollment Window (IEP)?"):
-            quick_prompt = "Can you explain my 7-month Initial Enrollment Period (IEP) timeline and what happens if I miss it?"
-
-        st.subheader("📍 Step 3: Premiums & Financials")
-        if st.button("💵 Part B Cost & Automatic Payment?"):
-            quick_prompt = "How much is the Part B premium and deductible, and how do I set up automatic payments?"
-        if st.button("📝 High Income Premium Surcharge (IRMAA)?"):
-            quick_prompt = "What is the IRMAA high-income Medicare surcharge, and how can I appeal it if my income dropped after retirement?"
-
-    elif current_lang == "繁體中文":
-        st.header("🗺️ 申辦核心指南")
-        
-        st.subheader("📍 零：基礎地圖總覽")
-        if st.button("🗺️ 傳統紅藍卡 (A/B) vs 優惠套餐 (C)？"):
-            quick_prompt = "請用白話說明 Medicare 的整體架構：傳統紅藍卡 Part A/B、Part C 優惠套餐、Part D 處方藥與 Medigap 補充保險有何不同？"
-
-        st.subheader("📍 第一步：方案探索")
-        if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
-            quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
-        if st.button("🩺 常看的診所（網絡內）與藥物有給付嗎？"):
-            quick_prompt = "如何確認我平時看診的醫生（是否在網絡內 In-network）以及在吃的慢性病藥物有沒有在給付範圍內？"
-
-        st.subheader("📍 第二步：時間軸與避開罰款")
-        if st.button("💼 65歲還在工作有公司保險，要辦 Part B 嗎？"):
-            quick_prompt = "我今年 65 歲但還在公司全職工作，公司有提供醫療保險，我需要現在申請 Part B 嗎？會不會有罰款？"
-        if st.button("📅 什麼是 7 個月黃金申辦期 (IEP)？"):
-            quick_prompt = "請幫我解釋 Initial Enrollment Period (IEP) 7 個月申辦黃金期是什麼時候？錯過會有罰款嗎？"
-
-        st.subheader("📍 第三步：保費與費用調降")
-        if st.button("💵 Part B 保費多少？如何設定自動繳費？"):
-            quick_prompt = "Part B 的每月保費與每年 Deductible (自付額) 是多少？該如何設定自動繳費？"
-        if st.button("📝 什麼是高收入附加費 (IRMAA)？如何調降？"):
-            quick_prompt = "請解釋什麼是 IRMAA 高收入保費附加費？如果我退休後收入變少，可以申請調降嗎？"
-
-    else:
-        st.header("🗺️ 3-Step Navigation")
-        st.subheader("📍 General Overview")
-        if st.button("🗺️ Medicare Basics (A/B/C/D)"):
-            quick_prompt = "Can you explain Medicare Parts A, B, C, D simply?"
+    if not primary_key:
+        primary_key = st.text_input("Gemini API Key:", type="password")
 
     st.markdown("---")
-    
-    st.header("📸 " + ("Document Assistant" if current_lang in ["English", "Español", "한국어"] else "看不懂英文信件/保單？"))
-    
-    upload_label = "Upload photo (Optional) / 拍照上傳（選填）:"
-    uploaded_file = st.file_uploader(upload_label, type=["jpg", "jpeg", "png"])
-    img_data = None
-    if uploaded_file:
-        img_data = Image.open(uploaded_file)
-        st.image(img_data, caption="Loaded", use_column_width=True)
-
-    st.markdown("---")
-    st.warning("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
-st.markdown("---")
 
     # 4. 隱私承諾、免責聲明與非官方聲明
     if current_lang in ["English", "Español", "한국어"]:
         st.caption("""
-        🔒 **Data Privacy**: No personal input, uploaded documents, or chat histories are saved or stored. All data is permanently cleared upon session reset or browser closure.
-        
-        ℹ️ **Disclaimer**: Information provided is for educational and guidance reference only. Policy rates and terms change over time. Please verify final plan details with [Medicare.gov](https://www.medicare.gov).
-        
-        🏛️ **Non-Governmental**: Medicare Compass™ (powered by Care Compass™) is an independent educational tool and is not affiliated with, endorsed by, or connected to the US Government or Social Security Administration.
+🔒 **Data Privacy**: No personal input, uploaded documents, or chat histories are saved or stored. All data is permanently cleared upon session reset or browser closure.
+
+ℹ️ **Disclaimer**: Information provided is for educational and guidance reference only. Policy rates and terms change over time. Please verify final plan details with [Medicare.gov](https://www.medicare.gov).
+
+🏛️ **Non-Governmental**: Medicare Compass™ (powered by Care Compass™) is an independent educational tool and is not affiliated with, endorsed by, or connected to the US Government or Social Security Administration.
         """)
     else:
         st.caption("""
-        🔒 **隱私承諾**：本工具**完全不儲存**任何您的個人資料、對話紀錄或上傳文件，視窗關閉或重置後即刻永久清除。
-        
-        ℹ️ **免責聲明**：資訊僅供教育與評估參考。醫保政策與費用每年調整，最終細節請務必至 [Medicare.gov](https://www.medicare.gov) 官方核對。
-        
-        🏛️ **非官方聲明**：Medicare Compass™（powered by Care Compass™）為獨立輔助導航應用，不代表美國政府或社會安全局 (SSA) 官方機構。
+🔒 **隱私承諾**：本工具**完全不儲存**任何您的個人資料、對話紀錄或上傳文件，視窗關閉或重置後即刻永久清除。
+
+ℹ️ **免責聲明**：資訊僅供教育與評估參考。醫保政策與費用每年調整，最終細節請務必至 [Medicare.gov](https://www.medicare.gov) 官方核對。
+
+🏛️ **非官方聲明**：Medicare Compass™（powered by Care Compass™）為獨立輔助導航應用，不代表美國政府或社會安全局 (SSA) 官方機構。
         """)
 
     st.markdown("---")
 
-    # 5. 最底部：重置對話按鈕 (Reset Conversation - 置底安全收尾)
-        reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
-        if st.button(reset_label, use_container_width=True):
+    # 5. 最底部：重置對話按鈕
+    reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
+    if st.button(reset_label, use_container_width=True):
         st.session_state.messages = []
         st.rerun()
-        if not primary_key:
-        primary_key = st.text_input("Gemini API Key:", type="password")
-        else:
-            st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
-
 # 4. Main Header & Announcement Banner (Pinned at the very top)
 if current_lang in ["English", "Español", "한국어"]:
     st.markdown("# 🧭 Medicare Compass")
