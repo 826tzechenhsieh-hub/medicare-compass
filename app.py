@@ -5,7 +5,18 @@ from PIL import Image
 
 # 1. Page Config
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
-
+# 強制讓頁面保持在頂端，防止 Streamlit 自動向下捲動
+st.markdown("""
+    <style>
+        .main .block-container {
+            scroll-behavior: smooth;
+        }
+    </style>
+    <script>
+        var body = window.parent.document.querySelector(".main");
+        if (body) { body.scrollTop = 0; }
+    </script>
+""", unsafe_allow_html=True)
 # Senior-friendly typography & Smooth auto-scroll prevention
 st.markdown("""
     <style>
