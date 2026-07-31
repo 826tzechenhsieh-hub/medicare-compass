@@ -320,7 +320,9 @@ if 'quick_prompt' not in locals():
 
 if 'uploaded_file' not in locals():
     uploaded_file = None
-input_prompt = st.chat_input(input_placeholder)
+if 'img_data' not in locals():
+    img_data = None
+    input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
 # 8. Execution Logic with Dual-Key Fallback & Warm Error Interception
