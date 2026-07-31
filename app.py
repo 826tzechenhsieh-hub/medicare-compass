@@ -245,12 +245,13 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 自動抓取當前 API Key 支援的第一個 generateContent 模型
-            working_model_name = "gemini-1.5-flash"
+            # 自動偵測可用模型，並清除多餘的 models/ 前綴
+            working_model_name = "gemini-2.0-flash"
             try:
                 for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        working_model_name = m.name
+                    name_clean = m.name.replace("models/", "")
+                    if 'generateContent' in m.supported_generation_methods and "2.0-flash" in name_clean:
+                        working_model_name = name_clean
                         break
             except Exception:
                 pass
