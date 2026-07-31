@@ -68,14 +68,21 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
 
-            candidate_models = [
-                "gemini-2.0-flash",
-                "gemini-1.5-flash",
-                "gemini-1.5-pro",
-                "gemini-pro"
-            ]
+            # 自動動態向 Google 查詢當前 API Key 真正可用的模型名稱
+            available_models = []
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        available_models.append(m.name)
+            except Exception:
+                pass
 
-            for m_name in candidate_models:
+            # 如果動態抓取失敗，準備標準相容清單
+            if not available_models:
+                available_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]
+
+            response = None
+            for m_name in available_models:
                 try:
                     model = genai.GenerativeModel(m_name, system_instruction=system_instruction)
                     if image_data:
