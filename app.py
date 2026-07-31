@@ -53,24 +53,37 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-def sanitize_ai_output(raw_text):
+# 強悍的外科手術式文本清洗器
+def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 如果包含 Gemini 的英文思維紀錄 (如 Constraint, Goal, User Identity)
-    if "User Identity:" in raw_text or "Constraint" in raw_text or "Tone:" in raw_text or "Information needed:" in raw_text:
-        # 以雙換行分隔段落，尋找真正給使用者的段落
-        paragraphs = raw_text.split('\n\n')
-        clean_paragraphs = []
-        for p in paragraphs:
-            # 排除掉含有英文檢查標籤或 bullet points 的思考段落
-            if not any(bad in p for bad in ["User Identity:", "Constraint", "Tone:", "Goal:", "Step 1 usually involves:", "Information needed:"]):
-                if not p.strip().startswith('•') and not p.strip().startswith('- User'):
-                    clean_paragraphs.append(p.strip())
-        if clean_paragraphs:
-            return "\n\n".join(clean_paragraphs)
-            
-    return raw_text.strip()
+    # 針對中文/韓文/西班牙文：如果混入英文思考雜訊，強制只擷取最後一段真正給使用者的說話
+    if target_lang in ["繁體中文", "簡體中文", "한국어", "Español"]:
+        # 尋找內文中最後出現的引號對話或問候語起始點
+        markers = ["您好", "你好", "안녕하세요", "¡Hola", "我們現在正式開始", "我们现在正式开始", "為了確保", "为了确保"]
+        for marker in markers:
+            if marker in raw_text:
+                # 擷取關鍵字之後的內容
+                idx = raw_text.rfind(marker)
+                clean_part = raw_text[idx:].strip()
+                # 移除多餘的結尾引號或括號標註
+                clean_part = re.sub(r'\s*\([^)]*\)\??\s*Yes\.', '', clean_part)
+                clean_part = re.sub(r'\s*\(Explanation of IEP\)', '', clean_part)
+                clean_part = re.sub(r'\s*\(The question\)', '', clean_part)
+                clean_part = re.sub(r'\s*\(Closing/Process reminder\)', '', clean_part)
+                clean_part = clean_part.strip().strip('"').strip('」')
+                if len(clean_part) > 10:
+                    return clean_part
+
+    # 英文通用的項目符號清洗
+    lines = raw_text.split('\n')
+    clean_lines = []
+    for line in lines:
+        if not any(bad in line for bad in ["User:", "Status:", "Persona:", "Constraint", "Language requirement:", "Process rule:", "Goal of Step", "Warm tone?", "Calculates IEP"]):
+            clean_lines.append(line)
+    
+    return "\n".join(clean_lines).strip()
 
 def generate_clean_response(user_input, target_lang="English", img_data=None):
     keys_to_try = [k for k in [primary_key, secondary_key] if k]
@@ -82,8 +95,8 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     lang_instruction_map = {
         "English": "Respond purely in English.",
         "Español": "Respond purely in Spanish.",
-        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字。",
-        "簡體中文": "请完全使用『简体中文』回答，严禁使用繁体字。",
+        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字與英文思考標籤。",
+        "簡體中文": "请完全使用『简体中文』回答，严禁使用繁体字与英文思考标签。",
         "한국어": "Respond purely in Korean."
     }
     lang_rule = lang_instruction_map.get(target_lang, "Respond in the target language.")
@@ -109,8 +122,8 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                     model = genai.GenerativeModel(m_name)
                     
                     system_context = [
-                        {"role": "user", "parts": [f"You are Medicare Compass, a warm human advisor. {lang_rule} Speak directly to the senior or their family. Always calculate IEP as 7 months (3 months before birth month, birth month, 3 months after). Stop and ask for confirmation before Step 2."]},
-                        {"role": "model", "parts": ["Understood. I will respond directly and warmly."]}
+                        {"role": "user", "parts": [f"You are Medicare Compass, a warm human advisor. {lang_rule} Speak directly to the user. Never output thinking process, constraints, goals, or checklists. Calculate IEP as 7 months (3 before birth month, birth month, 3 after). Ask for confirmation before Step 2."]},
+                        {"role": "model", "parts": ["Understood."]}
                     ]
                     
                     for m in st.session_state.messages[:-1]:
@@ -126,8 +139,7 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                         response = chat.send_message(user_input)
                         raw_output = response.text
                         
-                    # 強制清洗掉所有內部檢查廢話
-                    return sanitize_ai_output(raw_output)
+                    return sanitize_ai_output(raw_output, target_lang=target_lang)
                 except Exception as inner_e:
                     last_exception = inner_e
                     continue
@@ -255,7 +267,7 @@ Medicare Compass™ 为独立辅助导航工具，不代表美国政府、联邦
 本平台與應用程式**完全不儲存、不安裝且不保留**您的任何個人輸入資料、上傳的文件照片或對話紀錄。所有數據僅供當次即時運算，視窗關閉或重置後即刻永久清除。
 
 ℹ️ **免責聲明與資訊時效提醒**：
-本工具資訊僅供教育評估與導航參考。我們雖致力於提供最新資訊，但醫保政策、保費與條款每年且動態調整，無法保證毫秒級實時同步。使用者於決策前，**務必至官方網站 [Medicare.gov](https://www.medicare.gov) 或社會安全局 (SSA) 進行最終核對與確認**。
+本工具資訊僅供教育評估與導航參考。我們雖致力於提供最新資訊，但醫保政策、保費與條款每年且動態調整，無法保證毫毫秒級實時同步。使用者於決策前，**務必至官方網站 [Medicare.gov](https://www.medicare.gov) 或社會安全局 (SSA) 進行最終核對與確認**。
 
 🏛️ **非官方獨立聲明**：
 Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具，不代表美國政府、聯邦醫療照顧局 (CMS) 或社會安全局 (SSA) 官方機構。
