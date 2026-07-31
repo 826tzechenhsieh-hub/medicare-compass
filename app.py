@@ -57,48 +57,45 @@ secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 # Helper function to try generating content with dual-key failover
 def generate_response_with_fallback(prompt_input, image_data=None, system_instruction=""):
     keys_to_try = [k for k in [primary_key, secondary_key] if k]
-    
+
     if not keys_to_try:
         raise ValueError("NO_API_KEY")
 
     last_exception = None
-    
+
     for current_key in keys_to_try:
         try:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
-            
-            # Smart Model Detection (Filters out unsupported prefixes)
-            # 嘗試多個可用的 Gemini 模型，確保 100% 自動抓到可用的 Model
-        candidate_models = [
-            "gemini-2.0-flash",
-            "gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "gemini-pro"
-        ]
-        
-        response = None
-        last_err = None
-        
-        for m_name in candidate_models:
-            try:
-                model = genai.GenerativeModel(m_name, system_instruction=system_instruction)
-                if image_data:
-                    response = model.generate_content([prompt_input, image_data], stream=True)
-                else:
-                    chat = model.start_chat(history=[
-                        {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages[:-1]
-                    ])
-                    response = chat.send_message(prompt_input, stream=True)
-                # 只要有一個模型成功回覆，立刻跳出迴圈！
-                break
-            except Exception as e:
-                last_err = e
-                continue
-                
-        if response:
-            return response
+
+            candidate_models = [
+                "gemini-2.0-flash",
+                "gemini-1.5-flash",
+                "gemini-1.5-pro",
+                "gemini-pro"
+            ]
+
+            for m_name in candidate_models:
+                try:
+                    model = genai.GenerativeModel(m_name, system_instruction=system_instruction)
+                    if image_data:
+                        response = model.generate_content([prompt_input, image_data], stream=True)
+                    else:
+                        chat = model.start_chat(history=[
+                            {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
+                            for m in st.session_state.messages[:-1]
+                        ])
+                        response = chat.send_message(prompt_input, stream=True)
+                    return response
+                except Exception as inner_e:
+                    last_exception = inner_e
+                    continue
+        except Exception as outer_e:
+            last_exception = outer_e
+            continue
+
+    if last_exception:
+        raise last_exception
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
