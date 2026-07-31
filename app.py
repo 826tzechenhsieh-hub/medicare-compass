@@ -295,7 +295,10 @@ else:
     welcome_msg = "# 🧭 Medicare Compass\n\nHello! Which state do you live in, and what is your birth month and year?"
 
 # 7. Display Chat History
-for message in st.session_state.messages:
+if "messages" not in st.session_state:
+    if "welcome_msg" not in locals(): welcome_msg = "# 🧭 Medicare Compass"
+    st.session_state.messages = [{"role": "assistant", "content": welcome_msg}]
+    for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
