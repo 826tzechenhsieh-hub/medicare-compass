@@ -95,7 +95,7 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     lang_instruction_map = {
         "English": "Respond purely in English.",
         "Español": "Respond purely in Spanish.",
-        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字與英文思考標籤。",
+        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字與英文思考標註。",
         "簡體中文": "请完全使用『简体中文』回答，严禁使用繁体字与英文思考标签。",
         "한국어": "Respond purely in Korean."
     }
@@ -122,8 +122,14 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                     model = genai.GenerativeModel(m_name)
                     
                     system_context = [
-                        {"role": "user", "parts": [f"You are Medicare Compass, a warm human advisor. {lang_rule} Speak directly to the user. Never output thinking process, constraints, goals, or checklists. Calculate IEP as 7 months (3 before birth month, birth month, 3 after). Ask for confirmation before Step 2."]},
-                        {"role": "model", "parts": ["Understood."]}
+                        {"role": "user", "parts": [f"""You are Medicare Compass, a warm human advisor. {lang_rule}
+CRITICAL TIME ANCHOR: The CURRENT YEAR IS 2026.
+CRITICAL IEP MATH:
+- Someone born in 1961 turns 65 in 2026. They are CURRENTLY in their Initial Enrollment Period (IEP) in 2026!
+- Do NOT say a 1961-born person has passed their IEP! They turn 65 in 2026!
+- IEP calculation: 3 months before birth month in 2026 to 3 months after birth month in 2026/2027.
+- Always ask for confirmation before moving to Step 2! Never output internal notes or checklists."""]},
+                        {"role": "model", "parts": ["Understood. I will strictly anchor the current year as 2026, calculate 1961 birth dates as turning 65 in 2026 (currently in IEP), and respond warmly without internal notes."]}
                     ]
                     
                     for m in st.session_state.messages[:-1]:
