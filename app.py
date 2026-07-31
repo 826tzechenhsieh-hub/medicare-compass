@@ -142,16 +142,45 @@ with st.sidebar:
     if st.button(reset_label, use_container_width=True):
         st.session_state.messages = []
         st.rerun()
-# 4. Main Header & Announcement Banner (Pinned at the very top)
+# -------------------------------------------------------------------
+# 4. Main Header & Announcement Banner (pinned at the very top)
+# -------------------------------------------------------------------
 if current_lang in ["English", "Español", "한국어"]:
-    st.markdown("# 🧭 Medicare Compass")
+    st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
     st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
 else:
-    st.markdown("# 🧭 Medicare Compass 醫保指南針")
+    st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
     st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
 
 st.markdown("---")
 
+# -------------------------------------------------------------------
+# 5. 導航三步驟小卡片 (3 Steps Navigation)
+# -------------------------------------------------------------------
+if current_lang in ["English", "Español", "한국어"]:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("### 1️⃣ Step 1: When")
+        st.caption("Initial Enrollment Period (IEP) timing & key deadlines.")
+    with col2:
+        st.markdown("### 2️⃣ Step 2: What")
+        st.caption("Compare Part A, B, C (Advantage), and Part D.")
+    with col3:
+        st.markdown("### 3️⃣ Step 3: How")
+        st.caption("Avoid lifetime penalties & apply step-by-step.")
+else:
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("### 1️⃣ 第一步：參保時機")
+        st.caption("掌握滿 65 歲前後 7 個月的黃金申辦期 (IEP)。")
+    with col2:
+        st.markdown("### 2️⃣ 第二步：方案比對")
+        st.caption("釐清 Part A、B、C (紅藍卡/優質卡) 與 D 藥費保障。")
+    with col3:
+        st.markdown("### 3️⃣ 第三步：避罰申辦")
+        st.caption("了解遲辦罰款規則與一步步官方申辦途徑。")
+
+st.markdown("---")
 
 # 5. System Instructions (AI 提示詞大腦 - 完全保留)
 SYSTEM_INSTRUCTION = """
@@ -310,8 +339,9 @@ if prompt or uploaded_file:
 # 9. Summary Section (Only shows after 3+ turns)
 if len(st.session_state.messages) >= 3:
     st.markdown("---")
-    st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮諮紀錄打包與分享"))
-    
+    st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮詢紀錄打包與分享"))
+
+    full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
         role_title = "Compass Advisor" if m["role"] == "assistant" else "User"
