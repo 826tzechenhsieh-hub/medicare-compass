@@ -59,7 +59,6 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
     last_exception = None
 
-    # 對齊 AI 語言指令
     lang_instruction_map = {
         "English": "Respond purely in English.",
         "Español": "Respond purely in Spanish (Español).",
@@ -132,10 +131,18 @@ DO NOT jump into Step 2 plan comparison until user confirms!"""]},
 with st.sidebar:
     user_lang = st.session_state.get("selected_language", "English")
 
-    if user_lang in ["English", "Español", "한국어"]:
+    if user_lang == "English":
         st.markdown("# 🧭 Medicare Compass™")
         st.caption("##### *powered by Care Compass™*")
         st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
+    elif user_lang == "Español":
+        st.markdown("# 🧭 Medicare Compass™")
+        st.caption("##### *desarrollado por Care Compass™*")
+        st.info("📢 **Propósito de la aplicación**: ¡Diseñada para personas mayores que cumplen 65 años y sus familias para navegar por Medicare en 3 pasas claros!")
+    elif user_lang == "한국어":
+        st.markdown("# 🧭 Medicare Compass™ 메디케어 나침반")
+        st.caption("##### *powered by Care Compass™*")
+        st.info("📢 **앱 목적**: 65세가 되는 어르신과 가족이 3단계로 미국 메디케어를 쉽게 이해할 수 있도록 돕습니다!")
     elif user_lang == "簡體中文":
         st.markdown("# 🧭 Medicare Compass™ 医保指南针")
         st.caption("##### *powered by Care Compass™*")
@@ -163,7 +170,17 @@ with st.sidebar:
 
     st.markdown("---")
 
-    upload_label = "📎 Upload Document / Photo (Optional):" if current_lang in ["English", "Español", "한국어"] else ("📎 上传信件或保单照片（选填）：" if current_lang == "簡體中文" else "📎 上傳信件或保單照片（選填）：")
+    if current_lang == "English":
+        upload_label = "📎 Upload Document / Photo (Optional):"
+    elif current_lang == "Español":
+        upload_label = "📎 Cargar documento / foto (Opcional):"
+    elif current_lang == "한국어":
+        upload_label = "📎 서류 / 사진 업로드 (선택 사항):"
+    elif current_lang == "簡體中文":
+        upload_label = "📎 上传信件或保单照片（选填）："
+    else:
+        upload_label = "📎 上傳信件或保單照片（選填）："
+
     uploaded_file = st.file_uploader(upload_label, type=["png", "jpg", "jpeg", "pdf"])
     img_data = None
     if uploaded_file:
@@ -175,7 +192,7 @@ with st.sidebar:
 
     st.markdown("---")
 
-    if current_lang in ["English", "Español", "한국어"]:
+    if current_lang == "English":
         st.caption("""
 🔒 **Privacy Commitment & Zero Retention**:
 We DO NOT save or store any of your personal inputs or logs. All data is permanently cleared immediately upon closing your browser or clicking Reset.
@@ -185,6 +202,28 @@ Information provided is strictly for educational guidance. Regulations change co
 
 🏛️ **Non-Governmental Entity Notice**:
 Medicare Compass™ is an independent educational tool, not affiliated with the US Government, CMS, or SSA.
+        """)
+    elif current_lang == "Español":
+        st.caption("""
+🔒 **Compromiso de Privacidad**:
+NO guardamos ni almacenamos ninguno de sus datos personales. Todos los datos se borran de forma permanente al cerrar el navegador o hacer clic en Reiniciar.
+
+ℹ️ **Aviso Legal**:
+La información se proporciona estrictamente con fines educativos. Las regulaciones cambian continuamente; los usuarios SIEMPRE deben verificar los detalles finales con [Medicare.gov](https://www.medicare.gov).
+
+🏛️ **Entidad No Gubernamental**:
+Medicare Compass™ es una herramienta educativa independiente y no está afiliada al Gobierno de EE. UU., CMS o SSA.
+        """)
+    elif current_lang == "한국어":
+        st.caption("""
+🔒 **개인정보 보호 약속**:
+귀하의 개인 정보나 대화 기록을 저장하지 않습니다. 브라우저를 닫거나 재설정을 누르면 모든 데이터가 즉시 영구 삭제됩니다.
+
+ℹ️ **면책 조항**:
+제공되는 정보는 교육 안내용입니다. 규정은 지속적으로 변경되므로 사용자는 항상 [Medicare.gov](https://www.medicare.gov)에서 최종 세부 정보를 확인해야 합니다.
+
+🏛️ **비정부 기관 안내**:
+Medicare Compass™는 독립적인 교육 도구이며 미국 정부, CMS 또는 SSA와 관련이 없습니다.
         """)
     elif current_lang == "簡體中文":
         st.caption("""
@@ -211,11 +250,25 @@ Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具�
 
     st.markdown("---")
 
-    summary_btn_label = "📋 Generate / Update Summary" if current_lang in ["English", "Español", "한국어"] else ("📋 生成 / 更新咨询总结" if current_lang == "簡體中文" else "📋 生成 / 更新諮詢總結")
+    if current_lang == "English":
+        summary_btn_label = "📋 Generate / Update Summary"
+        reset_label = "🔄 Reset Conversation"
+    elif current_lang == "Español":
+        summary_btn_label = "📋 Generar / Actualizar Resumen"
+        reset_label = "🔄 Reiniciar Conversación"
+    elif current_lang == "한국어":
+        summary_btn_label = "📋 요약 생성 / 업데이트"
+        reset_label = "🔄 대화 재설정"
+    elif current_lang == "簡體中文":
+        summary_btn_label = "📋 生成 / 更新咨询总结"
+        reset_label = "🔄 重新开始咨询"
+    else:
+        summary_btn_label = "📋 生成 / 更新諮詢總結"
+        reset_label = "🔄 重新開始諮詢"
+
     if st.button(summary_btn_label, use_container_width=True, type="primary"):
         st.session_state.show_summary = True
 
-    reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else ("🔄 重新开始咨询" if current_lang == "簡體中文" else "🔄 重新開始諮詢")
     if st.button(reset_label, use_container_width=True):
         st.session_state.messages = []
         st.session_state.show_summary = False
@@ -227,9 +280,15 @@ Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具�
 top_container = st.container()
 
 with top_container:
-    if current_lang in ["English", "Español", "한국어"]:
+    if current_lang == "English":
         st.markdown("# 🧭 Medicare Compass™")
         st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
+    elif current_lang == "Español":
+        st.markdown("# 🧭 Medicare Compass™")
+        st.info("📢 **Propósito de la aplicación**: ¡Diseñada para personas mayores que cumplen 65 años y sus familias para navegar por Medicare en 3 pasos claros!")
+    elif current_lang == "한국어":
+        st.markdown("# 🧭 Medicare Compass™ 메디케어 나침반")
+        st.info("📢 **앱 목적**: 65세가 되는 어르신과 가족이 3단계로 미국 메디케어를 쉽게 이해할 수 있도록 돕습니다!")
     elif current_lang == "簡體中文":
         st.markdown("# 🧭 Medicare Compass™ 医保指南针")
         st.info("📢 **本工具宗旨**：专为即将满 65 岁长者与退休家庭设计！陪伴您分三步骤轻松了解申办流程、避开终身迟办罚款。")
@@ -239,8 +298,8 @@ with top_container:
 
     st.markdown("---")
 
-    if current_lang in ["English", "Español", "한국어"]:
-        col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
+    if current_lang == "English":
         with col1:
             st.markdown("### 1️⃣ Step 1: When")
             st.caption("IEP Timing, Date of Birth & State.")
@@ -250,8 +309,27 @@ with top_container:
         with col3:
             st.markdown("### 3️⃣ Step 3: How")
             st.caption("Step-by-step Application & Payment.")
+    elif current_lang == "Español":
+        with col1:
+            st.markdown("### 1️⃣ Paso 1: Cuándo")
+            st.caption("Fechas clave de IEP, fecha de nacimiento y estado.")
+        with col2:
+            st.markdown("### 2️⃣ Paso 2: Qué")
+            st.caption("Necesidades, cobertura y comparación de planes.")
+        with col3:
+            st.markdown("### 3️⃣ Paso 3: Cómo")
+            st.caption("Solicitud paso a paso y pago.")
+    elif current_lang == "한국어":
+        with col1:
+            st.markdown("### 1️⃣ 1단계: 언제")
+            st.caption("IEP 가입 기간, 생년월일 및 거주 주.")
+        with col2:
+            st.markdown("### 2️⃣ 2단계: 무엇을")
+            st.caption("보장 필요성 및 플랜 비교.")
+        with col3:
+            st.markdown("### 3️⃣ 3단계: 어떻게")
+            st.caption("단계별 신청 방법 및 납부 설정.")
     elif current_lang == "簡體中文":
-        col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown("### 1️⃣ 第一步：WHEN 参保时机")
             st.caption("出生年月、居住州与 IEP 黄金期限。")
@@ -262,7 +340,6 @@ with top_container:
             st.markdown("### 3️⃣ 第三步：HOW 申办执行")
             st.caption("逐步申请流程与保费扣款设定。")
     else:
-        col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown("### 1️⃣ 第一步：WHEN 參保時機")
             st.caption("出生年月、居住州與 IEP 黃金期限。")
@@ -275,13 +352,36 @@ with top_container:
 
     st.markdown("---")
 
-    with st.expander("🗺️ **1-Minute Medicare Map (一分鐘醫保地圖對照)**", expanded=True):
+    # 1-Minute Medicare Map
+    expander_title_map = {
+        "English": "🗺️ **1-Minute Medicare Map**",
+        "Español": "🗺️ **Mapa de Medicare de 1 Minuto**",
+        "한국어": "🗺️ **1분 메디케어 한눈에 보기**",
+        "簡體中文": "🗺️ **1分钟医保地图对照**",
+        "繁體中文": "🗺️ **1分鐘醫保地圖對照**"
+    }
+    
+    with st.expander(expander_title_map.get(current_lang, "🗺️ **1-Minute Medicare Map**"), expanded=True):
         if current_lang == "English":
             st.markdown("""
 * **Original Medicare (Government)**: Part A (Hospital) + Part B (Medical - 80% coverage, 20% gap).
 * **Part C (Medicare Advantage)**: Private all-in-one plans (A + B + usually D).
 * **Part D (Prescription Drugs)**: Standalone drug coverage.
 * **Medigap (Supplement)**: Private plans to cover Part B's 20% gap.
+            """)
+        elif current_lang == "Español":
+            st.markdown("""
+* **Original Medicare (Gobierno)**: Parte A (Hospital) + Parte B (Médica - 80% de cobertura, ¡20% de brecha!).
+* **Parte C (Medicare Advantage)**: Planes privados todo en uno (A + B + D).
+* **Parte D (Medicamentos)**: Cobertura de medicamentos.
+* **Medigap (Suplemento)**: Planes privados para cubrir la brecha del 20% de la Parte B.
+            """)
+        elif current_lang == "한국어":
+            st.markdown("""
+* **Original Medicare (정부 메디케어)**: Part A (병원) + Part B (의료 - 80% 보장, 20% 본인 부담).
+* **Part C (Medicare Advantage)**: 민간 통합 플랜 (A + B + D).
+* **Part D (처방약)**: 약품 보장.
+* **Medigap (보충 보험)**: Part B의 20% 본인 부담금을 메워주는 민간 보험.
             """)
         elif current_lang == "簡體中文":
             st.markdown("""
@@ -315,21 +415,65 @@ for message in st.session_state.messages:
 
 quick_prompt = None
 if len(st.session_state.messages) == 0:
-    st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else ("您也可以直接点选以下身份快速开始：" if current_lang == "簡體中文" else "您也可以直接點選以下身分快速開始：")))
+    q_caption_map = {
+        "English": "💡 Quick start options:",
+        "Español": "💡 Opciones de inicio rápido:",
+        "한국어": "💡 빠른 시작 옵션:",
+        "簡體中文": "💡 您也可以直接点选以下身份快速开始：",
+        "繁體中文": "💡 您也可以直接點選以下身分快速開始："
+    }
+    st.caption(q_caption_map.get(current_lang, "💡 Quick start options:"))
+    
     col_start1, col_start2 = st.columns(2)
     with col_start1:
-        btn1_txt = "👴 " + ("I'm applying for myself" if current_lang == "English" else ("我是长者本人（开始 Step 1 导览）" if current_lang == "簡體中文" else "我是長者本人（開始 Step 1 導覽）"))
-        if st.button(btn1_txt):
-            quick_prompt = "Hello! I am applying for myself and would like to start Step 1: When. Please calculate my enrollment deadlines." if current_lang == "English" else ("您好！我是长者本人，准备开始 Step 1，请帮我计算申办期限！" if current_lang == "簡體中文" else "您好！我是長者本人，準備開始 Step 1，請幫我計算申辦期限！")
+        btn1_map = {
+            "English": "👴 I'm applying for myself",
+            "Español": "👴 Estoy solicitando para mí",
+            "한국어": "👴 본인 신청 (1단계 시작)",
+            "簡體中文": "👴 我是长者本人（开始 Step 1 导览）",
+            "繁體中文": "👴 我是長者本人（開始 Step 1 導覽）"
+        }
+        if st.button(btn1_map.get(current_lang, "👴 Apply for myself")):
+            p1_map = {
+                "English": "Hello! I am applying for myself and would like to start Step 1: When. Please calculate my enrollment deadlines.",
+                "Español": "¡Hola! Estoy solicitando para mí y me gustaría comenzar el Paso 1: Cuándo. Por favor calcule mis fechas límite.",
+                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작하고 내 가입 마감일을 계산해 주세요.",
+                "簡體中文": "您好！我是长者本人，准备开始 Step 1，请帮我计算申办期限！",
+                "繁體中文": "您好！我是長者本人，準備開始 Step 1，請幫我計算申辦期限！"
+            }
+            quick_prompt = p1_map.get(current_lang)
+
     with col_start2:
-        btn2_txt = "👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else ("我是帮父母查询的子女（开始 Step 1）" if current_lang == "簡體中文" else "我是幫父母查詢的子女（開始 Step 1）"))
-        if st.button(btn2_txt):
-            quick_prompt = "Hello! I am helping my parents start Step 1: When. What information do you need?" if current_lang == "English" else ("您好！我是帮长辈查询的子女，请引导我们开始 Step 1！" if current_lang == "簡體中文" else "您好！我是幫長輩查詢的子女，請引導我們開始 Step 1！")
+        btn2_map = {
+            "English": "👨‍👩‍👧 I'm helping my parents",
+            "Español": "👨‍👩‍👧 Estoy ayudando a mis padres",
+            "한국어": "👨‍👩‍👧 부모님 도와드리기 (1단계 시작)",
+            "簡體中文": "👨‍👩‍👧 我是帮父母查询的子女（开始 Step 1）",
+            "繁體中文": "👨‍👩‍👧 我是幫父母查詢的子女（開始 Step 1）"
+        }
+        if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Help parents")):
+            p2_map = {
+                "English": "Hello! I am helping my parents start Step 1: When. What information do you need?",
+                "Español": "¡Hola! Estoy ayudando a mis padres a comenzar el Paso 1. ¿Qué información necesita?",
+                "한국어": "안녕하세요! 부모님 메디케어 신청을 돕고 있습니다. 1단계를 시작해 주세요.",
+                "簡體中文": "您好！我是帮长辈查询的子女，请引导我们开始 Step 1！",
+                "繁體中文": "您好！我是幫長輩查詢的子女，請引導我們開始 Step 1！"
+            }
+            quick_prompt = p2_map.get(current_lang)
 
 has_user_replied = len(st.session_state.messages) > 0
-input_placeholder = "🎙️ Type your birth month/year and state here..." if not has_user_replied else "🎙️ Speak or type your reply here..."
-input_prompt = st.chat_input(input_placeholder)
+if current_lang == "English":
+    input_placeholder = "🎙️ Type your birth month/year and state here..." if not has_user_replied else "🎙️ Speak or type your reply here..."
+elif current_lang == "Español":
+    input_placeholder = "🎙️ Escriba su mes/año de nacimiento y estado aquí..."
+elif current_lang == "한국어":
+    input_placeholder = "🎙️ 여기에 출생 월/년 및 거주 주를 입력하세요..."
+elif current_lang == "簡體中文":
+    input_placeholder = "🎙️ 请输入您的居住州与出生年月..."
+else:
+    input_placeholder = "🎙️ 請輸入您的居住州與出生年月..."
 
+input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
 # -------------------------------------------------------------------
@@ -368,7 +512,7 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
         role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
         full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-"*40 + "\n\n"
 
-    short_summary_text = "【Medicare Compass - Summary / 重点摘要】\n\n"
+    short_summary_text = "【Medicare Compass - Summary】\n\n"
     user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
     ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
 
@@ -385,7 +529,7 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     email_body = urllib.parse.quote(short_summary_text)
     mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
 
-    tab1, tab2 = st.tabs(["⚡ 1-Page Summary (1页精简版)", "📄 Full Log (完整纪录版)"])
+    tab1, tab2 = st.tabs(["⚡ 1-Page Summary", "📄 Full Log"])
 
     with tab1:
         st.text_area("Preview:", value=short_summary_text, height=200, key="summary_preview_area")
