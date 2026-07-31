@@ -53,22 +53,23 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 清理 AI 輸出的「自我檢查雜訊」函數
 def sanitize_ai_output(raw_text):
     if not raw_text:
         return raw_text
     
-    # 如果包含清單雜訊 (如 Tone:, Yes., Constraints:)，切割並只留最後真正的回答
-    if "Yes." in raw_text or "Tone:" in raw_text or "Goal:" in raw_text or "• User:" in raw_text:
-        lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
-        clean_lines = []
-        for line in lines:
-            # 過濾掉帶有英文標籤或以 bullet point 開頭的檢查項目
-            if not any(bad in line for bad in ["Tone:", "Goal:", "Constraint:", "Yes.", "Simplified Chinese?", "Traditional Chinese?", "Follows Step", "Directly addresses", "IEP calculation rules"]):
-                if not line.startswith('•') and not line.startswith('-'):
-                    clean_lines.append(line)
-        if clean_lines:
-            return "\n\n".join(clean_lines)
+    # 如果包含 Gemini 的英文思維紀錄 (如 Constraint, Goal, User Identity)
+    if "User Identity:" in raw_text or "Constraint" in raw_text or "Tone:" in raw_text or "Information needed:" in raw_text:
+        # 以雙換行分隔段落，尋找真正給使用者的段落
+        paragraphs = raw_text.split('\n\n')
+        clean_paragraphs = []
+        for p in paragraphs:
+            # 排除掉含有英文檢查標籤或 bullet points 的思考段落
+            if not any(bad in p for bad in ["User Identity:", "Constraint", "Tone:", "Goal:", "Step 1 usually involves:", "Information needed:"]):
+                if not p.strip().startswith('•') and not p.strip().startswith('- User'):
+                    clean_paragraphs.append(p.strip())
+        if clean_paragraphs:
+            return "\n\n".join(clean_paragraphs)
+            
     return raw_text.strip()
 
 def generate_clean_response(user_input, target_lang="English", img_data=None):
