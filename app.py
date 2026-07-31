@@ -69,7 +69,7 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
             genai.configure(api_key=clean_key)
             
             # Smart Model Detection (Filters out unsupported prefixes)
-            working_model_name = "gemini-2.0-flash"
+            working_model_name = "gemini-1.5-flash"
             try:
                 for m in genai.list_models():
                     name_clean = m.name.replace("models/", "")
