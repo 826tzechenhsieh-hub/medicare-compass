@@ -81,11 +81,16 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
 
 # 3. Sidebar
 with st.sidebar:
-    if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
-        if "messages" in st.session_state:
-            del st.session_state["messages"]
-        st.rerun()
-
+    # 1. 置頂品牌大標題 (方案 A) 與宗旨 Banner
+    if current_lang in ["English", "Español", "한국어"]:
+        st.markdown("# 🧭 Medicare Compass™")
+        st.caption("##### *powered by Care Compass™*")
+        st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
+    else:
+        st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
+        st.caption("##### *powered by Care Compass™*")
+        st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
+    
     st.markdown("---")
     st.header("🌐 Language / 語言設定")
     
@@ -177,7 +182,33 @@ with st.sidebar:
 
     st.markdown("---")
     st.warning("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
+st.markdown("---")
 
+    # 4. 隱私承諾、免責聲明與非官方聲明
+    if current_lang in ["English", "Español", "한국어"]:
+        st.caption("""
+        🔒 **Data Privacy**: No personal input, uploaded documents, or chat histories are saved or stored. All data is permanently cleared upon session reset or browser closure.
+        
+        ℹ️ **Disclaimer**: Information provided is for educational and guidance reference only. Policy rates and terms change over time. Please verify final plan details with [Medicare.gov](https://www.medicare.gov).
+        
+        🏛️ **Non-Governmental**: Medicare Compass™ (powered by Care Compass™) is an independent educational tool and is not affiliated with, endorsed by, or connected to the US Government or Social Security Administration.
+        """)
+    else:
+        st.caption("""
+        🔒 **隱私承諾**：本工具**完全不儲存**任何您的個人資料、對話紀錄或上傳文件，視窗關閉或重置後即刻永久清除。
+        
+        ℹ️ **免責聲明**：資訊僅供教育與評估參考。醫保政策與費用每年調整，最終細節請務必至 [Medicare.gov](https://www.medicare.gov) 官方核對。
+        
+        🏛️ **非官方聲明**：Medicare Compass™（powered by Care Compass™）為獨立輔助導航應用，不代表美國政府或社會安全局 (SSA) 官方機構。
+        """)
+
+    st.markdown("---")
+
+    # 5. 最底部：重置對話按鈕 (Reset Conversation - 置底安全收尾)
+    reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
+    if st.button(reset_label, use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
     if not primary_key:
         primary_key = st.text_input("Gemini API Key:", type="password")
     else:
