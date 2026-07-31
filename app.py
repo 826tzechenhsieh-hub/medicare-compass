@@ -366,65 +366,55 @@ if prompt or uploaded_file:
 # 9. Summary Section (Only shows after 3+ turns)
 if len(st.session_state.messages) >= 3:
     st.markdown("---")
-    st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮詢紀錄打包與分享"))
+    
+    # Header with multilingual support
+    st.header("📋 Consultation Summary & Sharing")
 
-    full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
+    # 1. Clean Full Log
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
-        role_title = "Compass Advisor" if m["role"] == "assistant" else "User"
-        full_log_text += f"[{role_title}]:\n{m['content']}\n\n------------------------\n\n"
+        role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
+        full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-"*40 + "\n\n"
 
+    # 2. Clean 1-Page Summary (Filters out system instructions)
     short_summary_text = "【Medicare Compass - 1-Page Key Takeaways / 1頁重點摘要】\n\n"
-    assistant_msgs = [m["content"] for m in st.session_state.messages if m["role"] == "assistant"]
-    if len(assistant_msgs) > 1:
-        short_summary_text += "💡 KEY RECOMMENDATIONS & TIMELINE:\n\n" + assistant_msgs[-1]
+    
+    user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
+    ai_msgs = [m['content'] for m in st.session_state.messages if (m.get('role') in ['assistant', 'model']) and ('warm patient empathy' not in m.get('content', ''))]
+    
+    if user_msgs:
+        short_summary_text += "📌 MAIN TOPICS DISCUSSED:\n"
+        for u_msg in user_msgs[-3:]:
+            short_summary_text += f"- {u_msg}\n"
+        short_summary_text += "\n"
+        
+    if ai_msgs:
+        short_summary_text += f"💡 KEY RECOMMENDATIONS & TIMELINE:\n{ai_msgs[-1][:300]}...\n"
     else:
-        short_summary_text += "💡 INITIAL ADVICE:\n\n" + assistant_msgs[0]
+        short_summary_text += "💡 KEY RECOMMENDATIONS & TIMELINE:\nUser requested consultation details.\n"
 
+    # Prepare Mailto URL
     email_subject = urllib.parse.quote("My Medicare Compass Summary")
     email_body = urllib.parse.quote(short_summary_text)
     mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
 
+    # Tabs Rendering
     tab1, tab2 = st.tabs(["⚡ 1-Page Summary (1頁精簡版)", "📄 Full Log (完整紀錄版)"])
-    
+
     with tab1:
-        st.caption("Great for sending to family via Email or WeChat")
-        st.text_area("Preview:", value=short_summary_text, height=150)
+        st.caption("Great for sharing with family via Email, LINE, WhatsApp, or WeChat")
+        st.text_area("Preview:", value=short_summary_text, height=260, key="summary_preview_area")
         
         col1, col2 = st.columns(2)
         with col1:
-            st.download_button(
-                label="📥 Download 1-Page Summary (TXT)",
-                data=short_summary_text,
-                file_name="Medicare_1Page_Summary.txt",
-                mime="text/plain"
-            )
+            st.download_button("📥 Download 1-Page Summary (TXT)", data=short_summary_text, file_name="medicare_summary.txt")
         with col2:
-            st.markdown(f'''
-                <a href="{mailto_url}" target="_blank" style="text-decoration: none;">
-                    <button style="
-                        background-color: #0288D1;
-                        color: white;
-                        border: none;
-                        padding: 7px 15px;
-                        font-size: 14px;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        width: 100%;
-                    ">
-                        📧 Send to My Email
-                    </button>
-                </a>
-            ''', unsafe_allow_html=True)
+            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:38px; border-radius:5px; background-color:#0066cc; color:white; border:none; cursor:pointer;">✉️ Send to My Email</button></a>', unsafe_allow_html=True)
 
     with tab2:
-        st.caption("Complete Q&A History")
-        st.download_button(
-            label="📥 Download Full Log (TXT)",
-            data=full_log_text,
-            file_name="Medicare_Full_Consultation.txt",
-            mime="text/plain"
-        )
+        st.caption("Complete Q&A History for your records")
+        st.text_area("Full Conversation Log:", value=full_log_text, height=300, key="full_log_area")
+        st.download_button("📥 Download Full Log (TXT)", data=full_log_text, file_name="medicare_full_log.txt")
 # 10. Force Scroll to Top on Initial Load / Reboot (Universal Fix)
 st.markdown("""
     <script>
