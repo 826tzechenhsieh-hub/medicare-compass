@@ -63,14 +63,23 @@ def generate_clean_response(user_input):
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 自動嘗試各種格式的模型名稱，徹底解決 API Connection Error
-            available_models = ["models/gemini-1.5-flash", "gemini-1.5-flash", "models/gemini-1.5-pro", "gemini-1.5-pro"]
-            
-            for m_name in available_models:
+            # 1. 動態向 Google 查詢該 API Key 真正能用的模型名稱 (徹底避開 404)
+            valid_models = []
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        valid_models.append(m.name)
+            except Exception:
+                pass
+
+            # 2. 如果動態查詢失敗，使用目前最相容的標準 flash 名單
+            if not valid_models:
+                valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-2.5-flash"]
+
+            for m_name in valid_models:
                 try:
                     model = genai.GenerativeModel(m_name)
                     
-                    # 乾淨無污染的情境設定
                     system_context = [
                         {"role": "user", "parts": ["You are Medicare Compass, a warm, concise Medicare advisor. Speak directly to the senior. Never output thinking process, goals, constraints, or lists of instructions. Always follow Step 1 (ask birth date/state -> calculate IEP), Step 2 (compare coverage), Step 3 (application steps)."]},
                         {"role": "model", "parts": ["Understood. I am Medicare Compass. I will assist warmly and directly without any internal notes."]}
@@ -92,7 +101,6 @@ def generate_clean_response(user_input):
 
     if last_exception:
         raise last_exception
-
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
 # -------------------------------------------------------------------
