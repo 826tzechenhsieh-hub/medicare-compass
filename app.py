@@ -6,7 +6,7 @@ import urllib.parse
 # 1. Page Config
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
-# 強制頁面保持在頂端，防止 Streamlit 自動向下捲動
+# 強制頁面保持在頂端
 components.html(
     """
     <script>
@@ -16,7 +16,7 @@ components.html(
     height=0,
 )
 
-# Senior-friendly typography & Smooth auto-scroll prevention
+# Typography & Styles
 st.markdown("""
     <style>
         .block-container {
@@ -47,55 +47,39 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Get Dual API Keys for Automatic Failover / Rotation
+# 2. Get API Keys
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-def generate_response_with_fallback(prompt_input, image_data=None, system_instruction=""):
+def generate_clean_response(user_input):
     keys_to_try = [k for k in [primary_key, secondary_key] if k]
-
     if not keys_to_try:
         raise ValueError("NO_API_KEY")
-
-    last_exception = None
 
     for current_key in keys_to_try:
         try:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
-
-            available_models = []
-            try:
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        available_models.append(m.name)
-            except Exception:
-                pass
-
-            if not available_models:
-                available_models = ["models/gemini-1.5-flash", "models/gemini-1.5-pro", "gemini-1.5-flash"]
-
-            response = None
-            for m_name in available_models:
-                try:
-                    model = genai.GenerativeModel(m_name, system_instruction=system_instruction)
-                    
-                    chat_history = [
-                        {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages[:-1]
-                    ]
-                    chat = model.start_chat(history=chat_history)
-                    response = chat.send_message(prompt_input, stream=True)
-                    return response
-                except Exception as inner_e:
-                    last_exception = inner_e
-                    continue
-        except Exception as outer_e:
-            last_exception = outer_e
+            
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            # 建立無污染的背景提示 Context
+            system_context = [
+                {"role": "user", "parts": ["You are Medicare Compass, a warm, concise Medicare advisor. Speak directly to the senior. Never output thinking process, goals, constraints, or lists of instructions. Always follow Step 1 (ask birth date/state -> calculate IEP), Step 2 (compare coverage), Step 3 (application steps)."]},
+                {"role": "model", "parts": ["Understood. I am Medicare Compass. I will assist warmly and directly without any internal notes."]}
+            ]
+            
+            # 載入歷史對話
+            for m in st.session_state.messages[:-1]:
+                role = "user" if m["role"] == "user" else "model"
+                system_context.append({"role": role, "parts": [m["content"]]})
+                
+            chat = model.start_chat(history=system_context)
+            response = chat.send_message(user_input, stream=True)
+            return response
+        except Exception:
             continue
-
-    if last_exception:
-        raise last_exception
+    raise RuntimeError("API Connection Error. Please try again.")
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
@@ -124,39 +108,14 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
-    
-    if not primary_key:
-        primary_key = st.text_input("Gemini API Key:", type="password")
-
-    st.markdown("---")
-
-    if current_lang in ["English", "Español", "한국어"]:
-        st.caption("""
-🔒 **Data Privacy**: No personal input, uploaded documents, or chat histories are saved or stored. All data is permanently cleared upon session reset or browser closure.
-
-ℹ️ **Disclaimer**: Information provided is for educational and guidance reference only. Policy rates and terms change over time. Please verify final plan details with [Medicare.gov](https://www.medicare.gov).
-
-🏛️ **Non-Governmental**: Medicare Compass™ (powered by Care Compass™) is an independent educational tool and is not affiliated with, endorsed by, or connected to the US Government or Social Security Administration.
-        """)
-    else:
-        st.caption("""
-🔒 **隱私承諾**：本工具**完全不儲存**任何您的個人資料、對話紀錄或上傳文件，視窗關閉或重置後即刻永久清除。
-
-ℹ️ **免責聲明**：資訊僅供教育與評估參考。醫保政策與費用每年調整，最終細節請務必至 [Medicare.gov](https://www.medicare.gov) 官方核對。
-
-🏛️ **非官方聲明**：Medicare Compass™（powered by Care Compass™）為獨立輔助導航應用，不代表美國政府或社會安全局 (SSA) 官方機構。
-        """)
-
-    st.markdown("---")
-
     reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
     if st.button(reset_label, use_container_width=True):
         st.session_state.messages = []
+        st.session_state.show_summary = False
         st.rerun()
 
 # -------------------------------------------------------------------
-# 4. Pinned Top Container & 1-Minute Medicare Map Banner
+# 4. Main Banner & 1-Minute Medicare Map
 # -------------------------------------------------------------------
 top_container = st.container()
 
@@ -170,7 +129,7 @@ with top_container:
 
     st.markdown("---")
 
-    # 頂部導航三步驟卡片
+    # 3 Steps Card Layout
     if current_lang in ["English", "Español", "한국어"]:
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -216,68 +175,40 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. System Instructions (Few-Shot 強定型版：徹底禁止思考過程)
-# -------------------------------------------------------------------
-SYSTEM_INSTRUCTION = f"""
-You are a human Medicare Advisor speaking in {current_lang}.
-
-[STRICT OUTPUT FORMAT RULES]
-1. DO NOT output any lists, bullet points, or sections starting with: Goal, Constraints, Persona, Step 1 Requirements, Direct question, Explanation, Pre-closing question, or User wants to start.
-2. DO NOT show your internal reasoning or planning steps.
-3. Speak ONLY as a human advisor talking directly to the senior.
-
-[FEW-SHOT EXAMPLE OF PERFECT RESPONSE]
-User: "Hello! I am applying for myself and would like to start Step 1."
-Advisor Response: "Hello! I am glad to help you navigate Medicare. To get started with Step 1, could you please share your birth month and year, as well as the current state where you live?"
-
-[YOUR CONSULTATION WORKFLOW]
-- Step 1: Ask for birth month/year and state. Calculate IEP deadlines once received.
-- Step 2: Compare Original Medicare vs Medicare Advantage based on health needs and travel.
-- Step 3: Guide application steps on SSA.gov/Medicare.gov.
-"""
-
-# -------------------------------------------------------------------
-# 6. Initialize & Display Clean Conversation History
+# 5. Message History Setup
 # -------------------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# 顯示聊天歷史
+if "show_summary" not in st.session_state:
+    st.session_state.show_summary = False
+
+# 顯示歷史紀錄
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 開場引導
-if len(st.session_state.messages) == 0:
-    intro_prompt_text = "To get started with **Step 1: When**, please tell me: **What is your birth month/year and which state do you live in?**" if current_lang == "English" else "開始 **第一步：WHEN 參保時機** 前，請告訴我：**您的出生年月以及目前居住在在哪一個州？**"
-    st.info(f"🧭 **Medicare Compass**: {intro_prompt_text}")
-
-# Universal Quick Start Options
+# Quick Start Options (只在對話剛開始時顯示)
+quick_prompt = None
 if len(st.session_state.messages) == 0:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
     col_start1, col_start2 = st.columns(2)
-    quick_prompt = None
     with col_start1:
         if st.button("👴 " + ("I'm applying for myself" if current_lang == "English" else "我是長者本人（開始 Step 1 導覽）")):
-            quick_prompt = "Hello! I am applying for myself and would like to start Step 1. Please help me calculate my deadlines." if current_lang == "English" else "您好！我是長者本人，準備開始 Step 1，請幫我計算申辦期限！"
+            quick_prompt = "Hello! I am applying for myself and would like to start Step 1: When. Please calculate my enrollment deadlines." if current_lang == "English" else "您好！我是長者本人，準備開始 Step 1，請幫我計算申辦期限！"
     with col_start2:
         if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（開始 Step 1）")):
-            quick_prompt = "Hello! I am helping my parents start Step 1. Please guide us on where to begin." if current_lang == "English" else "您好！我是幫長輩查詢的子女，請引導我們開始 Step 1！"
-else:
-    quick_prompt = None
+            quick_prompt = "Hello! I am helping my parents start Step 1: When. What information do you need?" if current_lang == "English" else "您好！我是幫長輩查詢的子女，請引導我們開始 Step 1！"
 
 # Input Bar
 has_user_replied = len(st.session_state.messages) > 0
-if current_lang == "English":
-    input_placeholder = "🎙️ Speak or type your question here..." if has_user_replied else "🎙️ Type your birth date and state here..."
-else:
-    input_placeholder = "🎙️ 點擊麥克風發問，或輸入您的回覆..." if has_user_replied else "🎙️ 請輸入您的居住州與出生年月（例如：加州, 1960/05）..."
-
+input_placeholder = "🎙️ Type your birth month/year and state here..." if not has_user_replied else "🎙️ Speak or type your reply here..."
 input_prompt = st.chat_input(input_placeholder)
+
 prompt = quick_prompt if quick_prompt else input_prompt
 
 # -------------------------------------------------------------------
-# 7. Execution Logic with Streaming
+# 6. Response Execution
 # -------------------------------------------------------------------
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -290,71 +221,69 @@ if prompt:
                 yield chunk.text
 
     with st.chat_message("assistant"):
-        spinner_text = "Medicare Compass is analyzing..."
-        with st.spinner(spinner_text):
+        with st.spinner("Medicare Compass is analyzing..."):
             try:
-                response = generate_response_with_fallback(prompt, None, SYSTEM_INSTRUCTION)
+                response = generate_clean_response(prompt)
                 full_text = st.write_stream(stream_text_generator(response))
                 st.session_state.messages.append({"role": "assistant", "content": full_text})
                 st.rerun()
             except Exception as e:
-                err_msg = str(e)
-                if "429" in err_msg or "quota" in err_msg.lower():
-                    warm_card = "☕ **Medicare Compass 正在為您整理資料中...**\n\n系統目前流量較大，請喝口水稍微等待 10 秒鐘後再發問，我們馬上為您解答喔！" if current_lang == "繁體中文" else "☕ **Medicare Compass is organizing your information...**\n\nSystem traffic is high. Please take a 10-second break and ask again!"
-                    st.info(warm_card)
-                else:
-                    st.error(f"Notice: {e}")
+                st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 8. Clean Consultation Summary & Sharing Section
+# 7. Consultation Summary Section (方案 A：手動按鈕觸發，絕不主動搶戲)
 # -------------------------------------------------------------------
 if len(st.session_state.messages) >= 2:
     st.markdown("---")
-    st.header("📋 Consultation Summary & Sharing (諮詢總結與分享)")
+    
+    # 手動解鎖按鈕
+    btn_label = "📋 Generate / Update My Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "📋 點擊生成 / 更新我的諮詢總結與分享報告"
+    if st.button(btn_label, use_container_width=True, type="primary"):
+        st.session_state.show_summary = True
 
-    # 1. 完整紀錄
-    full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
-    for m in st.session_state.messages:
-        role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
-        full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-"*40 + "\n\n"
+    # 只有當使用者點擊按鈕後才展開此區塊
+    if st.session_state.show_summary:
+        st.header("📋 Consultation Summary & Sharing (諮詢總結與分享)")
 
-    # 2. 1-Page 精簡版
-    short_summary_text = "【Medicare Compass - 1-Page Summary / 1頁重點摘要】\n\n"
-    user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
-    ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
+        full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
+        for m in st.session_state.messages:
+            role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
+            full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-"*40 + "\n\n"
 
-    if user_msgs:
-        short_summary_text += "📌 KEY USER QUESTIONS / INPUTS:\n"
-        for u in user_msgs:
-            short_summary_text += f"- {u}\n"
-        short_summary_text += "\n"
+        short_summary_text = "【Medicare Compass - 1-Page Summary / 1頁重點摘要】\n\n"
+        user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
+        ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
 
-    if ai_msgs:
-        short_summary_text += f"💡 LATEST ADVICE & PLAN HIGHLIGHTS:\n{ai_msgs[-1]}\n"
+        if user_msgs:
+            short_summary_text += "📌 KEY USER INPUTS:\n"
+            for u in user_msgs:
+                short_summary_text += f"- {u}\n"
+            short_summary_text += "\n"
 
-    # Prepare Mailto URL
-    email_subject = urllib.parse.quote("My Medicare Compass Summary")
-    email_body = urllib.parse.quote(short_summary_text)
-    mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
+        if ai_msgs:
+            short_summary_text += f"💡 LATEST ADVICE:\n{ai_msgs[-1]}\n"
 
-    tab1, tab2 = st.tabs(["⚡ 1-Page Summary (1頁精簡版)", "📄 Full Log (完整紀錄版)"])
+        email_subject = urllib.parse.quote("My Medicare Compass Summary")
+        email_body = urllib.parse.quote(short_summary_text)
+        mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
 
-    with tab1:
-        st.caption("Great for sharing with family via Email, LINE, WhatsApp, or WeChat")
-        st.text_area("Preview:", value=short_summary_text, height=240, key="summary_preview_area")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button("📥 Download 1-Page Summary (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
-        with col2:
-            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:42px; border-radius:8px; background-color:#0066cc; color:white; border:none; cursor:pointer; font-size:16px;">✉️ Send to My Email</button></a>', unsafe_allow_html=True)
+        tab1, tab2 = st.tabs(["⚡ 1-Page Summary (1頁精簡版)", "📄 Full Log (完整紀錄版)"])
 
-    with tab2:
-        st.caption("Complete Q&A History for your records")
-        st.text_area("Full Conversation Log:", value=full_log_text, height=280, key="full_log_area")
-        st.download_button("📥 Download Full Log (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
+        with tab1:
+            st.caption("Great for sharing with family via Email, LINE, WhatsApp, or WeChat")
+            st.text_area("Preview:", value=short_summary_text, height=200, key="summary_preview_area")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button("📥 Download 1-Page Summary (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
+            with col2:
+                st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:42px; border-radius:8px; background-color:#0066cc; color:white; border:none; cursor:pointer; font-size:16px;">✉️ Send to My Email</button></a>', unsafe_allow_html=True)
 
-# Force Scroll to Top
+        with tab2:
+            st.caption("Complete Q&A History for your records")
+            st.text_area("Full Conversation Log:", value=full_log_text, height=260, key="full_log_area")
+            st.download_button("📥 Download Full Log (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
+
+# Auto-scroll control
 st.markdown("""
     <script>
         function scrollToTop() {
