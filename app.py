@@ -266,6 +266,10 @@ elif current_lang == "繁體中文":
 else:
     input_placeholder = "🎙️ Speak or type your reply here..."
 
+# 先給 quick_prompt 一個安全預設值 (避免 NameError)
+if 'quick_prompt' not in locals():
+    quick_prompt = None
+
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
