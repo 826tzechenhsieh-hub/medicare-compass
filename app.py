@@ -270,6 +270,8 @@ else:
 if 'quick_prompt' not in locals():
     quick_prompt = None
 
+if 'uploaded_file' not in locals():
+    uploaded_file = None
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
