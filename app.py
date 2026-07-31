@@ -183,9 +183,18 @@ with st.sidebar:
     else:
         st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
 
-# 4. Main Header & Announcement Banner
+# 4. Main Header & Announcement Banner (Pinned at the very top)
+if current_lang in ["English", "Español", "한국어"]:
+    st.markdown("# 🧭 Medicare Compass")
+    st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
+else:
+    st.markdown("# 🧭 Medicare Compass 醫保指南針")
+    st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
 
-# 5. System Instructions
+st.markdown("---")
+
+
+# 5. System Instructions (AI 提示詞大腦 - 完全保留)
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
@@ -198,16 +207,13 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 3. Concise Responses: Keep answers short, structured, and bullet-pointed (2-3 brief paragraphs max). Use bold keywords.
 4. Phase Transition Check: Always end Phase 1/2 with a friendly check-in on whether they want to proceed to the next step.
 5. Language Matching: Respond fluently in the selected language.
+---
 """
 
-# 6. Greeting Initialization (Title + Map in One Card for All Languages)
+
+# 6. Greeting Initialization (Cleaned Welcome Messages)
 if current_lang == "English":
-    welcome_msg = """# 🧭 Medicare Compass
-📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!
-
----
-
-Hello and welcome! Before we dive in, here is your **1-Minute Medicare Map**:
+    welcome_msg = """Hello and welcome! Before we dive in, here is your **1-Minute Medicare Map**:
 
 * 🔴 **Original Medicare (Government)**: 
   * **Part A (Hospital)**: Mostly free if you worked 10 years.
@@ -219,13 +225,8 @@ Hello and welcome! Before we dive in, here is your **1-Minute Medicare Map**:
 ---
 To begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"""
 
-elif current_lang == "繁體中文":
-    welcome_msg = """# 🧭 Medicare Compass 醫保指南針
-📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。
-
----
-
-您好！在開始前，先為您奉上 **1分鐘 Medicare 快速地圖**：
+elif current_lang in ["繁體中文", "简体中文"]:
+    welcome_msg = """您好！在開始前，先為您奉上 **1分鐘 Medicare 快速地圖**：
 
 * 🔴 **Original Medicare (傳統紅藍卡 / 政府發行)**：
   * **Part A (住院保險)**：工作滿 10 年者多數免費。
@@ -237,31 +238,8 @@ elif current_lang == "繁體中文":
 ---
 為了幫您展開 **第一步：方案探索**，請告訴我：**您目前居住在哪一個州？以及您的出生年月是什麼時候呢？**"""
 
-elif current_lang == "简体中文":
-    welcome_msg = """# 🧭 Medicare Compass 医保指南针
-📢 **本工具宗旨**：专为即将满 65 岁长者与退休家庭设计！陪伴您分三步骤轻松了解申办流程、避开终身迟办罚款。
-
----
-
-您好！在开始前，先为您奉上 **1分钟 Medicare 快速地图**：
-
-* 🔴 **Original Medicare (传统红蓝卡 / 政府发行)**：
-  * **Part A (住院保险)**：工作满 10 年者多数免费。
-  * **Part B (门诊保险)**：需缴月保费，政府给付 **80%**（**自付 20% 无上限！**）。
-* 🟡 **Part C (Advantage 优惠套餐)**：私人保险公司包办 (A + B + 通常含 D)。
-* 🔵 **Part D (处方药专案)**：单纯补充药物给付。
-* 🟣 **Medigap (补充保险)**：填补 Part B 那 **20% 自付额无底洞**。
-
----
-为了帮您展开 **第一步：方案探索**，请告诉我：**您目前居住在哪一个州？以及您的出生年月是什么时候呢？**"""
-
 elif current_lang == "Español":
-    welcome_msg = """# 🧭 Medicare Compass
-📢 **Propósito**: ¡Diseñado para personas de 65 años y familias para navegar Medicare en 3 pasos claros!
-
----
-
-¡Hola y bienvenido! Aquí está su **Mapa de Medicare de 1 Minuto**:
+    welcome_msg = """¡Hola y bienvenido! Aquí está su **Mapa de Medicare de 1 Minuto**:
 
 * 🔴 **Original Medicare (Gobierno)**:
   * **Parte A (Hospital)**: Mayormente gratuita si trabajó 10 años.
@@ -274,17 +252,12 @@ elif current_lang == "Español":
 Para comenzar el **Paso 1: Exploración de Planes**, por favor dígame: **¿En qué estado vive y cuál es su mes y año de nacimiento?**"""
 
 elif current_lang == "한국어":
-    welcome_msg = """# 🧭 Medicare Compass
-📢 **앱 목적**: 65세를 앞둔 어르신과 가족이 3단계로 쉽고 정확하게 메디케어를 이해할 수 있도록 돕습니다!
-
----
-
-안녕하세요! **1분 메디케어 한눈에 보기**:
+    welcome_msg = """안녕하세요! **1분 메디케어 한눈에 보기**:
 
 * 🔴 **Original Medicare (정부 메디케어)**:
   * **Part A (병원)**: 10년 이상 일한 경우 대부분 무료.
   * **Part B (의료)**: 월 보험료 발생, **80%** 보장 (20% 본인 부담!).
-* 🟡 **Part C (Medicare Advantage)**: 민간 통합 플랜 (A + B + обычно D).
+* 🟡 **Part C (Medicare Advantage)**: 민간 통합 플랜 (A + B + D).
 * 🔵 **Part D (처방약)**: 약품 보장.
 * 🟣 **Medigap (보충 보험)**: Part B의 **20% 본인 부담금**을 메워주는 민간 보험.
 
@@ -292,7 +265,7 @@ elif current_lang == "한국어":
 **1단계: 플랜 탐색**을 시작하려면: **현재 거주하는 주(State)와 출생 월/년을 알려주세요!**"""
 
 else:
-    welcome_msg = "# 🧭 Medicare Compass\n\nHello! Which state do you live in, and what is your birth month and year?"
+    welcome_msg = "Hello! Which state do you live in, and what is your birth month and year?"
 
 # 7. Display Chat History
 if "messages" not in st.session_state:
