@@ -245,14 +245,7 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # Robust model fallback sequence
-            try:
-                model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_INSTRUCTION)
-            except Exception:
-                try:
-                    model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION)
-                except Exception:
-                    model = genai.GenerativeModel("gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
+            model = genai.GenerativeModel("gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
             
             user_content = prompt if prompt else "Please analyze this uploaded document."
             
