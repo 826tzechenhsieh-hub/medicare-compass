@@ -375,12 +375,26 @@ if len(st.session_state.messages) >= 3:
             file_name="Medicare_Full_Consultation.txt",
             mime="text/plain"
         )
-# 10. Force Scroll to Top on Initial Load / Reboot
+# 10. Force Scroll to Top on Initial Load / Reboot (Universal Fix)
 st.markdown("""
     <script>
-        var body = window.parent.document.querySelector(".main");
-        if (body) {
-            body.scrollTop = 0;
+        function scrollToTop() {
+            // 1. 針對 Streamlit 的核心滾動容器
+            var mainContainer = window.parent.document.querySelector(".main");
+            if (mainContainer) mainContainer.scrollTop = 0;
+            
+            var blockContainer = window.parent.document.querySelector(".block-container");
+            if (blockContainer) blockContainer.scrollTop = 0;
+
+            // 2. 針對全域瀏覽器視窗
+            window.parent.scrollTo(0, 0);
+            window.scrollTo(0, 0);
         }
+        
+        // 立即執行一次
+        scrollToTop();
+        
+        // 延遲 200 毫秒等 Streamlit DOM 渲染完成後再執行一次（雙重保險）
+        setTimeout(scrollToTop, 200);
     </script>
 """, unsafe_allow_html=True)
