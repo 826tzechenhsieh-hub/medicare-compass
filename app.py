@@ -6,7 +6,7 @@ from PIL import Image
 # 1. Page Config
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
-# Senior-friendly typography
+# Senior-friendly typography & Smooth auto-scroll prevention
 st.markdown("""
     <style>
     html, body, [class*="css"] {
@@ -27,10 +27,55 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 2. Get API Key
-api_key = st.secrets.get("GEMINI_API_KEY", None)
+# 2. Get Dual API Keys for Automatic Failover / Rotation
+primary_key = st.secrets.get("GEMINI_API_KEY", None)
+secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 3. Sidebar (Using plain English labels for IEP & IRMAA)
+# Helper function to try generating content with dual-key failover
+def generate_response_with_fallback(prompt_input, image_data=None, system_instruction=""):
+    keys_to_try = [k for k in [primary_key, secondary_key] if k]
+    
+    if not keys_to_try:
+        raise ValueError("NO_API_KEY")
+
+    last_exception = None
+    
+    for current_key in keys_to_try:
+        try:
+            clean_key = str(current_key).strip().strip('"').strip("'")
+            genai.configure(api_key=clean_key)
+            
+            # Smart Model Detection (Filters out unsupported prefixes)
+            working_model_name = "gemini-2.0-flash"
+            try:
+                for m in genai.list_models():
+                    name_clean = m.name.replace("models/", "")
+                    if 'generateContent' in m.supported_generation_methods and "flash" in name_clean:
+                        working_model_name = name_clean
+                        break
+            except Exception:
+                pass
+
+            model = genai.GenerativeModel(working_model_name, system_instruction=system_instruction)
+            
+            if image_data:
+                response = model.generate_content([prompt_input, image_data], stream=True)
+            else:
+                chat = model.start_chat(history=[
+                    {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
+                    for m in st.session_state.messages[:-1]
+                ])
+                response = chat.send_message(prompt_input, stream=True)
+                
+            return response # Successfully obtained response stream
+        except Exception as e:
+            last_exception = e
+            # If 429 or quota limit hit, loop automatically tries the next key in list!
+            continue
+            
+    raise last_exception
+
+# 3. Sidebar
 with st.sidebar:
     if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
         if "messages" in st.session_state:
@@ -94,7 +139,7 @@ with st.sidebar:
         st.subheader("📍 第一步：方案探索")
         if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
-        if st.button("🩺 常看的診所與藥物有給付嗎？"):
+        if st.button("🩺 常看的診所（網絡內）與藥物有給付嗎？"):
             quick_prompt = "如何確認我平時看診的醫生（是否在網絡內 In-network）以及在吃的慢性病藥物有沒有在給付範圍內？"
 
         st.subheader("📍 第二步：時間軸與避開罰款")
@@ -119,9 +164,6 @@ with st.sidebar:
     
     st.header("📸 " + ("Document Assistant" if current_lang in ["English", "Español", "한국어"] else "看不懂英文信件/保單？"))
     
-    with st.expander("ℹ️ " + ("Why upload photo?" if current_lang in ["English", "Español", "한국어"] else "為什麼要拍照上傳？")):
-        st.caption("If you receive letters from Social Security or Medicare that are confusing, simply snap a photo! AI will read and explain it in plain text. Your privacy is safe and documents are not stored.")
-    
     upload_label = "Upload photo (Optional) / 拍照上傳（選填）:"
     uploaded_file = st.file_uploader(upload_label, type=["jpg", "jpeg", "png"])
     img_data = None
@@ -132,8 +174,8 @@ with st.sidebar:
     st.markdown("---")
     st.warning("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
 
-    if not api_key:
-        api_key = st.text_input("Gemini API Key:", type="password")
+    if not primary_key:
+        primary_key = st.text_input("Gemini API Key:", type="password")
     else:
         st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
 
@@ -163,7 +205,7 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 5. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. Greeting Initialization (With Clear Overview Map & Universal Quick Prompts)
+# 6. Greeting Initialization (With Clear Overview Map)
 if current_lang == "English":
     welcome_msg = """Hello and welcome! I am your **Medicare Compass** guide. 
 
@@ -201,7 +243,7 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Universal Quick Start Options (No longer assuming NY or age 65!)
+# Universal Quick Start Options
 if len(st.session_state.messages) == 1:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
     col_start1, col_start2 = st.columns(2)
@@ -236,63 +278,42 @@ else:
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
-# 8. Execution Logic with Safe Model Loading (Resolves 404 & Quota issues)
+# 8. Execution Logic with Dual-Key Fallback & Warm Error Interception
 if prompt or uploaded_file:
-    if not api_key:
+    if not primary_key:
         st.error("Please set API Key in sidebar.")
     else:
-        try:
-            clean_key = str(api_key).strip().strip('"').strip("'")
-            genai.configure(api_key=clean_key)
-            
-            # 自動偵測可用模型，並清除多餘的 models/ 前綴
-            working_model_name = "gemini-2.0-flash"
-            try:
-                for m in genai.list_models():
-                    name_clean = m.name.replace("models/", "")
-                    if 'generateContent' in m.supported_generation_methods and "2.0-flash" in name_clean:
-                        working_model_name = name_clean
-                        break
-            except Exception:
-                pass
+        user_content = prompt if prompt else "Please analyze this uploaded document."
+        st.session_state.messages.append({"role": "user", "content": user_content})
+        with st.chat_message("user"):
+            st.markdown(user_content)
 
-            model = genai.GenerativeModel(working_model_name, system_instruction=SYSTEM_INSTRUCTION)
-            
-            user_content = prompt if prompt else "Please analyze this uploaded document."
-            
-            st.session_state.messages.append({"role": "user", "content": user_content})
-            with st.chat_message("user"):
-                st.markdown(user_content)
+        def stream_text_generator(response_stream):
+            for chunk in response_stream:
+                if chunk.text:
+                    yield chunk.text
 
-            def stream_text_generator(response_stream):
-                for chunk in response_stream:
-                    if chunk.text:
-                        yield chunk.text
-
-            with st.chat_message("assistant"):
-                spinner_text = "Medicare Compass is analyzing..."
-                with st.spinner(spinner_text):
-                    if img_data:
-                        response = model.generate_content([user_content, img_data], stream=True)
-                    else:
-                        chat = model.start_chat(history=[
-                            {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-                            for m in st.session_state.messages[:-1]
-                        ])
-                        response = chat.send_message(user_content, stream=True)
-                    
+        with st.chat_message("assistant"):
+            spinner_text = "Medicare Compass is analyzing..."
+            with st.spinner(spinner_text):
+                try:
+                    response = generate_response_with_fallback(user_content, img_data, SYSTEM_INSTRUCTION)
                     full_text = st.write_stream(stream_text_generator(response))
-                    
-            st.session_state.messages.append({"role": "assistant", "content": full_text})
-            st.rerun()
-            
-        except Exception as e:
-            st.error(f"Error: {e}")
+                    st.session_state.messages.append({"role": "assistant", "content": full_text})
+                    st.rerun()
+                except Exception as e:
+                    err_msg = str(e)
+                    # Warm, Friendly Interception for 429 Quota Exceeded Errors
+                    if "429" in err_msg or "quota" in err_msg.lower():
+                        warm_card = "☕ **Medicare Compass 正在為您整理資料中...**\n\n系統目前整理流量較大，請喝口水稍微等待 10 秒鐘後再發問，我們馬上為您解答喔！" if current_lang == "繁體中文" else "☕ **Medicare Compass is organizing your information...**\n\nSystem traffic is currently high. Please take a quick 10-second break and ask again. We will be right back with you!"
+                        st.info(warm_card)
+                    else:
+                        st.error(f"Notice: {e}")
 
 # 9. Summary Section (Only shows after 3+ turns)
 if len(st.session_state.messages) >= 3:
     st.markdown("---")
-    st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮詢紀錄打包與分享"))
+    st.header("📋 " + ("Consultation Summary & Sharing" if current_lang in ["English", "Español", "한국어"] else "諮諮紀錄打包與分享"))
     
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
