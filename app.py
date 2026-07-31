@@ -2,6 +2,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import google.generativeai as genai
 import urllib.parse
+import re
 from PIL import Image
 
 # 1. Page Config
@@ -52,6 +53,24 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
+# 清理 AI 輸出的「自我檢查雜訊」函數
+def sanitize_ai_output(raw_text):
+    if not raw_text:
+        return raw_text
+    
+    # 如果包含清單雜訊 (如 Tone:, Yes., Constraints:)，切割並只留最後真正的回答
+    if "Yes." in raw_text or "Tone:" in raw_text or "Goal:" in raw_text or "• User:" in raw_text:
+        lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
+        clean_lines = []
+        for line in lines:
+            # 過濾掉帶有英文標籤或以 bullet point 開頭的檢查項目
+            if not any(bad in line for bad in ["Tone:", "Goal:", "Constraint:", "Yes.", "Simplified Chinese?", "Traditional Chinese?", "Follows Step", "Directly addresses", "IEP calculation rules"]):
+                if not line.startswith('•') and not line.startswith('-'):
+                    clean_lines.append(line)
+        if clean_lines:
+            return "\n\n".join(clean_lines)
+    return raw_text.strip()
+
 def generate_clean_response(user_input, target_lang="English", img_data=None):
     keys_to_try = [k for k in [primary_key, secondary_key] if k]
     if not keys_to_try:
@@ -61,10 +80,10 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
     lang_instruction_map = {
         "English": "Respond purely in English.",
-        "Español": "Respond purely in Spanish (Español).",
-        "繁體中文": "請務必完全使用『繁體中文 (Traditional Chinese, zh-TW)』回答，嚴禁使用簡體字。",
-        "簡體中文": "请务必完全使用『简体中文 (Simplified Chinese, zh-CN)』回答，严禁使用繁体字。",
-        "한국어": "Respond purely in Korean (한국어)."
+        "Español": "Respond purely in Spanish.",
+        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字。",
+        "簡體中文": "请完全使用『简体中文』回答，严禁使用繁体字。",
+        "한국어": "Respond purely in Korean."
     }
     lang_rule = lang_instruction_map.get(target_lang, "Respond in the target language.")
 
@@ -89,23 +108,8 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                     model = genai.GenerativeModel(m_name)
                     
                     system_context = [
-                        {"role": "user", "parts": [f"""You are Medicare Compass, a warm, concise Medicare advisor speaking directly to the senior or their caring family member.
-CRITICAL FORMAT RULE: Never output your internal thinking, goals, constraints, role descriptions, or reasoning lists. Speak naturally as a human advisor!
-LANGUAGE REQUIREMENT: {lang_rule}
-
-[FEW-SHOT EXAMPLE FOR FAMILY INQUIRY]
-User: "Hello! I am helping my parents start Step 1: When. What information do you need?"
-Advisor Response: "Hello! I am so glad you are helping your parents navigate Medicare. To help calculate their exact enrollment window for Step 1, could you please share their birth month and year, as well as the state they currently live in?"
-
-[CRITICAL IEP CALCULATION RULES]
-1. Initial Enrollment Period (IEP) ALWAYS lasts for exactly 7 MONTHS (3 months BEFORE birth month, birth month, and 3 months AFTER birth month when turning 65).
-2. Calculate turning 65 year correctly: Birth Year + 65. (e.g. Born Aug 1961 -> Turns 65 in Aug 2026 -> IEP: May 1, 2026 to Nov 30, 2026).
-3. If birth year provided is in the future or recent years (e.g. 2026), kindly ask user to clarify their actual birth year (e.g. 1961).
-
-[STRICT STEP 1 TRANSITION GATE]
-After calculating the IEP window, STOP IMMEDIATELY and ask ONLY if they have questions about their timing before Step 2.
-DO NOT jump into Step 2 plan comparison until user confirms!"""]},
-                        {"role": "model", "parts": ["Understood. I will respond warmly and directly without any internal notes, whether assisting the senior directly or a family member, and follow the 7-month IEP rule and transition gates."]}
+                        {"role": "user", "parts": [f"You are Medicare Compass, a warm human advisor. {lang_rule} Speak directly to the senior or their family. Always calculate IEP as 7 months (3 months before birth month, birth month, 3 months after). Stop and ask for confirmation before Step 2."]},
+                        {"role": "model", "parts": ["Understood. I will respond directly and warmly."]}
                     ]
                     
                     for m in st.session_state.messages[:-1]:
@@ -115,10 +119,14 @@ DO NOT jump into Step 2 plan comparison until user confirms!"""]},
                     chat = model.start_chat(history=system_context)
                     
                     if img_data:
-                        response = model.generate_content([user_input, img_data], stream=True)
+                        response = model.generate_content([user_input, img_data])
+                        raw_output = response.text
                     else:
-                        response = chat.send_message(user_input, stream=True)
-                    return response
+                        response = chat.send_message(user_input)
+                        raw_output = response.text
+                        
+                    # 強制清洗掉所有內部檢查廢話
+                    return sanitize_ai_output(raw_output)
                 except Exception as inner_e:
                     last_exception = inner_e
                     continue
@@ -356,7 +364,6 @@ with top_container:
 
     st.markdown("---")
 
-    # 1-Minute Medicare Map
     expander_title_map = {
         "English": "🗺️ **1-Minute Medicare Map**",
         "Español": "🗺️ **Mapa de Medicare de 1 Minuto**",
@@ -439,11 +446,11 @@ if len(st.session_state.messages) == 0:
         }
         if st.button(btn1_map.get(current_lang, "👴 Apply for myself")):
             p1_map = {
-                "English": "Hello! I am applying for myself and would like to start Step 1: When. Please calculate my enrollment deadlines.",
-                "Español": "¡Hola! Estoy solicitando para mí y me gustaría comenzar el Paso 1: Cuándo. Por favor calcule mis fechas límite.",
-                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작하고 내 가입 마감일을 계산해 주세요.",
-                "簡體中文": "您好！我是长者本人，准备开始 Step 1，请帮我计算申办期限！",
-                "繁體中文": "您好！我是長者本人，準備開始 Step 1，請幫我計算申辦期限！"
+                "English": "Hello! I am applying for myself and would like to start Step 1.",
+                "Español": "¡Hola! Estoy solicitando para mí y me gustaría comenzar el Paso 1.",
+                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작합니다.",
+                "簡體中文": "您好！我是长者本人，准备开始 Step 1。",
+                "繁體中文": "您好！我是長者本人，準備開始 Step 1。"
             }
             quick_prompt = p1_map.get(current_lang)
 
@@ -457,11 +464,11 @@ if len(st.session_state.messages) == 0:
         }
         if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Help parents")):
             p2_map = {
-                "English": "Hello! I am helping my parents start Step 1: When. What information do you need?",
-                "Español": "¡Hola! Estoy ayudando a mis padres a comenzar el Paso 1: Cuándo. ¿Qué información necesita?",
-                "한국어": "안녕하세요! 부모님 메디케어 신청을 돕고 있습니다. 1단계를 시작해 주세요.",
-                "簡體中文": "您好！我是帮长辈查询的子女，准备开始 Step 1，请问需要什么资料？",
-                "繁體中文": "您好！我是幫長輩查詢的子女，準備開始 Step 1，請問需要什麼資料？"
+                "English": "Hello! I am helping my parents start Step 1.",
+                "Español": "¡Hola! Estoy ayudando a mis padres a comenzar el Paso 1.",
+                "한국어": "안녕하세요! 부모님 메디케어 신청을 위해 1단계를 시작합니다.",
+                "簡體中文": "您好！我是帮长辈查询的子女，准备开始 Step 1。",
+                "繁體中文": "您好！我是幫長輩查詢的子女，準備開始 Step 1。"
             }
             quick_prompt = p2_map.get(current_lang)
 
@@ -489,17 +496,12 @@ if prompt or uploaded_file:
     with st.chat_message("user"):
         st.markdown(user_text)
 
-    def stream_text_generator(response_stream):
-        for chunk in response_stream:
-            if chunk.text:
-                yield chunk.text
-
     with st.chat_message("assistant"):
         with st.spinner("Medicare Compass is analyzing..."):
             try:
-                response = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
-                full_text = st.write_stream(stream_text_generator(response))
-                st.session_state.messages.append({"role": "assistant", "content": full_text})
+                clean_text = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
+                st.markdown(clean_text)
+                st.session_state.messages.append({"role": "assistant", "content": clean_text})
                 st.rerun()
             except Exception as e:
                 st.error(f"Notice: {e}")
