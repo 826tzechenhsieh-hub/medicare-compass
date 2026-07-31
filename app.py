@@ -69,26 +69,36 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
             genai.configure(api_key=clean_key)
             
             # Smart Model Detection (Filters out unsupported prefixes)
-            working_model_name = "models/gemini-1.5-flash"
-                            
-            model = genai.GenerativeModel(working_model_name, system_instruction=system_instruction)
-            
-            if image_data:
-                response = model.generate_content([prompt_input, image_data], stream=True)
-            else:
-                chat = model.start_chat(history=[
-                    {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
-                    for m in st.session_state.messages[:-1]
-                ])
-                response = chat.send_message(prompt_input, stream=True)
+            # 嘗試多個可用的 Gemini 模型，確保 100% 自動抓到可用的 Model
+        candidate_models = [
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-pro"
+        ]
+        
+        response = None
+        last_err = None
+        
+        for m_name in candidate_models:
+            try:
+                model = genai.GenerativeModel(m_name, system_instruction=system_instruction)
+                if image_data:
+                    response = model.generate_content([prompt_input, image_data], stream=True)
+                else:
+                    chat = model.start_chat(history=[
+                        {"role": "user" if m["role"] == "user" else "model", "parts": [m["content"]]}
+                        for m in st.session_state.messages[:-1]
+                    ])
+                    response = chat.send_message(prompt_input, stream=True)
+                # 只要有一個模型成功回覆，立刻跳出迴圈！
+                break
+            except Exception as e:
+                last_err = e
+                continue
                 
-            return response # Successfully obtained response stream
-        except Exception as e:
-            last_exception = e
-            # If 429 or quota limit hit, loop automatically tries the next key in list!
-            continue
-            
-    raise last_exception
+        if response:
+            return response
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
