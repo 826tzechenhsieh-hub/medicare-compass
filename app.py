@@ -184,7 +184,6 @@ with st.sidebar:
         st.success("✅ Service Ready!" if current_lang in ["English", "Español", "한국어"] else "✅ 系統服務已就緒！")
 
 # 4. Main Header & Announcement Banner
-(已合併至開場白)
 
 # 5. System Instructions
 SYSTEM_INSTRUCTION = """
