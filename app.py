@@ -61,6 +61,11 @@ with st.sidebar:
     
     if current_lang == "English":
         st.header("🗺️ 3-Step Quick Questions")
+        
+        st.subheader("📍 Step 0: General Overview")
+        if st.button("🗺️ Traditional Medicare vs Advantage?"):
+            quick_prompt = "Can you explain the basic framework of Medicare (Parts A, B, C, D, and Medigap) in simple terms?"
+
         st.subheader("📍 Step 1: Plan Exploration")
         if st.button("❓ What is Medigap & why need it?"):
             quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
@@ -80,7 +85,12 @@ with st.sidebar:
             quick_prompt = "What is the IRMAA Medicare surcharge, and how can I appeal it if my income dropped after retirement?"
 
     elif current_lang == "繁體中文":
-        st.header("🗺️ 申辦三步驟核心問題")
+        st.header("🗺️ 申辦核心指南")
+        
+        st.subheader("📍 零：基礎地圖總覽")
+        if st.button("🗺️ 傳統紅藍卡 (A/B) vs 優惠套餐 (C)？"):
+            quick_prompt = "請用白話說明 Medicare 的整體架構：傳統紅藍卡 Part A/B、Part C 優惠套餐、Part D 處方藥與 Medigap 補充保險有何不同？"
+
         st.subheader("📍 第一步：方案探索")
         if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
@@ -101,15 +111,9 @@ with st.sidebar:
 
     else:
         st.header("🗺️ 3-Step Navigation")
-        st.subheader("📍 Step 1")
-        if st.button("❓ What is Medigap?"):
-            quick_prompt = "Can you explain Medigap simply?"
-        st.subheader("📍 Step 2")
-        if st.button("💼 Working past 65 & Part B?"):
-            quick_prompt = "I'm turning 65 but still working. Do I need Part B?"
-        st.subheader("📍 Step 3")
-        if st.button("📝 What is IRMAA surcharge?"):
-            quick_prompt = "What is the IRMAA surcharge?"
+        st.subheader("📍 General Overview")
+        if st.button("🗺️ Medicare Basics (A/B/C/D)"):
+            quick_prompt = "Can you explain Medicare Parts A, B, C, D simply?"
 
     st.markdown("---")
     
@@ -149,19 +153,43 @@ SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
 Your mission is to guide first-time applicants, turning 65 seniors, and families through US Medicare smoothly.
 
-【Core Principles】
-1. Keep responses CONCISE and short (2-3 brief paragraphs maximum). Use bold keywords for easy scanning.
-2. Phase Transition Check: At the end of answering Phase 1 or Phase 2 topics, ALWAYS ask: 
-   "Do you have any more questions about this step? If you feel ready, ask your next question or pick from the left sidebar!"
-3. Demystify the 80/20 myth early: Clarify that Original Medicare only covers 80% with NO out-of-pocket maximum.
-4. Language Matching: Respond fluently in the selected language.
+【Core Principles & Conceptual Map】
+1. Always ground the user first: Ensure they understand the basic 2 pathways if asked:
+   - Pathway 1: Original Medicare (Part A Hospital + Part B Medical) + Part D (Drugs) + Medigap (Supplement)
+   - Pathway 2: Medicare Advantage (Part C All-in-one private plan)
+2. Demystify early: Original Medicare Part B only covers 80% with NO out-of-pocket maximum limit.
+3. Concise Responses: Keep answers short, structured, and bullet-pointed (2-3 brief paragraphs max). Use bold keywords.
+4. Phase Transition Check: Always end Phase 1/2 with a friendly check-in on whether they want to proceed to the next step.
+5. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. Greeting Initialization
+# 6. Greeting Initialization (With Clear Overview Map)
 if current_lang == "English":
-    welcome_msg = "Hello and welcome! I am your Medicare Compass guide. We will guide you step-by-step through Medicare.\n\nTo begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"
+    welcome_msg = """Hello and welcome! I am your **Medicare Compass** guide. 
+
+Before we dive in, here is your **1-Minute Medicare Map**:
+* 🔴 **Original Medicare (Government)**: 
+  * **Part A (Hospital)**: Mostly free if you worked 10 years.
+  * **Part B (Medical)**: Monthly premium required, covers **80%** (20% gap!).
+* 🟡 **Part C (Medicare Advantage)**: Private all-in-one plans (A + B + usually D).
+* 🔵 **Part D (Prescription Drugs)**: Standalone drug coverage.
+* 🟣 **Medigap (Supplement)**: Private plans to cover the **20% gap** of Part B.
+
+---
+To begin **Step 1: Plan Exploration**, please tell me: **Which state do you live in, and what is your birth month and year?**"""
 elif current_lang == "繁體中文":
-    welcome_msg = "您好！我是您的 Medicare 智慧導覽助手。我們會陪伴您分三步驟輕鬆了解 Medicare。\n\n為了幫您展開 **第一步：方案探索**，請告訴我：**您目前居住在哪一個州（或 Zip Code）？以及您的出生年月是什麼時候呢？**"
+    welcome_msg = """您好！我是您的 **Medicare 智慧導覽助手**。
+
+在開始前，先為您奉上 **1分鐘 Medicare 快速地圖**：
+* 🔴 **Original Medicare (傳統紅藍卡 / 政府發行)**：
+  * **Part A (住院保險)**：工作滿 10 年者多數免費。
+  * **Part B (門診保險)**：需繳月保費，政府給付 **80%**（**自付 20% 無上限！**）。
+* 🟡 **Part C (Advantage 優惠套餐)**：私人保險公司包辦 (A + B + 通常含 D)。
+* 🔵 **Part D (處方藥專案)**：單純補充藥物給付。
+* 🟣 **Medigap (補充保險)**：填補 Part B 那 **20% 自付額無底洞**。
+
+---
+為了幫您展開 **第一步：方案探索**，請告訴我：**您目前居住在哪一個州？以及您的出生年月是什麼時候呢？**"""
 else:
     welcome_msg = "Hello! I am your Medicare Compass guide. Which state do you live in, and what is your birth month and year?"
 
@@ -217,12 +245,12 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # Smart Model Fallback to guarantee no 404
+            # Smart Model Fallback to guarantee no 404 (Prioritizes 1.5-flash for free quotas)
             try:
-                model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION)
+                model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_INSTRUCTION)
             except Exception:
                 try:
-                    model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_INSTRUCTION)
+                    model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION)
                 except Exception:
                     model = genai.GenerativeModel("gemini-1.5-pro", system_instruction=SYSTEM_INSTRUCTION)
             
