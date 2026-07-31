@@ -19,25 +19,34 @@ components.html(
 # Senior-friendly typography & Smooth auto-scroll prevention
 st.markdown("""
     <style>
-    /* 清除 Streamlit 頂部預設巨大空白 */
-    .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 0rem !important;
-    }html, body, [class*="css"] {
-        font-size: 19px !important;
-    }
-    .stChatMessage {
-        font-size: 20px !important;
-        line-height: 1.6 !important;
-    }
-    .stButton>button {
-        font-size: 18px !important;
-        padding: 10px 20px !important;
-        border-radius: 8px !important;
-    }
-    .stChatInput input {
-        font-size: 19px !important;
-    }
+        /* 清除 Streamlit 頂部預設巨大空白 */
+        .block-container {
+            padding-top: 1.5rem !important;
+            padding-bottom: 0rem !important;
+        }
+        html, body, [class*="css"] {
+            font-size: 19px !important;
+        }
+        /* 徹底禁止 Streamlit 自動往下捲動，強制停留在頂部 */
+        .main {
+            overflow-anchor: none !important;
+        }
+        [data-testid="stChatMessageContainer"] {
+            scroll-margin-top: 0px !important;
+        }
+        /* 保留您原本的 Chat/Button/Input 字型大小設定 */
+        .stChatMessage {
+            font-size: 20px !important;
+            line-height: 1.6 !important;
+        }
+        .stButton>button {
+            font-size: 18px !important;
+            padding: 10px 20px !important;
+            border-radius: 8px !important;
+        }
+        .stChatInput input {
+            font-size: 19px !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -153,45 +162,45 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 # -------------------------------------------------------------------
-# 4. Main Header & Announcement Banner (pinned at the very top)
+# 4. Main Header & Announcement Banner (Pinned Top Container)
 # -------------------------------------------------------------------
-if current_lang in ["English", "Español", "한국어"]:
-    st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
-    st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
-else:
-    st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
-    st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
+top_container = st.container()
 
-st.markdown("---")
+with top_container:
+    if current_lang in ["English", "Español", "한국어"]:
+        st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
+        st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
+    else:
+        st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
+        st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
 
-# -------------------------------------------------------------------
-# 5. 導航三步驟小卡片 (3 Steps Navigation)
-# -------------------------------------------------------------------
-if current_lang in ["English", "Español", "한국어"]:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("### 1️⃣ Step 1: When")
-        st.caption("Initial Enrollment Period (IEP) timing & key deadlines.")
-    with col2:
-        st.markdown("### 2️⃣ Step 2: What")
-        st.caption("Compare Part A, B, C (Advantage), and Part D.")
-    with col3:
-        st.markdown("### 3️⃣ Step 3: How")
-        st.caption("Avoid lifetime penalties & apply step-by-step.")
-else:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown("### 1️⃣ 第一步：參保時機")
-        st.caption("掌握滿 65 歲前後 7 個月的黃金申辦期 (IEP)。")
-    with col2:
-        st.markdown("### 2️⃣ 第二步：方案比對")
-        st.caption("釐清 Part A、B、C (紅藍卡/優質卡) 與 D 藥費保障。")
-    with col3:
-        st.markdown("### 3️⃣ 第三步：避罰申辦")
-        st.caption("了解遲辦罰款規則與一步步官方申辦途徑。")
+    st.markdown("---")
 
-st.markdown("---")
+    # 5. 導航三步驟小卡片 (3 Steps Navigation)
+    if current_lang in ["English", "Español", "한국어"]:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 1️⃣ Step 1: When")
+            st.caption("Initial Enrollment Period (IEP) timing & key deadlines.")
+        with col2:
+            st.markdown("### 2️⃣ Step 2: What")
+            st.caption("Compare Part A, B, C (Advantage), and Part D.")
+        with col3:
+            st.markdown("### 3️⃣ Step 3: How")
+            st.caption("Avoid lifetime penalties & apply step-by-step.")
+    else:
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown("### 1️⃣ 第一步：參保時機")
+            st.caption("掌握滿 65 歲前後 7 個月的黃金申辦期 (IEP)。")
+        with col2:
+            st.markdown("### 2️⃣ 第二步：方案比對")
+            st.caption("釐清 Part A、B、C (紅藍卡/優質卡) 與 D 藥費保障。")
+        with col3:
+            st.markdown("### 3️⃣ 第三步：避罰申辦")
+            st.caption("了解遲辦罰款規則與一步步官方申辦途徑。")
 
+    st.markdown("---")
 # 5. System Instructions (AI 提示詞大腦 - 完全保留)
 SYSTEM_INSTRUCTION = """
 You are a warm, highly patient, and empathetic expert Medicare guide named "Medicare Compass".
