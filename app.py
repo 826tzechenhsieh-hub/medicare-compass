@@ -379,8 +379,13 @@ if len(st.session_state.messages) >= 3:
     # 2. Clean 1-Page Summary (Filters out system instructions)
     short_summary_text = "【Medicare Compass - 1-Page Key Takeaways / 1頁重點摘要】\n\n"
     
+    # 嚴格過濾：徹底剔除包含系統設定、彩色地圖、人設 (empathetic) 或內部提示詞的訊息
     user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
-    ai_msgs = [m['content'] for m in st.session_state.messages if (m.get('role') in ['assistant', 'model']) and ('warm patient empathy' not in m.get('content', ''))]
+    ai_msgs = [
+        m['content'] for m in st.session_state.messages 
+        if (m.get('role') in ['assistant', 'model']) 
+        and not any(bad_word in m.get('content', '') for bad_word in ['1-Minute Medicare Map', 'Original Medicare', 'Name: Medicare Compass', 'warm, patient', 'empathetic', 'Core Principles', 'Mission:'])
+    ]
     
     if user_msgs:
         short_summary_text += "📌 MAIN TOPICS DISCUSSED:\n"
