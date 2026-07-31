@@ -9,7 +9,11 @@ st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="cent
 # Senior-friendly typography & Smooth auto-scroll prevention
 st.markdown("""
     <style>
-    html, body, [class*="css"] {
+    /* 清除 Streamlit 頂部預設巨大空白 */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 0rem !important;
+    }html, body, [class*="css"] {
         font-size: 19px !important;
     }
     .stChatMessage {
