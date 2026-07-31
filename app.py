@@ -371,3 +371,12 @@ if len(st.session_state.messages) >= 3:
             file_name="Medicare_Full_Consultation.txt",
             mime="text/plain"
         )
+# 10. Force Scroll to Top on Initial Load / Reboot
+st.markdown("""
+    <script>
+        var body = window.parent.document.querySelector(".main");
+        if (body) {
+            body.scrollTop = 0;
+        }
+    </script>
+""", unsafe_allow_html=True)
