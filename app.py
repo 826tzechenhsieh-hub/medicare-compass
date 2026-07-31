@@ -30,7 +30,7 @@ st.markdown("""
 # 2. Get API Key
 api_key = st.secrets.get("GEMINI_API_KEY", None)
 
-# 3. Sidebar
+# 3. Sidebar (Using plain English labels for IEP & IRMAA)
 with st.sidebar:
     if st.button("🔄 " + ("Reset Conversation" if "English" in st.session_state.get("selected_language", "English") else "重新開始諮詢 (Reset)"), use_container_width=True):
         if "messages" in st.session_state:
@@ -69,20 +69,20 @@ with st.sidebar:
         st.subheader("📍 Step 1: Plan Exploration")
         if st.button("❓ What is Medigap & why need it?"):
             quick_prompt = "Can you explain what Medigap is in simple terms and why Original Medicare alone isn't enough?"
-        if st.button("🩺 Are my doctors covered?"):
-            quick_prompt = "How do I check if my current doctors and prescriptions are covered under Part D or Advantage?"
+        if st.button("🩺 Are my doctors in-network & prescriptions covered?"):
+            quick_prompt = "How do I check if my current doctors are in-network and if my prescriptions are covered under Part D or Advantage?"
 
         st.subheader("📍 Step 2: Timeline & Penalties")
-        if st.button("💼 Working past 65 & Part B?"):
+        if st.button("💼 Working past 65 with employer coverage?"):
             quick_prompt = "I'm turning 65 but still working with employer insurance. Do I need Part B now, and will I face penalties?"
-        if st.button("📅 What is my IEP timeline?"):
-            quick_prompt = "When is my Initial Enrollment Period (IEP), and what happens if I miss it?"
+        if st.button("📅 When is my 7-Month Enrollment Window (IEP)?"):
+            quick_prompt = "Can you explain my 7-month Initial Enrollment Period (IEP) timeline and what happens if I miss it?"
 
         st.subheader("📍 Step 3: Premiums & Financials")
-        if st.button("💵 Part B Cost & Payment?"):
-            quick_prompt = "How much is Part B premium and deductible, and how do I set up payments?"
-        if st.button("📝 What is IRMAA surcharge?"):
-            quick_prompt = "What is the IRMAA Medicare surcharge, and how can I appeal it if my income dropped after retirement?"
+        if st.button("💵 Part B Cost & Automatic Payment?"):
+            quick_prompt = "How much is the Part B premium and deductible, and how do I set up automatic payments?"
+        if st.button("📝 High Income Premium Surcharge (IRMAA)?"):
+            quick_prompt = "What is the IRMAA high-income Medicare surcharge, and how can I appeal it if my income dropped after retirement?"
 
     elif current_lang == "繁體中文":
         st.header("🗺️ 申辦核心指南")
@@ -94,20 +94,20 @@ with st.sidebar:
         st.subheader("📍 第一步：方案探索")
         if st.button("❓ 什麼是 Medigap？為什麼只買紅藍卡不夠？"):
             quick_prompt = "請用最白話的方式告訴我，什麼是 Medigap？為什麼只買 Medicare Original 還不夠？"
-        if st.button("🩺 常看的醫生與慢性病藥物有給付嗎？"):
-            quick_prompt = "如何確認我平時看診的醫生以及在吃的慢性病藥物有沒有在 Medicare 的給付範圍內？"
+        if st.button("🩺 常看的診所與藥物有給付嗎？"):
+            quick_prompt = "如何確認我平時看診的醫生（是否在網絡內 In-network）以及在吃的慢性病藥物有沒有在給付範圍內？"
 
         st.subheader("📍 第二步：時間軸與避開罰款")
         if st.button("💼 65歲還在工作有公司保險，要辦 Part B 嗎？"):
             quick_prompt = "我今年 65 歲但還在公司全職工作，公司有提供醫療保險，我需要現在申請 Part B 嗎？會不會有罰款？"
-        if st.button("📅 我的黃金申辦期 (IEP) 是什麼時候？"):
-            quick_prompt = "請幫我算算我的 Initial Enrollment Period (IEP) 黃金申辦期是哪幾個月？錯過會有罰款嗎？"
+        if st.button("📅 什麼是 7 個月黃金申辦期 (IEP)？"):
+            quick_prompt = "請幫我解釋 Initial Enrollment Period (IEP) 7 個月申辦黃金期是什麼時候？錯過會有罰款嗎？"
 
         st.subheader("📍 第三步：保費與費用調降")
-        if st.button("💵 Part B 保費多少？如何繳費？"):
+        if st.button("💵 Part B 保費多少？如何設定自動繳費？"):
             quick_prompt = "Part B 的每月保費與每年 Deductible (自付額) 是多少？該如何設定自動繳費？"
-        if st.button("📝 什麼是 IRMAA 附加費？如何申請調降？"):
-            quick_prompt = "請解釋什麼是 IRMAA 保費附加費？如果我退休後收入變少，可以申請調降嗎？"
+        if st.button("📝 什麼是高收入附加費 (IRMAA)？如何調降？"):
+            quick_prompt = "請解釋什麼是 IRMAA 高收入保費附加費？如果我退休後收入變少，可以申請調降嗎？"
 
     else:
         st.header("🗺️ 3-Step Navigation")
@@ -163,7 +163,7 @@ Your mission is to guide first-time applicants, turning 65 seniors, and families
 5. Language Matching: Respond fluently in the selected language.
 """
 
-# 6. Greeting Initialization (With Clear Overview Map)
+# 6. Greeting Initialization (With Clear Overview Map & Universal Quick Prompts)
 if current_lang == "English":
     welcome_msg = """Hello and welcome! I am your **Medicare Compass** guide. 
 
@@ -201,16 +201,16 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Quick Start Options
+# Universal Quick Start Options (No longer assuming NY or age 65!)
 if len(st.session_state.messages) == 1:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
     col_start1, col_start2 = st.columns(2)
     with col_start1:
         if st.button("👴 " + ("I'm applying for myself" if current_lang == "English" else "我是長者本人（開始 3 步驟導覽）")):
-            quick_prompt = "Hello! I am applying for myself. I turn 65 this year and live in NY. Please guide me through Step 1." if current_lang == "English" else "您好！我是長者本人，準備開始了解 Medicare 申辦流程。我住在紐約州，今年剛滿 65 歲。"
+            quick_prompt = "Hello! I am applying for myself and would like to start Step 1: Plan Exploration. Please guide me on what details you need!" if current_lang == "English" else "您好！我是長者本人，準備開始了解 Medicare 申辦流程。請引導我展開第一步！"
     with col_start2:
         if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（查看快速對照清單）")):
-            quick_prompt = "I am helping my elderly parents with Medicare. Please provide a clear checklist of deadlines and options." if current_lang == "English" else "我是幫家中長輩查詢 Medicare 的子女。請給我一份清晰、結構化的清單，告訴我幫父母申辦時最需要注意的核心選項與時間軸限制！"
+            quick_prompt = "Hello! I am helping my parents explore Medicare options. Please provide a clear breakdown of where we should begin." if current_lang == "English" else "您好！我是幫家中長輩查詢 Medicare 的子女，請告訴我幫父母申辦時最需要注意的第一步！"
 
 # Quick Cards during conversation
 if len(st.session_state.messages) > 1:
@@ -236,7 +236,7 @@ else:
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
 
-# 8. Execution Logic with Failover Model Loading
+# 8. Execution Logic with Safe Model Loading (Resolves 404 & Quota issues)
 if prompt or uploaded_file:
     if not api_key:
         st.error("Please set API Key in sidebar.")
@@ -245,14 +245,14 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # Smart Model Fallback to guarantee no 404 (Prioritizes 1.5-flash for free quotas)
+            # Robust model fallback sequence
             try:
                 model = genai.GenerativeModel("gemini-1.5-flash", system_instruction=SYSTEM_INSTRUCTION)
             except Exception:
                 try:
                     model = genai.GenerativeModel("gemini-2.0-flash", system_instruction=SYSTEM_INSTRUCTION)
                 except Exception:
-                    model = genai.GenerativeModel("gemini-1.5-pro", system_instruction=SYSTEM_INSTRUCTION)
+                    model = genai.GenerativeModel("gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
             
             user_content = prompt if prompt else "Please analyze this uploaded document."
             
