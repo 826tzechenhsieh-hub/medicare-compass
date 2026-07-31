@@ -245,7 +245,17 @@ if prompt or uploaded_file:
             clean_key = str(api_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            model = genai.GenerativeModel("gemini-pro", system_instruction=SYSTEM_INSTRUCTION)
+            # 自動抓取當前 API Key 支援的第一個 generateContent 模型
+            working_model_name = "gemini-1.5-flash"
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        working_model_name = m.name
+                        break
+            except Exception:
+                pass
+
+            model = genai.GenerativeModel(working_model_name, system_instruction=SYSTEM_INSTRUCTION)
             
             user_content = prompt if prompt else "Please analyze this uploaded document."
             
