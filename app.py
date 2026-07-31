@@ -83,8 +83,11 @@ def generate_response_with_fallback(prompt_input, image_data=None, system_instru
 # 3. Sidebar Setup
 # -------------------------------------------------------------------
 with st.sidebar:
+    # 預先獲取當前語言 setting (避免 NameError)
+    user_lang = st.session_state.get("selected_language", "English")
+
     # 1. 置頂品牌大標題 (方案 A) 與宗旨 Banner
-    if current_lang in ["English", "Español", "한국어"]:
+    if user_lang in ["English", "Español", "한국어"]:
         st.markdown("# 🧭 Medicare Compass™")
         st.caption("##### *powered by Care Compass™*")
         st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
