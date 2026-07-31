@@ -64,7 +64,6 @@ def generate_clean_response(user_input, img_data=None):
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 動態查詢可用的最新模型
             valid_models = []
             try:
                 for m in genai.list_models():
@@ -81,8 +80,19 @@ def generate_clean_response(user_input, img_data=None):
                     model = genai.GenerativeModel(m_name)
                     
                     system_context = [
-                        {"role": "user", "parts": ["You are Medicare Compass, a warm, concise Medicare advisor. Speak directly to the senior. Never output thinking process, goals, constraints, or lists of instructions. Always follow Step 1 (ask birth date/state -> calculate IEP), Step 2 (compare coverage), Step 3 (application steps)."]},
-                        {"role": "model", "parts": ["Understood. I am Medicare Compass. I will assist warmly and directly without any internal notes."]}
+                        {"role": "user", "parts": ["""You are Medicare Compass, a warm, concise Medicare advisor.
+Speak directly to the senior. Never output thinking process, goals, or constraints.
+
+[CRITICAL IEP CALCULATION RULES]
+1. Initial Enrollment Period (IEP) ALWAYS lasts for exactly 7 MONTHS (3 months BEFORE birth month, birth month, and 3 months AFTER birth month when turning 65).
+2. Calculate turning 65 year correctly: Birth Year + 65. (e.g. Born Aug 1961 -> Turns 65 in Aug 2026 -> IEP: May 1, 2026 to Nov 30, 2026).
+3. If birth year provided is in the future or recent years (e.g. 2026), kindly ask user to clarify their actual birth year (e.g. 1961).
+
+[STRICT STEP 1 TRANSITION GATE]
+After calculating the IEP window, STOP IMMEDIATELY and ask ONLY:
+'Before we move on to Step 2: Comparing Coverage Options, do you have any questions about your timing or enrollment window?'
+DO NOT ask about Part A/B/C/D or jump into Step 2 options until user confirms!"""]},
+                        {"role": "model", "parts": ["Understood. I will strictly calculate IEP as a 7-month window (3 months before, birth month, 3 months after) and stop to ask for confirmation before introducing Step 2."]}
                     ]
                     
                     for m in st.session_state.messages[:-1]:
@@ -107,12 +117,11 @@ def generate_clean_response(user_input, img_data=None):
         raise last_exception
 
 # -------------------------------------------------------------------
-# 3. Sidebar Setup (完整的隱私、法律免責、文件上傳與按鈕配置)
+# 3. Sidebar Setup
 # -------------------------------------------------------------------
 with st.sidebar:
     user_lang = st.session_state.get("selected_language", "English")
 
-    # 1. 品牌標題與宗旨 Banner
     if user_lang in ["English", "Español", "한국어"]:
         st.markdown("# 🧭 Medicare Compass™")
         st.caption("##### *powered by Care Compass™*")
@@ -124,7 +133,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 2. 語言選擇器
     st.header("🌐 Language / 語言設定")
     current_lang = st.radio(
         "Select Language / 選擇語言:",
@@ -135,16 +143,14 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 3. 官方安全警告與 API Key 設定
     st.markdown("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
     if not primary_key:
         primary_key = st.text_input("Gemini API Key:", type="password")
 
     st.markdown("---")
 
-    # 4. 輔助文件/照片上傳區塊 (Document / Notice Upload)
     upload_label = "📎 Upload Document / Photo (Optional):" if current_lang in ["English", "Español", "한국어"] else "📎 上傳信件或保單照片（選填）："
-    uploaded_file = st.file_input_container = st.file_uploader(upload_label, type=["png", "jpg", "jpeg", "pdf"])
+    uploaded_file = st.file_uploader(upload_label, type=["png", "jpg", "jpeg", "pdf"])
     img_data = None
     if uploaded_file:
         try:
@@ -155,7 +161,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 5. 完整法律條款、隱私承諾與實時更新免責聲明
     if current_lang in ["English", "Español", "한국어"]:
         st.caption("""
 🔒 **Privacy Commitment & Zero Retention**:
@@ -181,12 +186,10 @@ Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具�
 
     st.markdown("---")
 
-    # 6. 生成摘要按鈕 (放在 Reset 的上方)
     summary_btn_label = "📋 Generate / Update Summary" if current_lang in ["English", "Español", "한국어"] else "📋 生成 / 更新諮詢總結"
     if st.button(summary_btn_label, use_container_width=True, type="primary"):
         st.session_state.show_summary = True
 
-    # 7. 重置對話按鈕
     reset_label = "🔄 Reset Conversation" if current_lang in ["English", "Español", "한국어"] else "🔄 重新開始諮詢"
     if st.button(reset_label, use_container_width=True):
         st.session_state.messages = []
@@ -208,7 +211,6 @@ with top_container:
 
     st.markdown("---")
 
-    # 3 Steps Card Layout
     if current_lang in ["English", "Español", "한국어"]:
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -234,7 +236,6 @@ with top_container:
 
     st.markdown("---")
 
-    # 1-Minute Medicare Map
     with st.expander("🗺️ **1-Minute Medicare Map (一分鐘醫保地圖對照)**", expanded=True):
         if current_lang == "English":
             st.markdown("""
@@ -262,12 +263,10 @@ if "messages" not in st.session_state:
 if "show_summary" not in st.session_state:
     st.session_state.show_summary = False
 
-# 顯示對話歷史
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Quick Start Options (對話前顯示)
 quick_prompt = None
 if len(st.session_state.messages) == 0:
     st.caption("💡 " + ("Quick start options:" if current_lang in ["English", "Español", "한국어"] else "您也可以直接點選以下身分快速開始："))
@@ -279,7 +278,6 @@ if len(st.session_state.messages) == 0:
         if st.button("👨‍👩‍👧 " + ("I'm helping my parents" if current_lang == "English" else "我是幫父母查詢的子女（開始 Step 1）")):
             quick_prompt = "Hello! I am helping my parents start Step 1: When. What information do you need?" if current_lang == "English" else "您好！我是幫長輩查詢的子女，請引導我們開始 Step 1！"
 
-# Input Bar
 has_user_replied = len(st.session_state.messages) > 0
 input_placeholder = "🎙️ Type your birth month/year and state here..." if not has_user_replied else "🎙️ Speak or type your reply here..."
 input_prompt = st.chat_input(input_placeholder)
@@ -311,7 +309,7 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary Section (點擊左側按鈕後在最下層展開)
+# 7. Consultation Summary Section
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
