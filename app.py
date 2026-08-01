@@ -465,53 +465,84 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary & Official Portals
+# 7. Consultation Summary & Official Portals (美化版排版：优雅间距与卡片化)
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
-    st.header("📋 Consultation Summary & Official Portals")
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare 评估总结与官方通道</h2>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    # 嵌入中立的 SHIP 官方中立辅导入口，权威度最大化
-    st.info("🏛️ **Official Application Portals & Free Assistance / 官方申办与免费中立辅导**: \n\n"
-            "• **Social Security Administration (SSA)**: [Apply for Medicare Part A & B Online](https://www.ssa.gov/medicare) \n"
-            "• **Official Medicare Portal**: [Create / Sign in to Medicare.gov](https://www.medicare.gov) \n"
-            "• **Free Official Local Counseling (SHIP)**: [Find Free 1-on-1 Local Counseling at ShipHelp.org](https://www.shiphelp.org)")
+    # 官方通道卡片：加宽间距与优雅外框
+    st.markdown("""
+        <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
+            <h4 style='margin-top:0; color: #1E40AF;'>🏛️ 官方申办入口与免费中立辅导</h4>
+            <ul style='line-height: 1.8; font-size: 18px;'>
+                <li><b>Social Security Administration (SSA)</b>: <a href='https://www.ssa.gov/medicare' target='_blank'>在线申请 Medicare Part A & B 官方通道</a></li>
+                <li><b>Official Medicare Portal</b>: <a href='https://www.medicare.gov' target='_blank'>Medicare.gov 官网账户与选 Plan 入口</a></li>
+                <li><b>Free Local Counseling (SHIP)</b>: <a href='https://www.shiphelp.org' target='_blank'>查找您所在州的 SHIP 1对1 免费中立辅导</a></li>
+            </ul>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # 提取对话
+    user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
+    ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
+
+    # 构建漂亮的可读 HTML 摘要（带间距与高亮卡片）
+    pretty_summary_html = "<div style='background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
+    
+    if user_msgs:
+        pretty_summary_html += "<h4 style='color: #0F172A; margin-top:0;'>📌 您的核心背景与需求：</h4><ul>"
+        for u in user_msgs:
+            pretty_summary_html += f"<li style='margin-bottom: 8px;'>{u}</li>"
+        pretty_summary_html += "</ul><hr style='border: none; border-top: 1px solid #CBD5E1; margin: 20px 0;'>"
+
+    if ai_msgs:
+        pretty_summary_html += "<h4 style='color: #0F172A;'>💡 Advisor 避坑建议与方案总结：</h4>"
+        # 替换换行符以保持优雅间距
+        formatted_last_ai = ai_msgs[-1].replace('\n', '<br>')
+        pretty_summary_html += f"<div style='background-color: #FFFFFF; padding: 18px; border-radius: 8px; border: 1px solid #E2E8F0;'>{formatted_last_ai}</div>"
+    
+    pretty_summary_html += "</div>"
+
+    # 生成下载和邮件用的纯文本
+    short_summary_text = "【Medicare Compass - Summary】\n\n"
+    if user_msgs:
+        short_summary_text += "📌 KEY USER INPUTS:\n"
+        for u in user_msgs:
+            short_summary_text += f"- {u}\n"
+        short_summary_text += "\n"
+    if ai_msgs:
+        short_summary_text += f"💡 LATEST ADVICE:\n{ai_msgs[-1]}\n"
 
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
         role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
         full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-"*40 + "\n\n"
 
-    short_summary_text = "【Medicare Compass - Summary】\n\n"
-    user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
-    ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
-
-    if user_msgs:
-        short_summary_text += "📌 KEY USER INPUTS:\n"
-        for u in user_msgs:
-            short_summary_text += f"- {u}\n"
-        short_summary_text += "\n"
-
-    if ai_msgs:
-        short_summary_text += f"💡 LATEST ADVICE:\n{ai_msgs[-1]}\n"
-
     email_subject = urllib.parse.quote("My Medicare Compass Summary")
     email_body = urllib.parse.quote(short_summary_text)
     mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
 
-    tab1, tab2 = st.tabs(["⚡ 1-Page Summary", "📄 Full Log"])
+    # Tabs 标签页
+    tab1, tab2 = st.tabs(["⚡ 1-Page Summary (精简卡片)", "📄 Full Conversation Log (完整记录)"])
 
     with tab1:
-        st.text_area("Preview:", value=short_summary_text, height=200, key="summary_preview_area")
+        st.markdown("<br>", unsafe_allow_html=True)
+        # 用优雅的 Rich Text 卡片渲染替代原来的黑框 Text Area
+        st.markdown(pretty_summary_html, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         col1, col2 = st.columns(2)
         with col1:
-            st.download_button("📥 Download 1-Page Summary (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
+            st.download_button("📥 下载 1页精简总结 (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
         with col2:
-            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:42px; border-radius:8px; background-color:#0066cc; color:white; border:none; cursor:pointer; font-size:16px;">✉️ Send to My Email</button></a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:45px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">✉️ 发送到我的邮箱</button></a>', unsafe_allow_html=True)
 
     with tab2:
-        st.text_area("Full Conversation Log:", value=full_log_text, height=260, key="full_log_area")
-        st.download_button("📥 Download Full Log (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.text_area("完整对话记录 (Full Log):", value=full_log_text, height=300, key="full_log_area")
+        st.download_button("📥 下载完整对话记录 (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
 
 # Auto-scroll control
 st.markdown("""
