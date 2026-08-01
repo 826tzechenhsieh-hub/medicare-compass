@@ -56,45 +56,40 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 超强力外科手术截断函数：100% 砍掉思考日志，只保留给用户的最终回答
+# 强力彻底清洗器：绝对剥离所有思考日志与推演过程
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 寻找最终回答的强特征起始点（截断前面所有推演日志）
-    final_markers = [
-        "Your Initial Enrollment Period", "Start Date:", "End Date:", 
-        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", 
-        "To help me tailor", "To help me guide you", "Based on your birth date"
+    # 寻找真正的正文起始特征标志（从后往前找最接近最终回答的位置）
+    markers = [
+        "Option 1:", "Option 1 :", " Based on your preference", 
+        "Based on your preference", "Hello!", "您好", "你好", 
+        "Your Initial Enrollment Period", "Start Date:"
     ]
     
-    # 如果包含最终回答标志，从最后一次出现的地方或者核心位置截断
-    for marker in final_markers:
+    for marker in markers:
         if marker in raw_text:
             idx = raw_text.rfind(marker)
-            # 截取最终回答部分
-            tail_part = raw_text[idx:].strip()
-            
-            # 如果截取到的部分足够长且不含 System/User 指令，直接返回
-            if len(tail_part) > 15 and not any(bad in tail_part for bad in ["User DOB:", "Age Math:", "Constraint:"]):
-                return tail_part
+            clean_part = raw_text[idx:].strip()
+            # 确保提取出的正文不包含思考词汇
+            if len(clean_part) > 20 and not any(bad in clean_part for bad in ["Drafting Response:", "Self-Correction", "Does this meet"]):
+                return clean_part
 
-    # 保险清理：按行过滤
+    # 兜底：按行切割过滤
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
-        "User DOB:", "State:", "Age Math:", "IEP Calculation:", "Constraint:", 
-        "User's IEP Window:", "Status:", "Next step:", "Output only", "Concise bullets", 
-        "No drafts", "Draft 1", "Refining", "Goal:", "Action:", "User wants"
+        "User:", "DOB:", "Needs:", "Scenario:", "Knowledge to embed:", 
+        "Option 1: Medicare Advantage", "Option 2: Original Medicare", 
+        "Keep it warm", "Directly address", "Self-Correction", "Drafting Response:", 
+        "Does this meet", "Accurate?", "No wall of text?", "Professional/Warm?"
     ]
     
     for line in lines:
         stripped = line.strip()
         if any(bad.lower() in stripped.lower() for bad in bad_keywords):
             continue
-        if stripped.startswith('o ') or stripped.startswith('▪ '):
-            if any(bad.lower() in stripped.lower() for bad in bad_keywords):
-                continue
         clean_lines.append(line)
         
     final_text = "\n".join(clean_lines).strip()
@@ -120,15 +115,12 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 CRITICAL TIME ANCHOR: CURRENT DATE IS AUGUST 2026.
 
 STRICT OUTPUT RULES:
-1. OUTPUT ONLY THE FINAL DIRECT RESPONSE TO THE USER. NEVER WRITE DRAFTS, THOUGHTS, OR CHECKLISTS.
-2. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
-3. ACCURATE AGE MATH: Current date is August 2026. Born in Oct 1961 = Turns 65 in October 2026. IEP is July 2026 to January 2027.
+1. NEVER WRITE DRAFTS, THOUGHTS, DRAFTING PROCESS, OR CHECKLISTS.
+2. OUTPUT ONLY THE FINAL DIRECT CONVERSATIONAL RESPONSE TO THE USER.
+3. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
 
-SUPPORTED SCENARIOS:
-- If user provides DOB + State: Calculate IEP window (3 months before birth month to 3 months after in 2026) and ask about health/lifestyle needs.
-- If user asks follow-up questions (e.g., "what is my IEP"): Answer directly with concise dates (Start Date / End Date) without repeating internal calculations.
-
-EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
+EXPERT KNOWLEDGE TO EMBED CONCISELY:
+- Supplement (Medigap) Scope: Clarify that Medigap covers Part B's 20% medical gap, but DOES NOT cover standalone prescription drugs (needs Part D) or routine dental/vision unless specified.
 - Rehab/SNF Denial: Advantage (Part C) Prior Auth often DENIES coverage after 20-30 days in Rehab.
 - Durable Medical Equipment (DME): Doctors must write prescription BEFORE hospital discharge.
 - ER & Ambulance: Part B covers 80% for medically necessary emergencies only.
@@ -462,9 +454,13 @@ if prompt or uploaded_file:
     with st.chat_message("assistant"):
         with st.spinner("Medicare Compass is working..."):
             try:
+                # 传入 AI 生成纯净回答
                 clean_text = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
-                st.markdown(clean_text)
-                st.session_state.messages.append({"role": "assistant", "content": clean_text})
+                # 再次做一次保洁确保没有残余
+                sanitized_text = sanitize_ai_output(clean_text, target_lang=current_lang)
+                st.markdown(sanitized_text)
+                # 存入对话历史的必须是清洗干净的文字！
+                st.session_state.messages.append({"role": "assistant", "content": sanitized_text})
                 st.rerun()
             except Exception as e:
                 st.error(f"Notice: {e}")
