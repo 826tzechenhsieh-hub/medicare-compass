@@ -56,33 +56,34 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 超強力終極外科手術截斷函數（徹底杜絕 System Instruction 與 CoT 洩漏）
+# 终极外科手术截断函数：100% 砍掉 *Final Polish:* / *Review against rules:* 等所有思考日志
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 特徵標題清單：從後往前尋找真正的正文開頭
+    # 寻找真正给用户的正文起始标志（优先寻找最靠后的正文开头）
     content_anchors = [
-        "That sounds like", "Actionable Steps", "How to Apply:", "Where to Apply:",
-        "Annual Premiums:", "Two Critical Warnings:", "Summary Strategy:", 
-        "Option 1:", "Option 2:", "Step 3:", "Step 1:", "Hello!", "您好", "你好"
+        "Hello!", "In New Jersey", "In California", "In Virginia",
+        "Path 1:", "Path 2:", "Option 1:", "Option 2:", 
+        "Actionable Steps", "How to Apply:", "Where to Apply:",
+        "您好", "你好", "¡Hola", "안녕하세요"
     ]
     
     for anchor in content_anchors:
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            if len(candidate) > 15 and not any(bad in candidate for bad in ["* User's goal:", "* Constraint:", "* Instruction:", "Drafting Response:"]):
+            # 确保截取出来的段落不包含草稿推演词汇
+            if len(candidate) > 15 and not any(bad in candidate for bad in ["*Review against rules:*", "*Final Polish:*", "*Correction on", "*Final Content Construction:*"]):
                 return candidate
 
-    # 逐行強力過濾：直接砍掉所有思考日誌特徵行
+    # 兜底：如果找不到标志，按行切割，删除所有带有星号草稿特征的行
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
-        "User's goal:", "Constraint:", "Instruction:", "Acknowledge", "Transition:", 
-        "Closing:", "Concise bullet points?", "No wall of text?", "No drafts", 
-        "Step 3 transition?", "Warm/Concise?", "Components of the estimate:", 
-        "User wants", "User is helping", "Headline:", "Bullet Points:", "Crucial Advice:"
+        "*Review against rules:*", "*Final Polish:*", "*Correction on", "*Final Content Construction:*",
+        "*Ready.*", "*One more check:*", "*Constraint Check:*", "*Final check on rules:*",
+        "User's goal:", "Constraint:", "Instruction:", "Concise bullet points?", "No drafts"
     ]
     
     for line in lines:
