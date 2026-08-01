@@ -362,80 +362,78 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. Message History & Improved Quick Start Buttons
+# 5. Message History & Streamlined Sequence (先选身份/或直接输入，不空跑 AI)
 # -------------------------------------------------------------------
+if "user_role_type" not in st.session_state:
+    st.session_state.user_role_type = "self"  # 默认身份：本人
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "show_summary" not in st.session_state:
     st.session_state.show_summary = False
 
+# 渲染对话历史
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-quick_prompt = None
+# 仅在尚未开始对话时，显示身份选择卡片
 if len(st.session_state.messages) == 0:
     q_caption_map = {
-        "English": "💡 **Quick Start**: Please select your scenario, then enter your **Birth Month/Year & State** below:",
-        "Español": "💡 **Inicio rápido**: Seleccione su situación e ingrese su **Mes/Año de nacimiento y Estado** abajo:",
-        "한국어": "💡 **빠른 시작**: 신분을 선택한 후, 아래 입력창에 **출생 월/년 및 거주 주**를 입력하세요:",
-        "簡體中文": "💡 **快速开始**：请选择您的查询身份，并直接在下方输入框填写**“出生年月与居住州”**：",
-        "繁體中文": "💡 **快速開始**：請選擇您的查詢身分，並直接在下方輸入框填寫**「出生年月與居住州」**："
+        "English": "💡 **Step 1 Quick Start**: Choose who you are inquiring for, then enter details below:",
+        "Español": "💡 **Paso 1 Inicio rápido**: Elija para quién consulta e ingrese los datos abajo:",
+        "한국어": "💡 **1단계 빠른 시작**: 신청 대상을 선택한 후, 아래에 정보를 입력하세요:",
+        "簡體中文": "💡 **Step 1 快速开始**：请先选择查询身份，并在下方输入**出生年月与居住州**：",
+        "繁體中文": "💡 **Step 1 快速開始**：請先選擇查詢身分，並在下方輸入**出生年月與居住州**："
     }
     st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
     
     col_start1, col_start2 = st.columns(2)
     with col_start1:
-        btn1_map = {
-            "English": "👴 Applying for Myself",
-            "Español": "👴 Solicitando para mí",
-            "한국어": "👴 본인 신청",
-            "簡體中文": "👴 我是长者本人",
-            "繁體中文": "👴 我是長者本人"
-        }
-        if st.button(btn1_map.get(current_lang, "👴 Myself")):
-            p1_map = {
-                "English": "Hello! I am applying for myself. Please share your birth month/year and state of residency in the box below to start Step 1!",
-                "Español": "¡Hola! Estoy solicitando para mí. ¡Ingrese su mes/año de nacimiento y estado abajo para comenzar!",
-                "한국어": "안녕하세요! 본인 신청입니다. 아래 입력창에 출생 월/년 및 거주 주를 입력해주세요!",
-                "簡體中文": "您好！我是长者本人。请直接在下方输入框提供您的出生年月与居住州，我们立刻开始 Step 1 评估！",
-                "繁體中文": "您好！我是長者本人。請直接在下方輸入框提供您的出生年月與居住州，我們立刻開始 Step 1 評估！"
-            }
-            quick_prompt = p1_map.get(current_lang)
+        btn1_label = "👴 " + ("Applying for Myself" if current_lang == "English" else "我是长者本人" if current_lang == "簡體中文" else "我是長者本人" if current_lang == "繁體中文" else "Solicitando para mí" if current_lang == "Español" else "본인 신청")
+        # 点按仅切换身份状态，不触发 AI 运行！
+        btn_type1 = "primary" if st.session_state.user_role_type == "self" else "secondary"
+        if st.button(btn1_label, use_container_width=True, type=btn_type1):
+            st.session_state.user_role_type = "self"
+            st.rerun()
 
     with col_start2:
-        btn2_map = {
-            "English": "👨‍👩‍👧 Helping Family / Parents",
-            "Español": "👨‍👩‍👧 Ayudando a mi familia",
-            "한국어": "👨‍👩‍👧 부모님/가족 도와드리기",
-            "簡體中文": "👨‍👩‍👧 我是帮家人/父母查询",
-            "繁體中文": "👨‍👩‍👧 我是幫家人/父母查詢"
-        }
-        if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Helping Family")):
-            p2_map = {
-                "English": "Hello! I am helping my family member. Please share their birth month/year and state of residency in the box below to start Step 1!",
-                "Español": "¡Hola! Estoy ayudando a un familiar. ¡Ingrese su mes/año de nacimiento y estado abajo!",
-                "한국어": "안녕하세요! 가족을 도와주는 중입니다. 아래 입력창에 가족의 출생 월/년 및 거주 주를 입력해주세요!",
-                "簡體中文": "您好！我是帮家人查询。请直接在下方输入框提供长辈的出生年月与居住州，我们立刻开始 Step 1！",
-                "繁體中文": "您好！我是幫家人查詢。請直接在下方輸入框提供長輩的出生年月與居住州，我們立刻開始 Step 1！"
-            }
-            quick_prompt = p2_map.get(current_lang)
+        btn2_label = "👨‍👩‍👧 " + ("Helping Family / Parents" if current_lang == "English" else "我是帮家人/父母" if current_lang == "簡體中文" else "我是幫家人/父母" if current_lang == "繁體中文" else "Ayudando a mi familia" if current_lang == "Español" else "가족 도와드리기")
+        btn_type2 = "primary" if st.session_state.user_role_type == "family" else "secondary"
+        if st.button(btn2_label, use_container_width=True, type=btn_type2):
+            st.session_state.user_role_type = "family"
+            st.rerun()
 
+# 根据选中的身份，动态更新输入框的 Placeholder
 has_user_replied = len(st.session_state.messages) > 0
-if current_lang == "English":
-    input_placeholder = "🎙️ Enter Birth Month/Year & State (e.g., 10/1961, VA)..." if not has_user_replied else "🎙️ Type your reply here..."
-elif current_lang == "Español":
-    input_placeholder = "🎙️ Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)..."
-elif current_lang == "한국어":
-    input_placeholder = "🎙️ 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)..."
-elif current_lang == "簡體中文":
-    input_placeholder = "🎙️ 请输入出生年月与居住州（例如：10/1961, VA）..."
-else:
-    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：10/1961, VA）..."
 
-input_prompt = st.chat_input(input_placeholder)
-prompt = quick_prompt if quick_prompt else input_prompt
+if st.session_state.user_role_type == "self":
+    ph_map = {
+        "English": "🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA)...",
+        "Español": "🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)...",
+        "한국어": "🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
+        "簡體中文": "🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）...",
+        "繁體中文": "🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）..."
+    }
+else:
+    ph_map = {
+        "English": "🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA)...",
+        "Español": "🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar...",
+        "한국어": "🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
+        "簡體中文": "🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）...",
+        "繁體中文": "🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）..."
+    }
+
+input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 请输入您的回复...")
+prompt = st.chat_input(input_placeholder)
+
+# 在用户真正提交文本时，把选中的“身份前缀”自动拼接到 prompt 中传给 AI
+if prompt:
+    role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
+    full_prompt = role_prefix + prompt
+else:
+    full_prompt = None
 
 # -------------------------------------------------------------------
 # 6. Response Execution
