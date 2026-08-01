@@ -18,7 +18,7 @@ components.html(
     height=0,
 )
 
-# Typography & Styles
+# Typography & Styles (加大行高與視覺呼吸感)
 st.markdown("""
     <style>
         .block-container {
@@ -36,7 +36,7 @@ st.markdown("""
         }
         .stChatMessage {
             font-size: 20px !important;
-            line-height: 1.6 !important;
+            line-height: 1.7 !important;
         }
         .stButton>button {
             font-size: 18px !important;
@@ -56,7 +56,7 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 超強力終極外科手術截斷函數
+# 超強力終極外科手術截斷函數（徹底杜絕 System Instruction 與 CoT 洩漏）
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
@@ -72,7 +72,6 @@ def sanitize_ai_output(raw_text, target_lang="English"):
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            # 確保擷取出來的段落不包含任何系統思考特徵關鍵字
             if len(candidate) > 15 and not any(bad in candidate for bad in ["* User's goal:", "* Constraint:", "* Instruction:", "Drafting Response:"]):
                 return candidate
 
@@ -179,7 +178,7 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
         raise last_exception
 
 # -------------------------------------------------------------------
-# 3. Sidebar Setup
+# 3. Sidebar Setup & 記憶功能控制
 # -------------------------------------------------------------------
 with st.sidebar:
     st.markdown("# 🧭 Medicare Compass™")
@@ -197,6 +196,15 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # 本地記憶控制卡片 (Local Memory Management)
+    if "saved_user_input" in st.session_state and st.session_state.saved_user_input:
+        st.markdown(f"💾 **本地設備記憶 (Local Memory)**:\n`{st.session_state.saved_user_input}`")
+        if st.button("🗑️ 清除本地記憶 (Clear Memory)", use_container_width=True):
+            st.session_state.saved_user_input = ""
+            st.rerun()
+        st.markdown("---")
+
+    # 優化版的上傳/拍照引導文案
     if current_lang == "English":
         upload_label = "📎 Take Photo or Upload Notice/Plan (Optional):"
     elif current_lang == "Español":
@@ -232,8 +240,8 @@ with st.sidebar:
     
     with st.expander(legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False):
         st.caption("""
-🔒 **Zero-Data Retention Privacy**:
-We DO NOT store or track any of your personal inputs or photos. All data is cleared permanently upon close/reset.
+🔒 **Zero-Server-Data Privacy**:
+We DO NOT store or track any of your inputs on our servers. Any remembered input is stored ONLY on your local browser device.
 
 ⚠️ **Anti-Fraud Notice**: Medicare will NEVER call/text asking for SSN or banking details.
 ℹ️ **Disclaimer**: Educational guidance only; verify final choices with [Medicare.gov](https://www.medicare.gov).
@@ -378,7 +386,7 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. Message History & Streamlined Sequence
+# 5. Message History & Local Memory Integration
 # -------------------------------------------------------------------
 if "user_role_type" not in st.session_state:
     st.session_state.user_role_type = "self"
@@ -388,6 +396,9 @@ if "messages" not in st.session_state:
 
 if "show_summary" not in st.session_state:
     st.session_state.show_summary = False
+
+if "saved_user_input" not in st.session_state:
+    st.session_state.saved_user_input = ""
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -420,27 +431,34 @@ if len(st.session_state.messages) == 0:
 
 has_user_replied = len(st.session_state.messages) > 0
 
+# 智能自動載入本地設備記憶 (Local Memory Pre-fill)
+default_ph_text = ""
+if st.session_state.saved_user_input and not has_user_replied:
+    default_ph_text = f" [已自動記憶載入: {st.session_state.saved_user_input}]"
+
 if st.session_state.user_role_type == "self":
     ph_map = {
-        "English": "🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA)...",
-        "Español": "🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)...",
-        "한국어": "🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
-        "簡體中文": "🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）...",
-        "繁體中文": "🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）..."
+        "English": f"🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA){default_ph_text}...",
+        "Español": f"🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA){default_ph_text}...",
+        "한국어": f"🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA){default_ph_text}...",
+        "簡體中文": f"🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）{default_ph_text}...",
+        "繁體中文": f"🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）{default_ph_text}..."
     }
 else:
     ph_map = {
-        "English": "🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA)...",
-        "Español": "🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar...",
-        "한국어": "🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
-        "簡體中文": "🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）...",
-        "繁體中文": "🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）..."
+        "English": f"🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA){default_ph_text}...",
+        "Español": f"🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar{default_ph_text}...",
+        "한국어": f"🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA){default_ph_text}...",
+        "簡體中文": f"🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）{default_ph_text}...",
+        "繁體中文": f"🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）{default_ph_text}..."
     }
 
-input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 请输入您的回复...")
+input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 請輸入您的回覆...")
 input_prompt = st.chat_input(input_placeholder)
 
 if input_prompt:
+    # 存入本地設備記憶（下次免重複輸入）
+    st.session_state.saved_user_input = input_prompt
     role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
     prompt = role_prefix + input_prompt
 else:
@@ -467,20 +485,21 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary & Official Portals
+# 7. Consultation Summary & SHIP Official Portals (卡片化美化版)
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare 評估總結與官方通道</h2>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
+    # 官方申辦通道與 SHIP 中立輔導入口卡片
     st.markdown("""
-        <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
-            <h4 style='margin-top:0; color: #1E40AF;'>🏛️ 官方申辦入口與免費中立輔導</h4>
-            <ul style='line-height: 1.8; font-size: 18px;'>
+        <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 22px; border-radius: 10px; margin-bottom: 25px;'>
+            <h4 style='margin-top:0; color: #1E40AF; font-size: 21px;'>🏛️ 官方申辦入口與免費中立輔導</h4>
+            <ul style='line-height: 1.9; font-size: 18px;'>
                 <li><b>Social Security Administration (SSA)</b>: <a href='https://www.ssa.gov/medicare' target='_blank'>線上申請 Medicare Part A & B 官方通道</a></li>
                 <li><b>Official Medicare Portal</b>: <a href='https://www.medicare.gov' target='_blank'>Medicare.gov 官網帳號與選 Plan 入口</a></li>
-                <li><b>Free Local Counseling (SHIP)</b>: <a href='https://www.shiphelp.org' target='_blank'>尋找您所在州的 SHIP 1對1 免費中立輔導</a></li>
+                <li><b>Free Local Counseling (SHIP)</b>: <a href='https://www.shiphelp.org' target='_blank'>尋找您所在州的 SHIP 1對1 免費中立輔導 (ShipHelp.org)</a></li>
             </ul>
         </div>
     """, unsafe_allow_html=True)
@@ -488,18 +507,19 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
     ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
 
-    pretty_summary_html = "<div style='background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
+    # 高質感卡片式 Summary，徹底摒棄刺眼的黑框 Text Area
+    pretty_summary_html = "<div style='background-color: #F8FAFC; border: 1px solid #CBD5E1; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
     
     if user_msgs:
-        pretty_summary_html += "<h4 style='color: #0F172A; margin-top:0;'>📌 您的核心背景與需求：</h4><ul>"
+        pretty_summary_html += "<h4 style='color: #0F172A; margin-top:0; font-size: 20px;'>📌 您的核心背景與需求：</h4><ul>"
         for u in user_msgs:
             pretty_summary_html += f"<li style='margin-bottom: 8px;'>{u}</li>"
         pretty_summary_html += "</ul><hr style='border: none; border-top: 1px solid #CBD5E1; margin: 20px 0;'>"
 
     if ai_msgs:
-        pretty_summary_html += "<h4 style='color: #0F172A;'>💡 Advisor 避坑建議與方案總結：</h4>"
+        pretty_summary_html += "<h4 style='color: #0F172A; font-size: 20px;'>💡 Advisor 避坑建議與方案總結：</h4>"
         formatted_last_ai = ai_msgs[-1].replace('\n', '<br>')
-        pretty_summary_html += f"<div style='background-color: #FFFFFF; padding: 18px; border-radius: 8px; border: 1px solid #E2E8F0;'>{formatted_last_ai}</div>"
+        pretty_summary_html += f"<div style='background-color: #FFFFFF; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;'>{formatted_last_ai}</div>"
     
     pretty_summary_html += "</div>"
 
@@ -532,7 +552,7 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
         with col1:
             st.download_button("📥 下載 1頁精簡總結 (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
         with col2:
-            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:45px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">✉️ 發送到我的郵箱</button></a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:46px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">✉️ 發送到我的郵箱</button></a>', unsafe_allow_html=True)
 
     with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
