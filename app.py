@@ -1,46 +1,27 @@
 import re
-import urllib.parse
-import google.generativeai as genai
-import streamlit as st
-import streamlit.components.v1 as components
-from PIL import Image
 
 
-# --------------------------------------------------
-# 1. 輔助函式：清洗 AI 回應中的思考過程與草稿標記
-# --------------------------------------------------
 def clean_response(text: str) -> str:
     if not text:
         return ""
 
-    # 1. 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
+    # 1. Remove XML/HTML think tags if present
     text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
-    # 2. 針對流出的草稿/指示標籤進行切除
-    patterns = [
-        r"(Medigap \(Medicare Supplement\).*)",
-        r"(How it works:.*)",
-        r"(Medicare Advantage.*)",
-        r"(Final Content Plan:.*)",
+    # 2. Drop internal thought metadata headers or bullet lists
+    metadata_patterns = [
+        # Catch metadata bullet points (e.g., "* User wants to...", "* Constraint 1:...", "* NJ Context:...")
+        r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ Context|Closing|Greeting|Persona|Context|Check|Did I|Follow-up):.*$\n?",
+        # Catch confirmation bullets (e.g., "* Concise bullet points used", "* No wall of text")
+        r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert knowledge|Current date|Ensure tone|Wait, did I).*$\n?",
+        # Catch standalone prompt/draft headings
+        r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final Content Plan|User wants to know|Constraint \d+:|Ensure tone is).*$\n?",
     ]
 
-    cleaned = text
-    for pattern in patterns:
-        match = re.search(pattern, text, re.DOTALL)
-        if match:
-            cleaned = match.group(1)
-            break
+    for pattern in metadata_patterns:
+        text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
-    # 移除殘留的 Draft 關鍵字行
-    cleaned = re.sub(
-        r"^(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Follow-up|Did I include).*$\n?",
-        "",
-        cleaned,
-        flags=re.MULTILINE,
-    )
-
-    return cleaned.strip()
-
+    return text.strip()
 
 # --------------------------------------------------
 # 2. 下方接著是你原本的 Streamlit 主程式 (st.set_page_config 等)
