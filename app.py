@@ -56,19 +56,36 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 强力文本清洗器：彻底粉碎 AI 内部思考日志
+# 超强力外科手术截断函数：100% 砍掉思考日志，只保留给用户的最终回答
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
+    # 寻找最终回答的强特征起始点（截断前面所有推演日志）
+    final_markers = [
+        "Your Initial Enrollment Period", "Start Date:", "End Date:", 
+        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", 
+        "To help me tailor", "To help me guide you", "Based on your birth date"
+    ]
+    
+    # 如果包含最终回答标志，从最后一次出现的地方或者核心位置截断
+    for marker in final_markers:
+        if marker in raw_text:
+            idx = raw_text.rfind(marker)
+            # 截取最终回答部分
+            tail_part = raw_text[idx:].strip()
+            
+            # 如果截取到的部分足够长且不含 System/User 指令，直接返回
+            if len(tail_part) > 15 and not any(bad in tail_part for bad in ["User DOB:", "Age Math:", "Constraint:"]):
+                return tail_part
+
+    # 保险清理：按行过滤
     lines = raw_text.split('\n')
     clean_lines = []
-    
     bad_keywords = [
-        "User wants", "Goal:", "Action:", "Greeting:", "Format:", "Draft 1", "Draft 2", 
-        "Refining", "Does it use", "Does it ask", "Does it include", "Is the date", 
-        "Current Date:", "Scenario", "Tone:", "Information Gathering:", "Why?", 
-        "No internal notes", "Pure English", "Warm and empathetic", "User says:"
+        "User DOB:", "State:", "Age Math:", "IEP Calculation:", "Constraint:", 
+        "User's IEP Window:", "Status:", "Next step:", "Output only", "Concise bullets", 
+        "No drafts", "Draft 1", "Refining", "Goal:", "Action:", "User wants"
     ]
     
     for line in lines:
@@ -81,11 +98,6 @@ def sanitize_ai_output(raw_text, target_lang="English"):
         clean_lines.append(line)
         
     final_text = "\n".join(clean_lines).strip()
-    
-    quote_match = re.search(r'"([^"]{20,})"', final_text)
-    if quote_match and ("Hello" in quote_match.group(1) or "您好" in quote_match.group(1)):
-        return quote_match.group(1).strip()
-        
     return final_text if final_text else raw_text.strip()
 
 def generate_clean_response(user_input, target_lang="English", img_data=None):
@@ -110,11 +122,11 @@ CRITICAL TIME ANCHOR: CURRENT DATE IS AUGUST 2026.
 STRICT OUTPUT RULES:
 1. OUTPUT ONLY THE FINAL DIRECT RESPONSE TO THE USER. NEVER WRITE DRAFTS, THOUGHTS, OR CHECKLISTS.
 2. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
-3. ACCURATE AGE MATH: Current date is August 2026. Born in April 1961 = Already turned 65 in April 2026.
+3. ACCURATE AGE MATH: Current date is August 2026. Born in Oct 1961 = Turns 65 in October 2026. IEP is July 2026 to January 2027.
 
 SUPPORTED SCENARIOS:
 - If user provides DOB + State: Calculate IEP window (3 months before birth month to 3 months after in 2026) and ask about health/lifestyle needs.
-- If user missing DOB or State: Politely ask for missing Birth Month/Year and State of Residency in concise bullet points.
+- If user asks follow-up questions (e.g., "what is my IEP"): Answer directly with concise dates (Start Date / End Date) without repeating internal calculations.
 
 EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
 - Rehab/SNF Denial: Advantage (Part C) Prior Auth often DENIES coverage after 20-30 days in Rehab.
@@ -127,7 +139,6 @@ EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 动态检测当前 API Key 可用的真实模型名称
             valid_models = []
             try:
                 for m in genai.list_models():
@@ -136,15 +147,9 @@ EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
             except Exception:
                 pass
 
-            # 如果检测失败，使用备用常用模型名组合
             if not valid_models:
-                valid_models = [
-                    "gemini-1.5-flash",
-                    "models/gemini-1.5-flash",
-                    "gemini-1.5-pro",
-                    "models/gemini-1.5-pro"
-                ]
-            
+                valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
+
             for m_name in valid_models:
                 try:
                     model = genai.GenerativeModel(
@@ -377,10 +382,10 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. Message History & Streamlined Sequence (先选身份/或直接输入，不空跑 AI)
+# 5. Message History & Streamlined Sequence
 # -------------------------------------------------------------------
 if "user_role_type" not in st.session_state:
-    st.session_state.user_role_type = "self"  # 默认身份：本人
+    st.session_state.user_role_type = "self"
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -388,12 +393,10 @@ if "messages" not in st.session_state:
 if "show_summary" not in st.session_state:
     st.session_state.show_summary = False
 
-# 渲染对话历史
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 仅在尚未开始对话时，显示身份选择卡片
 if len(st.session_state.messages) == 0:
     q_caption_map = {
         "English": "💡 **Step 1 Quick Start**: Choose who you are inquiring for, then enter details below:",
@@ -407,7 +410,6 @@ if len(st.session_state.messages) == 0:
     col_start1, col_start2 = st.columns(2)
     with col_start1:
         btn1_label = "👴 " + ("Applying for Myself" if current_lang == "English" else "我是长者本人" if current_lang == "簡體中文" else "我是長者本人" if current_lang == "繁體中文" else "Solicitando para mí" if current_lang == "Español" else "본인 신청")
-        # 点按仅切换身份状态，不触发 AI 运行！
         btn_type1 = "primary" if st.session_state.user_role_type == "self" else "secondary"
         if st.button(btn1_label, use_container_width=True, type=btn_type1):
             st.session_state.user_role_type = "self"
@@ -420,7 +422,6 @@ if len(st.session_state.messages) == 0:
             st.session_state.user_role_type = "family"
             st.rerun()
 
-# 根据选中的身份，动态更新输入框的 Placeholder
 has_user_replied = len(st.session_state.messages) > 0
 
 if st.session_state.user_role_type == "self":
@@ -441,14 +442,13 @@ else:
     }
 
 input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 请输入您的回复...")
-prompt = st.chat_input(input_placeholder)
+input_prompt = st.chat_input(input_placeholder)
 
-# 在用户真正提交文本时，把选中的“身份前缀”自动拼接到 prompt 中传给 AI
-if prompt:
+if input_prompt:
     role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
-    full_prompt = role_prefix + prompt
+    prompt = role_prefix + input_prompt
 else:
-    full_prompt = None
+    prompt = None
 
 # -------------------------------------------------------------------
 # 6. Response Execution
