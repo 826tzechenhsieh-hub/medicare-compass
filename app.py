@@ -56,12 +56,11 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 超强力文本清洗器：彻底粉碎 AI 内部思考日志 (Draft, Goal, Refining, Bullet checks)
+# 强力文本清洗器：彻底粉碎 AI 内部思考日志
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 按行切割并过滤掉所有思考性标记
     lines = raw_text.split('\n')
     clean_lines = []
     
@@ -74,10 +73,8 @@ def sanitize_ai_output(raw_text, target_lang="English"):
     
     for line in lines:
         stripped = line.strip()
-        # 排除包含思考关键词的行
         if any(bad.lower() in stripped.lower() for bad in bad_keywords):
             continue
-        # 排除开头的思考列表符号
         if stripped.startswith('o ') or stripped.startswith('▪ '):
             if any(bad.lower() in stripped.lower() for bad in bad_keywords):
                 continue
@@ -85,9 +82,8 @@ def sanitize_ai_output(raw_text, target_lang="English"):
         
     final_text = "\n".join(clean_lines).strip()
     
-    # 如果清洗后留下了被引用的正文（例如包含 "Hello! ..."），提取引號內的正文
     quote_match = re.search(r'"([^"]{20,})"', final_text)
-    if quote_match and "Hello" in quote_match.group(1):
+    if quote_match and ("Hello" in quote_match.group(1) or "您好" in quote_match.group(1)):
         return quote_match.group(1).strip()
         
     return final_text if final_text else raw_text.strip()
@@ -131,7 +127,8 @@ EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-2.5-flash"]
+            # 使用官方标准的 1.5-flash 模型，彻底解决 404 报错
+            valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
             
             for m_name in valid_models:
                 try:
@@ -365,7 +362,7 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. Message History & Streamlined Quick Start Buttons
+# 5. Message History & Improved Quick Start Buttons
 # -------------------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -380,11 +377,11 @@ for message in st.session_state.messages:
 quick_prompt = None
 if len(st.session_state.messages) == 0:
     q_caption_map = {
-        "English": "💡 Quick Start: Select who you are inquiring for:",
-        "Español": "💡 Inicio rápido: Seleccione para quién consulta:",
-        "한국어": "💡 빠른 시작: 신청 대상을 선택하세요:",
-        "簡體中文": "💡 快速开始：请选择您的查询身份：",
-        "繁體中文": "💡 快速開始：請選擇您的查詢身分："
+        "English": "💡 **Quick Start**: Please select your scenario, then enter your **Birth Month/Year & State** below:",
+        "Español": "💡 **Inicio rápido**: Seleccione su situación e ingrese su **Mes/Año de nacimiento y Estado** abajo:",
+        "한국어": "💡 **빠른 시작**: 신분을 선택한 후, 아래 입력창에 **출생 월/년 및 거주 주**를 입력하세요:",
+        "簡體中文": "💡 **快速开始**：请选择您的查询身份，并直接在下方输入框填写**“出生年月与居住州”**：",
+        "繁體中文": "💡 **快速開始**：請選擇您的查詢身分，並直接在下方輸入框填寫**「出生年月與居住州」**："
     }
     st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
     
@@ -399,11 +396,11 @@ if len(st.session_state.messages) == 0:
         }
         if st.button(btn1_map.get(current_lang, "👴 Myself")):
             p1_map = {
-                "English": "Hello! I am applying for myself. Please tell me what information you need from me to start Step 1.",
-                "Español": "¡Hola! Estoy solicitando para mí. ¿Qué información necesita para comenzar el Paso 1?",
-                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작하기 위해 어떤 정보가 필요한가요?",
-                "簡體中文": "您好！我是长者本人，请问开始 Step 1 需要我提供哪些信息？",
-                "繁體中文": "您好！我是長者本人，請問開始 Step 1 需要我提供哪些資訊？"
+                "English": "Hello! I am applying for myself. Please share your birth month/year and state of residency in the box below to start Step 1!",
+                "Español": "¡Hola! Estoy solicitando para mí. ¡Ingrese su mes/año de nacimiento y estado abajo para comenzar!",
+                "한국어": "안녕하세요! 본인 신청입니다. 아래 입력창에 출생 월/년 및 거주 주를 입력해주세요!",
+                "簡體中文": "您好！我是长者本人。请直接在下方输入框提供您的出生年月与居住州，我们立刻开始 Step 1 评估！",
+                "繁體中文": "您好！我是長者本人。請直接在下方輸入框提供您的出生年月與居住州，我們立刻開始 Step 1 評估！"
             }
             quick_prompt = p1_map.get(current_lang)
 
@@ -417,25 +414,25 @@ if len(st.session_state.messages) == 0:
         }
         if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Helping Family")):
             p2_map = {
-                "English": "Hello! I am helping my family member. Please tell me what information you need to start Step 1.",
-                "Español": "¡Hola! Estoy ayudando a un familiar. ¿Qué información necesita para el Paso 1?",
-                "한국어": "안녕하세요! 가족을 도와주는 중입니다. 1단계를 시작하기 위해 필요한 정보를 알려주세요.",
-                "簡體中文": "您好！我是帮家人查询，请问开始 Step 1 需要提供哪些信息？",
-                "繁體中文": "您好！我是幫家人查詢，請問開始 Step 1 需要提供哪些資訊？"
+                "English": "Hello! I am helping my family member. Please share their birth month/year and state of residency in the box below to start Step 1!",
+                "Español": "¡Hola! Estoy ayudando a un familiar. ¡Ingrese su mes/año de nacimiento y estado abajo!",
+                "한국어": "안녕하세요! 가족을 도와주는 중입니다. 아래 입력창에 가족의 출생 월/년 및 거주 주를 입력해주세요!",
+                "簡體中文": "您好！我是帮家人查询。请直接在下方输入框提供长辈的出生年月与居住州，我们立刻开始 Step 1！",
+                "繁體中文": "您好！我是幫家人查詢。請直接在下方輸入框提供長輩的出生年月與居住州，我們立刻開始 Step 1！"
             }
             quick_prompt = p2_map.get(current_lang)
 
 has_user_replied = len(st.session_state.messages) > 0
 if current_lang == "English":
-    input_placeholder = "🎙️ Enter Birth Month/Year & State (e.g., 04/1961, CA)..." if not has_user_replied else "🎙️ Type your reply here..."
+    input_placeholder = "🎙️ Enter Birth Month/Year & State (e.g., 10/1961, VA)..." if not has_user_replied else "🎙️ Type your reply here..."
 elif current_lang == "Español":
-    input_placeholder = "🎙️ Ingrese mes/año de nacimiento y estado (ej. 04/1961, CA)..."
+    input_placeholder = "🎙️ Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)..."
 elif current_lang == "한국어":
-    input_placeholder = "🎙️ 출생 월/년 및 거주 주 입력 (예: 04/1961, CA)..."
+    input_placeholder = "🎙️ 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)..."
 elif current_lang == "簡體中文":
-    input_placeholder = "🎙️ 请输入出生年月与居住州（例如：04/1961, CA）..."
+    input_placeholder = "🎙️ 请输入出生年月与居住州（例如：10/1961, VA）..."
 else:
-    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：04/1961, CA）..."
+    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：10/1961, VA）..."
 
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
