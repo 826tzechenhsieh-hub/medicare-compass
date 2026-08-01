@@ -56,38 +56,34 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 超强力终点反向截断函数：绝对砍掉 100% 的思考日志与 Draft 推演
+# 超強力終極外科手術截斷函數
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 包含了所有可能出现的正文起始标题/锚点
+    # 特徵標題清單：從後往前尋找真正的正文開頭
     content_anchors = [
-        "Actionable Steps for Enrollment:", "Actionable Steps:", "Where to Apply:",
-        "Annual Premiums:", "Here is how to break down", "Two Critical Warnings:", 
-        "Summary Strategy:", "Option 1:", "Option 2:", "Step 3:", "Step 1:", 
-        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", "Based on your preference",
-        "That sounds like a great direction"
+        "That sounds like", "Actionable Steps", "How to Apply:", "Where to Apply:",
+        "Annual Premiums:", "Two Critical Warnings:", "Summary Strategy:", 
+        "Option 1:", "Option 2:", "Step 3:", "Step 1:", "Hello!", "您好", "你好"
     ]
     
     for anchor in content_anchors:
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            # 确保提取出来的不是草稿列表里的思考文本
-            if len(candidate) > 15 and not any(bad in candidate for bad in ["Drafting Response:", "Self-Correction:", "User wants to", "Components of the estimate:"]):
+            # 確保擷取出來的段落不包含任何系統思考特徵關鍵字
+            if len(candidate) > 15 and not any(bad in candidate for bad in ["* User's goal:", "* Constraint:", "* Instruction:", "Drafting Response:"]):
                 return candidate
 
-    # 兜底逐行过滤
+    # 逐行強力過濾：直接砍掉所有思考日誌特徵行
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
-        "User wants", "User is helping", "Components of the estimate:", "The goal:", "The \"Total Annual Cost\"", 
-        "Monthly Premiums (Fixed)", "Intro:", "The Core Concept:", "Breakdown:", 
-        "Comparison Strategy:", "Caveat:", "Use concise", "No wall of text", "No \"drafts\"", 
-        "Direct response", "Headline:", "Bullet Points:", "Crucial Advice:", "English only?", 
-        "Concise?", "Correct Expert Knowledge?", "Self-Correction", "Instruction:", "Acknowledge",
-        "Transition:", "Closing:"
+        "User's goal:", "Constraint:", "Instruction:", "Acknowledge", "Transition:", 
+        "Closing:", "Concise bullet points?", "No wall of text?", "No drafts", 
+        "Step 3 transition?", "Warm/Concise?", "Components of the estimate:", 
+        "User wants", "User is helping", "Headline:", "Bullet Points:", "Crucial Advice:"
     ]
     
     for line in lines:
@@ -471,47 +467,42 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary & Official Portals (美化版排版：优雅间距与卡片化)
+# 7. Consultation Summary & Official Portals
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
-    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare 评估总结与官方通道</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare 評估總結與官方通道</h2>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 官方通道卡片：加宽间距与优雅外框
     st.markdown("""
         <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 20px; border-radius: 8px; margin-bottom: 25px;'>
-            <h4 style='margin-top:0; color: #1E40AF;'>🏛️ 官方申办入口与免费中立辅导</h4>
+            <h4 style='margin-top:0; color: #1E40AF;'>🏛️ 官方申辦入口與免費中立輔導</h4>
             <ul style='line-height: 1.8; font-size: 18px;'>
-                <li><b>Social Security Administration (SSA)</b>: <a href='https://www.ssa.gov/medicare' target='_blank'>在线申请 Medicare Part A & B 官方通道</a></li>
-                <li><b>Official Medicare Portal</b>: <a href='https://www.medicare.gov' target='_blank'>Medicare.gov 官网账户与选 Plan 入口</a></li>
-                <li><b>Free Local Counseling (SHIP)</b>: <a href='https://www.shiphelp.org' target='_blank'>查找您所在州的 SHIP 1对1 免费中立辅导</a></li>
+                <li><b>Social Security Administration (SSA)</b>: <a href='https://www.ssa.gov/medicare' target='_blank'>線上申請 Medicare Part A & B 官方通道</a></li>
+                <li><b>Official Medicare Portal</b>: <a href='https://www.medicare.gov' target='_blank'>Medicare.gov 官網帳號與選 Plan 入口</a></li>
+                <li><b>Free Local Counseling (SHIP)</b>: <a href='https://www.shiphelp.org' target='_blank'>尋找您所在州的 SHIP 1對1 免費中立輔導</a></li>
             </ul>
         </div>
     """, unsafe_allow_html=True)
 
-    # 提取对话
     user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
     ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
 
-    # 构建漂亮的可读 HTML 摘要（带间距与高亮卡片）
     pretty_summary_html = "<div style='background-color: #F8FAFC; border: 1px solid #E2E8F0; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
     
     if user_msgs:
-        pretty_summary_html += "<h4 style='color: #0F172A; margin-top:0;'>📌 您的核心背景与需求：</h4><ul>"
+        pretty_summary_html += "<h4 style='color: #0F172A; margin-top:0;'>📌 您的核心背景與需求：</h4><ul>"
         for u in user_msgs:
             pretty_summary_html += f"<li style='margin-bottom: 8px;'>{u}</li>"
         pretty_summary_html += "</ul><hr style='border: none; border-top: 1px solid #CBD5E1; margin: 20px 0;'>"
 
     if ai_msgs:
-        pretty_summary_html += "<h4 style='color: #0F172A;'>💡 Advisor 避坑建议与方案总结：</h4>"
-        # 替换换行符以保持优雅间距
+        pretty_summary_html += "<h4 style='color: #0F172A;'>💡 Advisor 避坑建議與方案總結：</h4>"
         formatted_last_ai = ai_msgs[-1].replace('\n', '<br>')
         pretty_summary_html += f"<div style='background-color: #FFFFFF; padding: 18px; border-radius: 8px; border: 1px solid #E2E8F0;'>{formatted_last_ai}</div>"
     
     pretty_summary_html += "</div>"
 
-    # 生成下载和邮件用的纯文本
     short_summary_text = "【Medicare Compass - Summary】\n\n"
     if user_msgs:
         short_summary_text += "📌 KEY USER INPUTS:\n"
@@ -530,25 +521,23 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     email_body = urllib.parse.quote(short_summary_text)
     mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
 
-    # Tabs 标签页
-    tab1, tab2 = st.tabs(["⚡ 1-Page Summary (精简卡片)", "📄 Full Conversation Log (完整记录)"])
+    tab1, tab2 = st.tabs(["⚡ 1-Page Summary (精簡卡片)", "📄 Full Conversation Log (完整記錄)"])
 
     with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
-        # 用优雅的 Rich Text 卡片渲染替代原来的黑框 Text Area
         st.markdown(pretty_summary_html, unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
         col1, col2 = st.columns(2)
         with col1:
-            st.download_button("📥 下载 1页精简总结 (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
+            st.download_button("📥 下載 1頁精簡總結 (TXT)", data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
         with col2:
-            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:45px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">✉️ 发送到我的邮箱</button></a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:45px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">✉️ 發送到我的郵箱</button></a>', unsafe_allow_html=True)
 
     with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.text_area("完整对话记录 (Full Log):", value=full_log_text, height=300, key="full_log_area")
-        st.download_button("📥 下载完整对话记录 (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
+        st.text_area("完整對話記錄 (Full Log):", value=full_log_text, height=300, key="full_log_area")
+        st.download_button("📥 下載完整對話記錄 (TXT)", data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
 
 # Auto-scroll control
 st.markdown("""
