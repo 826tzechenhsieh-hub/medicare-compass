@@ -56,34 +56,35 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 强力彻底清洗器：绝对剥离所有思考日志与推演过程
+# 超强力终点反向截断函数：绝对砍掉 100% 的思考日志与 Draft 推演
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 寻找真正的正文起始特征标志（从后往前找最接近最终回答的位置）
-    markers = [
-        "Option 1:", "Option 1 :", " Based on your preference", 
-        "Based on your preference", "Hello!", "您好", "你好", 
-        "Your Initial Enrollment Period", "Start Date:"
+    # 寻找真正正文输出的标志性锚点（优先保留最新的正文起始）
+    content_anchors = [
+        "Annual Premiums:", "Here is how to break down", "Two Critical Warnings:", 
+        "Summary Strategy:", "Option 1:", "Option 2:", "Step 3:", "Step 1:", 
+        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", "Based on your preference"
     ]
     
-    for marker in markers:
-        if marker in raw_text:
-            idx = raw_text.rfind(marker)
-            clean_part = raw_text[idx:].strip()
-            # 确保提取出的正文不包含思考词汇
-            if len(clean_part) > 20 and not any(bad in clean_part for bad in ["Drafting Response:", "Self-Correction", "Does this meet"]):
-                return clean_part
+    for anchor in content_anchors:
+        if anchor in raw_text:
+            idx = raw_text.rfind(anchor)
+            candidate = raw_text[idx:].strip()
+            # 确保提取出的不是草稿列表里的文本
+            if len(candidate) > 20 and not any(bad in candidate for bad in ["Drafting Response:", "Self-Correction:", "User is helping", "Components of the estimate:"]):
+                return candidate
 
-    # 兜底：按行切割过滤
+    # 兜底逐行过滤
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
-        "User:", "DOB:", "Needs:", "Scenario:", "Knowledge to embed:", 
-        "Option 1: Medicare Advantage", "Option 2: Original Medicare", 
-        "Keep it warm", "Directly address", "Self-Correction", "Drafting Response:", 
-        "Does this meet", "Accurate?", "No wall of text?", "Professional/Warm?"
+        "User is helping", "Components of the estimate:", "The goal:", "The \"Total Annual Cost\"", 
+        "Monthly Premiums (Fixed)", "Intro:", "The Core Concept:", "Breakdown:", 
+        "Comparison Strategy:", "Caveat:", "Use concise", "No wall of text", "No \"drafts\"", 
+        "Direct response", "Headline:", "Bullet Points:", "Crucial Advice:", "English only?", 
+        "Concise?", "Correct Expert Knowledge?", "Self-Correction"
     ]
     
     for line in lines:
@@ -118,6 +119,10 @@ STRICT OUTPUT RULES:
 1. NEVER WRITE DRAFTS, THOUGHTS, DRAFTING PROCESS, OR CHECKLISTS.
 2. OUTPUT ONLY THE FINAL DIRECT CONVERSATIONAL RESPONSE TO THE USER.
 3. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
+4. STEP 3 TRANSITION & CLOSURE:
+   - When user has selected/understood their plan options, DO NOT ask endless open questions.
+   - Warmly close Step 2 and transition to Step 3 (Application & Actionable Steps).
+   - Remind them they can apply via official portals (SSA.gov / Medicare.gov) or click "Generate Summary" on the sidebar.
 
 EXPERT KNOWLEDGE TO EMBED CONCISELY:
 - Supplement (Medigap) Scope: Clarify that Medigap covers Part B's 20% medical gap, but DOES NOT cover standalone prescription drugs (needs Part D) or routine dental/vision unless specified.
@@ -454,12 +459,10 @@ if prompt or uploaded_file:
     with st.chat_message("assistant"):
         with st.spinner("Medicare Compass is working..."):
             try:
-                # 传入 AI 生成纯净回答
-                clean_text = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
-                # 再次做一次保洁确保没有残余
-                sanitized_text = sanitize_ai_output(clean_text, target_lang=current_lang)
+                raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
+                # 强力双重清洗：保证存入 History 的永远是极致干净的文字
+                sanitized_text = sanitize_ai_output(raw_response, target_lang=current_lang)
                 st.markdown(sanitized_text)
-                # 存入对话历史的必须是清洗干净的文字！
                 st.session_state.messages.append({"role": "assistant", "content": sanitized_text})
                 st.rerun()
             except Exception as e:
