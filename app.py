@@ -18,7 +18,7 @@ components.html(
     height=0,
 )
 
-# Typography & Styles (加大行高與視覺呼吸感)
+# Typography & Styles
 st.markdown("""
     <style>
         .block-container {
@@ -56,16 +56,16 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 终极外科手术截断函数：100% 砍掉 *Final Polish:* / *Review against rules:* 等所有思考日志
+# 超強力外科手術截斷函數
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 寻找真正给用户的正文起始标志（优先寻找最靠后的正文开头）
     content_anchors = [
         "Hello!", "In New Jersey", "In California", "In Virginia",
         "Path 1:", "Path 2:", "Option 1:", "Option 2:", 
         "Actionable Steps", "How to Apply:", "Where to Apply:",
+        "To give you the most accurate", "Which state do you live in?",
         "您好", "你好", "¡Hola", "안녕하세요"
     ]
     
@@ -73,11 +73,9 @@ def sanitize_ai_output(raw_text, target_lang="English"):
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            # 确保截取出来的段落不包含草稿推演词汇
             if len(candidate) > 15 and not any(bad in candidate for bad in ["*Review against rules:*", "*Final Polish:*", "*Correction on", "*Final Content Construction:*"]):
                 return candidate
 
-    # 兜底：如果找不到标志，按行切割，删除所有带有星号草稿特征的行
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
@@ -118,10 +116,8 @@ STRICT OUTPUT RULES:
 1. NEVER WRITE DRAFTS, THOUGHTS, DRAFTING PROCESS, OR CHECKLISTS.
 2. OUTPUT ONLY THE FINAL DIRECT CONVERSATIONAL RESPONSE TO THE USER.
 3. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
-4. STEP 3 TRANSITION & CLOSURE:
-   - When user has selected/understood their plan options, DO NOT ask endless open questions.
-   - Warmly close Step 2 and transition to Step 3 (Application & Actionable Steps).
-   - Remind them they can apply via official portals (SSA.gov / Medicare.gov / SHIP) or click "Generate Summary" on the sidebar.
+4. MISSING STATE GUIDANCE:
+   - If user provided DOB/birth year but NO state (e.g. only "8/26/1961"), acknowledge their IEP dates warmly, then PROACTIVELY ASK: "Which state do you currently reside in (e.g., NJ, VA, CA)? Knowing your state helps me give exact local plan guidance."
 
 EXPERT KNOWLEDGE TO EMBED CONCISELY:
 - Supplement (Medigap) Scope: Clarify that Medigap covers Part B's 20% medical gap, but DOES NOT cover standalone prescription drugs (needs Part D) or routine dental/vision unless specified.
@@ -179,7 +175,7 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
         raise last_exception
 
 # -------------------------------------------------------------------
-# 3. Sidebar Setup & 記憶功能控制
+# 3. Sidebar Setup
 # -------------------------------------------------------------------
 with st.sidebar:
     st.markdown("# 🧭 Medicare Compass™")
@@ -197,7 +193,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 本地記憶控制卡片 (Local Memory Management)
     if "saved_user_input" in st.session_state and st.session_state.saved_user_input:
         st.markdown(f"💾 **本地設備記憶 (Local Memory)**:\n`{st.session_state.saved_user_input}`")
         if st.button("🗑️ 清除本地記憶 (Clear Memory)", use_container_width=True):
@@ -205,7 +200,6 @@ with st.sidebar:
             st.rerun()
         st.markdown("---")
 
-    # 優化版的上傳/拍照引導文案
     if current_lang == "English":
         upload_label = "📎 Take Photo or Upload Notice/Plan (Optional):"
     elif current_lang == "Español":
@@ -432,34 +426,21 @@ if len(st.session_state.messages) == 0:
             st.session_state.user_role_type = "family"
             st.rerun()
 
-    # 🌟 强效改进：如果有本地记忆，显示一键代入的快捷大按钮！
     if st.session_state.saved_user_input:
         st.markdown("<br>", unsafe_allow_html=True)
-        quick_btn_label = f"⚡ 点击直接使用上次记忆提交：{st.session_state.saved_user_input}"
+        quick_btn_label = f"⚡ 點擊直接使用上次記憶提交：{st.session_state.saved_user_input}"
         if st.button(quick_btn_label, type="primary", use_container_width=True):
             role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
             auto_prompt = role_prefix + st.session_state.saved_user_input
             st.session_state.messages.append({"role": "user", "content": auto_prompt})
             st.rerun()
 
-if st.session_state.user_role_type == "self":
-    ph_map = {
-        "English": "🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA)...",
-        "Español": "🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)...",
-        "한국어": "🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
-        "簡體中文": "🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）...",
-        "繁體中文": "🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）..."
-    }
+# 動態 Placeholder：提示使用者下一步可以打什麼
+if not has_user_replied:
+    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：8/26/1961, NJ）..."
 else:
-    ph_map = {
-        "English": "🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA)...",
-        "Español": "🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar...",
-        "한국어": "🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
-        "簡體中文": "🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）...",
-        "繁體中文": "🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）..."
-    }
+    input_placeholder = "🎙️ 請輸入您居住的州（例如：NJ, VA, CA）或繼續提問..." if current_lang == "繁體中文" else "🎙️ Enter your state (e.g. NJ, VA) or question..."
 
-input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 请输入您的回复...")
 input_prompt = st.chat_input(input_placeholder)
 
 if input_prompt:
@@ -490,14 +471,13 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary & SHIP Official Portals (卡片化美化版)
+# 7. Consultation Summary & SHIP Official Portals
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
     st.markdown("<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare 評估總結與官方通道</h2>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # 官方申辦通道與 SHIP 中立輔導入口卡片
     st.markdown("""
         <div style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 22px; border-radius: 10px; margin-bottom: 25px;'>
             <h4 style='margin-top:0; color: #1E40AF; font-size: 21px;'>🏛️ 官方申辦入口與免費中立輔導</h4>
@@ -512,7 +492,6 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     user_msgs = [m['content'] for m in st.session_state.messages if m.get('role') == 'user']
     ai_msgs = [m['content'] for m in st.session_state.messages if m.get('role') in ['assistant', 'model']]
 
-    # 高質感卡片式 Summary，徹底摒棄刺眼的黑框 Text Area
     pretty_summary_html = "<div style='background-color: #F8FAFC; border: 1px solid #CBD5E1; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
     
     if user_msgs:
