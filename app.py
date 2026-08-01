@@ -1,20 +1,23 @@
 import re
+import urllib.parse
+import google.generativeai as genai
+import streamlit as st
+import streamlit.components.v1 as components
+from PIL import Image
 
 
+# 1. 定義 AI 回應清洗函式
 def clean_response(text: str) -> str:
     if not text:
         return ""
 
-    # 1. Remove XML/HTML think tags if present
+    # 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
     text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
-    # 2. Drop internal thought metadata headers or bullet lists
+    # 移除殘留的 Draft 關鍵字行與 Metadata
     metadata_patterns = [
-        # Catch metadata bullet points (e.g., "* User wants to...", "* Constraint 1:...", "* NJ Context:...")
         r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ Context|Closing|Greeting|Persona|Context|Check|Did I|Follow-up):.*$\n?",
-        # Catch confirmation bullets (e.g., "* Concise bullet points used", "* No wall of text")
         r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert knowledge|Current date|Ensure tone|Wait, did I).*$\n?",
-        # Catch standalone prompt/draft headings
         r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final Content Plan|User wants to know|Constraint \d+:|Ensure tone is).*$\n?",
     ]
 
@@ -23,6 +26,10 @@ def clean_response(text: str) -> str:
 
     return text.strip()
 
+
+# --------------------------------------------------
+# 下方接你原本的 st.set_page_config(...)
+# --------------------------------------------------
 # --------------------------------------------------
 # 2. 下方接著是你原本的 Streamlit 主程式 (st.set_page_config 等)
 # --------------------------------------------------
