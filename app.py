@@ -405,6 +405,8 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
+has_user_replied = len(st.session_state.messages) > 0
+
 if len(st.session_state.messages) == 0:
     q_caption_map = {
         "English": "💡 **Step 1 Quick Start**: Choose who you are inquiring for, then enter details below:",
@@ -430,35 +432,37 @@ if len(st.session_state.messages) == 0:
             st.session_state.user_role_type = "family"
             st.rerun()
 
-has_user_replied = len(st.session_state.messages) > 0
-
-# 智能自動載入本地設備記憶 (Local Memory Pre-fill)
-default_ph_text = ""
-if st.session_state.saved_user_input and not has_user_replied:
-    default_ph_text = f" [已自動記憶載入: {st.session_state.saved_user_input}]"
+    # 🌟 强效改进：如果有本地记忆，显示一键代入的快捷大按钮！
+    if st.session_state.saved_user_input:
+        st.markdown("<br>", unsafe_allow_html=True)
+        quick_btn_label = f"⚡ 点击直接使用上次记忆提交：{st.session_state.saved_user_input}"
+        if st.button(quick_btn_label, type="primary", use_container_width=True):
+            role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
+            auto_prompt = role_prefix + st.session_state.saved_user_input
+            st.session_state.messages.append({"role": "user", "content": auto_prompt})
+            st.rerun()
 
 if st.session_state.user_role_type == "self":
     ph_map = {
-        "English": f"🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA){default_ph_text}...",
-        "Español": f"🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA){default_ph_text}...",
-        "한국어": f"🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA){default_ph_text}...",
-        "簡體中文": f"🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）{default_ph_text}...",
-        "繁體中文": f"🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）{default_ph_text}..."
+        "English": "🎙️ [For Myself] Enter Birth Month/Year & State (e.g., 10/1961, VA)...",
+        "Español": "🎙️ [Para mí] Ingrese mes/año de nacimiento y estado (ej. 10/1961, VA)...",
+        "한국어": "🎙️ [본인] 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
+        "簡體中文": "🎙️ [长者本人] 请输入出生年月与居住州（例如：10/1961, VA）...",
+        "繁體中文": "🎙️ [長者本人] 請輸入出生年月與居住州（例如：10/1961, VA）..."
     }
 else:
     ph_map = {
-        "English": f"🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA){default_ph_text}...",
-        "Español": f"🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar{default_ph_text}...",
-        "한국어": f"🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA){default_ph_text}...",
-        "簡體中文": f"🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）{default_ph_text}...",
-        "繁體中文": f"🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）{default_ph_text}..."
+        "English": "🎙️ [For Family] Enter Family Member's Birth Month/Year & State (e.g., 10/1961, VA)...",
+        "Español": "🎙️ [Para familiar] Ingrese mes/año de nacimiento y estado de su familiar...",
+        "한국어": "🎙️ [가족] 가족의 출생 월/년 및 거주 주 입력 (예: 10/1961, VA)...",
+        "簡體中文": "🎙️ [帮家人查询] 请输入长辈的出生年月与居住州（例如：10/1961, VA）...",
+        "繁體中文": "🎙️ [幫家人查詢] 請輸入長輩的出生年月與居住州（例如：10/1961, VA）..."
     }
 
-input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 請輸入您的回覆...")
+input_placeholder = ph_map.get(current_lang) if not has_user_replied else ("🎙️ Type your reply here..." if current_lang == "English" else "🎙️ 请输入您的回复...")
 input_prompt = st.chat_input(input_placeholder)
 
 if input_prompt:
-    # 存入本地設備記憶（下次免重複輸入）
     st.session_state.saved_user_input = input_prompt
     role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
     prompt = role_prefix + input_prompt
