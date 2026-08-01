@@ -18,11 +18,11 @@ components.html(
     height=0,
 )
 
-# Typography & Styles
+# Typography & Styles (极致清爽 UI 样式)
 st.markdown("""
     <style>
         .block-container {
-            padding-top: 1.5rem !important;
+            padding-top: 1.0rem !important;
             padding-bottom: 0rem !important;
         }
         html, body, [class*="css"] {
@@ -46,6 +46,10 @@ st.markdown("""
         .stChatInput input {
             font-size: 19px !important;
         }
+        /* 隐藏 Streamlit 默认的 Header anchor 图标，保持通透 */
+        .css-1544g2n {
+            padding-top: 1rem;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -53,21 +57,17 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 強悍的外科手術式文本清洗器
+# 外科手術式文本清洗器
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 針對中文/韓文/西班牙文：如果混入英文思考雜訊，強制只擷取最後一段真正給使用者的說話
     if target_lang in ["繁體中文", "簡體中文", "한국어", "Español"]:
-        # 尋找內文中最後出現的引號對話或問候語起始點
         markers = ["您好", "你好", "안녕하세요", "¡Hola", "我們現在正式開始", "我们现在正式开始", "為了確保", "为了确保"]
         for marker in markers:
             if marker in raw_text:
-                # 擷取關鍵字之後的內容
                 idx = raw_text.rfind(marker)
                 clean_part = raw_text[idx:].strip()
-                # 移除多餘的結尾引號或括號標註
                 clean_part = re.sub(r'\s*\([^)]*\)\??\s*Yes\.', '', clean_part)
                 clean_part = re.sub(r'\s*\(Explanation of IEP\)', '', clean_part)
                 clean_part = re.sub(r'\s*\(The question\)', '', clean_part)
@@ -76,7 +76,6 @@ def sanitize_ai_output(raw_text, target_lang="English"):
                 if len(clean_part) > 10:
                     return clean_part
 
-    # 英文通用的項目符號清洗
     lines = raw_text.split('\n')
     clean_lines = []
     for line in lines:
@@ -121,15 +120,26 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                 try:
                     model = genai.GenerativeModel(m_name)
                     
-                    system_context = [
-                        {"role": "user", "parts": [f"""You are Medicare Compass, a warm human advisor. {lang_rule}
+                    system_prompt_text = f"""You are Medicare Compass, a warm, highly empathetic, human Medicare advisor. {lang_rule}
 CRITICAL TIME ANCHOR: The CURRENT YEAR IS 2026.
-CRITICAL IEP MATH:
-- Someone born in 1961 turns 65 in 2026. They are CURRENTLY in their Initial Enrollment Period (IEP) in 2026!
-- Do NOT say a 1961-born person has passed their IEP! They turn 65 in 2026!
-- IEP calculation: 3 months before birth month in 2026 to 3 months after birth month in 2026/2027.
-- Always ask for confirmation before moving to Step 2! Never output internal notes or checklists."""]},
-                        {"role": "model", "parts": ["Understood. I will strictly anchor the current year as 2026, calculate 1961 birth dates as turning 65 in 2026 (currently in IEP), and respond warmly without internal notes."]}
+
+SUPPORTED USER SCENARIOS (Adapt dynamically):
+1. Turning 65 in 2026 (Born 1961): Currently in Initial Enrollment Period (IEP).
+2. Applying for Parents/Family: Ask for the family member's birth year/month with high empathy.
+3. Early Planners (<65 years old): Explain IEP rules briefly and welcome early preparation.
+4. Past 65 / Plan Switchers (>65 years old): Address Open Enrollment Period (AEP / Oct 15 - Dec 7) or Special Enrollment Periods (SEP).
+
+EXPERT KNOWLEDGE TO EMBED NATIVELY WHEN RELEVANT:
+- Traditional Medicare vs. Part C Advantage in Rehab / SNF: Warn that Advantage plans require Prior Authorization and commercial insurers often DENY coverage after 20-30 days in Rehab, forcing out-of-pocket costs or discharge.
+- Durable Medical Equipment (DME - Walkers, Hospital Beds, Wheelchairs): NEVER buy privately first! Doctors must write a prescription, and hospital social workers must order via Medicare suppliers before discharge.
+- ER & Ambulance: Medicare Part B covers 80% of medically necessary ambulances. Private transit or non-emergency rides are NOT covered.
+- Travel & Overseas: Traditional Medicare + Medigap covers nationwide US doctors (great for snowbirds/travel). Advantage (Part C) has strict local network limits outside home state. Original Medicare has 0 coverage overseas; Medigap Plan G/N offers up to $50,000 lifetime emergency travel coverage.
+
+Always respond warmly, clearly, and concisely without showing internal notes or logic checklists."""
+
+                    system_context = [
+                        {"role": "user", "parts": [system_prompt_text]},
+                        {"role": "model", "parts": ["Understood. I will dynamically handle all user scenarios (self, family, early planning, switchers) anchor 2026 accurately, and provide warm, expert guidance."]}
                     ]
                     
                     for m in st.session_state.messages[:-1]:
@@ -157,35 +167,19 @@ CRITICAL IEP MATH:
         raise last_exception
 
 # -------------------------------------------------------------------
-# 3. Sidebar Setup
+# 3. Sidebar Setup (极致瘦身与折叠收纳)
 # -------------------------------------------------------------------
 with st.sidebar:
+    # 唯一的品牌 Logo Header
+    st.markdown("# 🧭 Medicare Compass™")
+    st.caption("##### *powered by Care Compass™*")
+    
     user_lang = st.session_state.get("selected_language", "English")
-
-    if user_lang == "English":
-        st.markdown("# 🧭 Medicare Compass™")
-        st.caption("##### *powered by Care Compass™*")
-        st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
-    elif user_lang == "Español":
-        st.markdown("# 🧭 Medicare Compass™")
-        st.caption("##### *desarrollado por Care Compass™*")
-        st.info("📢 **Propósito de la aplicación**: ¡Diseñada para personas mayores que cumplen 65 años y sus familias para navegar por Medicare en 3 pasos claros!")
-    elif user_lang == "한국어":
-        st.markdown("# 🧭 Medicare Compass™ 메디케어 나침반")
-        st.caption("##### *powered by Care Compass™*")
-        st.info("📢 **앱 목적**: 65세가 되는 어르신과 가족이 3단계로 미국 메디케어를 쉽게 이해할 수 있도록 돕습니다!")
-    elif user_lang == "簡體中文":
-        st.markdown("# 🧭 Medicare Compass™ 医保指南针")
-        st.caption("##### *powered by Care Compass™*")
-        st.info("📢 **本工具宗旨**：专为即将满 65 岁长者与退休家庭设计！陪伴您分三步骤轻松了解申办流程、避开终身迟办罚款。")
-    else:
-        st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
-        st.caption("##### *powered by Care Compass™*")
-        st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
 
     st.markdown("---")
 
-    st.header("🌐 Language / 語言設定")
+    # 1. 语言设定
+    st.markdown("### 🌐 Language / 語言設定")
     current_lang = st.radio(
         "Select Language / 選擇語言:",
         ["English", "Español", "繁體中文", "簡體中文", "한국어"],
@@ -195,14 +189,9 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.markdown("⚠️ **Official Warning**: Medicare will NEVER call to ask for your Social Security Number.")
-    if not primary_key:
-        primary_key = st.text_input("Gemini API Key:", type="password")
-
-    st.markdown("---")
-
+    # 2. 附件上传
     if current_lang == "English":
-        upload_label = "📎 Upload Document / Photo (Optional):"
+        upload_label = "📎 Upload Notice or Plan Photo (Optional):"
     elif current_lang == "Español":
         upload_label = "📎 Cargar documento / foto (Opcional):"
     elif current_lang == "한국어":
@@ -217,70 +206,99 @@ with st.sidebar:
     if uploaded_file:
         try:
             img_data = Image.open(uploaded_file)
-            st.success("File attached successfully!")
+            st.success("File attached!")
         except Exception:
             st.warning("File uploaded.")
 
+    if not primary_key:
+        primary_key = st.text_input("Gemini API Key:", type="password")
+
     st.markdown("---")
 
-    if current_lang == "English":
-        st.caption("""
-🔒 **Privacy Commitment & Zero Retention**:
-We DO NOT save or store any of your personal inputs or logs. All data is permanently cleared immediately upon closing your browser or clicking Reset.
+    # 3. 法律与隐私条款收纳折叠抽屉（Modal / Expander）
+    legal_title_map = {
+        "English": "⚖️ Legal, Privacy & Notices",
+        "Español": "⚖️ Avisos Legales y Privacidad",
+        "한국어": "⚖️ 법적 고지 및 개인정보 보호",
+        "簡體中文": "⚖️ 法律声明、隐私与非官方提示",
+        "繁體中文": "⚖️ 法律聲明、隱私與非官方提示"
+    }
+    
+    with st.expander(legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False):
+        if current_lang == "English":
+            st.caption("""
+🔒 **Zero-Data Retention Privacy**:
+We DO NOT store or track any of your personal inputs or photos. All data is permanently cleared immediately when you close or reset the app.
 
-ℹ️ **Disclaimer & Notice**:
-Information provided is strictly for educational guidance. Regulations change continuously; users MUST always double-check and confirm final details with [Medicare.gov](https://www.medicare.gov) or SSA.
+⚠️ **Official Fraud Warning**:
+Medicare will NEVER call or text to ask for your Social Security Number or banking info.
 
-🏛️ **Non-Governmental Entity Notice**:
-Medicare Compass™ is an independent educational tool, not affiliated with the US Government, CMS, or SSA.
-        """)
-    elif current_lang == "Español":
-        st.caption("""
+ℹ️ **Disclaimer**:
+Educational guidance only. Regulations change; users MUST verify final choices with [Medicare.gov](https://www.medicare.gov) or SSA.
+
+🏛️ **Independent Tool**:
+Medicare Compass™ is not affiliated with the US Government, CMS, or SSA.
+            """)
+        elif current_lang == "Español":
+            st.caption("""
 🔒 **Compromiso de Privacidad**:
-NO guardamos ni almacenamos ninguno de sus datos personales. Todos los datos se borran de forma permanente al cerrar el navegador o hacer clic en Reiniciar.
+NO almacenamos sus datos personales. Todo se borra permanentemente al cerrar o reiniciar.
+
+⚠️ **Aviso Anti-Fraude**:
+Medicare NUNCA lo llamará para pedirle su Número de Seguro Social.
 
 ℹ️ **Aviso Legal**:
-La información se proporciona estrictamente con fines educativos. Las regulaciones cambian continuamente; los usuarios SIEMPRE deben verificar los detalles finales con [Medicare.gov](https://www.medicare.gov).
+Guía educativa únicamente. Verifique siempre con [Medicare.gov](https://www.medicare.gov).
 
-🏛️ **Entidad No Gubernamental**:
-Medicare Compass™ es una herramienta educativa independiente y no está afiliada al Gobierno de EE. UU., CMS o SSA.
-        """)
-    elif current_lang == "한국어":
-        st.caption("""
-🔒 **개인정보 보호 약속**:
-귀하의 개인 정보나 대화 기록을 저장하지 않습니다. 브라우저를 닫거나 재설정을 누르면 모든 데이터가 즉시 영구 삭제됩니다.
+🏛️ **Entidad Independiente**:
+No afiliada al Gobierno de EE. UU. o SSA.
+            """)
+        elif current_lang == "한국어":
+            st.caption("""
+🔒 **개인정보 보호**:
+귀하의 개인 정보를 저장하지 않습니다. 브라우저를 닫으면 모든 데이터가 삭제됩니다.
+
+⚠️ **사기 예방 경고**:
+메디케어는 절대로 사회보장번호를 전화로 요구하지 않습니다.
 
 ℹ️ **면책 조항**:
-제공되는 정보는 교육 안내용입니다. 규정은 지속적으로 변경되므로 사용자는 항상 [Medicare.gov](https://www.medicare.gov)에서 최종 세부 정보를 확인해야 합니다.
+교육용 안내입니다. 최종 사항은 [Medicare.gov](https://www.medicare.gov)에서 확인하세요.
 
-🏛️ **비정부 기관 안내**:
-Medicare Compass™는 독립적인 교육 도구이며 미국 정부, CMS 또는 SSA와 관련이 없습니다.
-        """)
-    elif current_lang == "簡體中文":
-        st.caption("""
-🔒 **隐私承诺与零数据留存**：
-本平台**完全不储存、不保留**您的任何个人输入资料、上传文件或对话纪录。视窗关闭或重置后即刻永久清除。
+🏛️ **독립 도구**:
+미국 정부 기관과 관련이 없습니다.
+            """)
+        elif current_lang == "簡體中文":
+            st.caption("""
+🔒 **零数据留存隐私承诺**：
+本工具完全不储存任何个人输入资料或照片。页面关闭或重置后即刻永久清除。
 
-ℹ️ **免责声明与资讯时效提醒**：
-本工具资讯仅供教育评估与导航参考。医保政策每年动态调整，使用者于决策前，**务必至官方网站 [Medicare.gov](https://www.medicare.gov) 或社会安全局 (SSA) 进行最终核对**。
+⚠️ **防诈骗官方警示**：
+Medicare 绝不会打电话或发短信向您索取社安号 (SSN) 或银行卡号。
+
+ℹ️ **免责声明**：
+本工具仅供教育与导航参考，政策每年调整，请务必于 [Medicare.gov](https://www.medicare.gov) 核对。
 
 🏛️ **非官方独立声明**：
-Medicare Compass™ 为独立辅助导航工具，不代表美国政府、联邦医疗照顾局 (CMS) 或社会安全局 (SSA) 官方机构。
-        """)
-    else:
-        st.caption("""
-🔒 **隱私承諾與零數據留存**：
-本平台與應用程式**完全不儲存、不安裝且不保留**您的任何個人輸入資料、上傳的文件照片或對話紀錄。所有數據僅供當次即時運算，視窗關閉或重置後即刻永久清除。
+Medicare Compass™ 为独立辅助工具，不代表美国政府或 SSA 官方机构。
+            """)
+        else:
+            st.caption("""
+🔒 **零數據留存隱私承諾**：
+本工具完全不儲存任何個人輸入資料或照片。頁面關閉或重置後即刻永久清除。
 
-ℹ️ **免責聲明與資訊時效提醒**：
-本工具資訊僅供教育評估與導航參考。我們雖致力於提供最新資訊，但醫保政策、保費與條款每年且動態調整，無法保證毫毫秒級實時同步。使用者於決策前，**務必至官方網站 [Medicare.gov](https://www.medicare.gov) 或社會安全局 (SSA) 進行最終核對與確認**。
+⚠️ **防詐騙官方警示**：
+Medicare 絕不會打電話或發簡訊向您索取社安號 (SSN) 或銀行帳號。
+
+ℹ️ **免責聲明**：
+本工具僅供教育與導航參考，政策每年動態調整，請務必至 [Medicare.gov](https://www.medicare.gov) 核對。
 
 🏛️ **非官方獨立聲明**：
-Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具，不代表美國政府、聯邦醫療照顧局 (CMS) 或社會安全局 (SSA) 官方機構。
-        """)
+Medicare Compass™ 為獨立輔助工具，不代表美國政府或 SSA 官方機構。
+            """)
 
     st.markdown("---")
 
+    # 4. 总结与重置按钮
     if current_lang == "English":
         summary_btn_label = "📋 Generate / Update Summary"
         reset_label = "🔄 Reset Conversation"
@@ -306,29 +324,12 @@ Medicare Compass™（powered by Care Compass™）為獨立輔助導航工具�
         st.rerun()
 
 # -------------------------------------------------------------------
-# 4. Main Header & 1-Minute Medicare Map
+# 4. Main Header & 1-Minute Medicare Map (主界面极简清爽化)
 # -------------------------------------------------------------------
 top_container = st.container()
 
 with top_container:
-    if current_lang == "English":
-        st.markdown("# 🧭 Medicare Compass™")
-        st.info("📢 **App Purpose**: Designed for seniors turning 65 and families to navigate US Medicare smoothly across 3 clear steps!")
-    elif current_lang == "Español":
-        st.markdown("# 🧭 Medicare Compass™")
-        st.info("📢 **Propósito de la aplicación**: ¡Diseñada para personas mayores que cumplen 65 años y sus familias para navegar por Medicare en 3 pasos claros!")
-    elif current_lang == "한국어":
-        st.markdown("# 🧭 Medicare Compass™ 메디케어 나침반")
-        st.info("📢 **앱 목적**: 65세가 되는 어르신과 가족이 3단계로 미국 메디케어를 쉽게 이해할 수 있도록 돕습니다!")
-    elif current_lang == "簡體中文":
-        st.markdown("# 🧭 Medicare Compass™ 医保指南针")
-        st.info("📢 **本工具宗旨**：专为即将满 65 岁长者与退休家庭设计！陪伴您分三步骤轻松了解申办流程、避开终身迟办罚款。")
-    else:
-        st.markdown("# 🧭 Medicare Compass™ 醫保指南針")
-        st.info("📢 **本工具宗旨**：專為即將滿 65 歲長者與退休家庭設計！陪伴您分三步驟輕鬆了解申辦流程、避開終身遲辦罰款。")
-
-    st.markdown("---")
-
+    # 顶部 3 步骤导航卡片
     col1, col2, col3 = st.columns(3)
     if current_lang == "English":
         with col1:
@@ -336,96 +337,102 @@ with top_container:
             st.caption("IEP Timing, Date of Birth & State.")
         with col2:
             st.markdown("### 2️⃣ Step 2: What")
-            st.caption("Needs, Coverage & Plan Comparison.")
+            st.caption("Needs, Coverage & Plan Options.")
         with col3:
             st.markdown("### 3️⃣ Step 3: How")
-            st.caption("Step-by-step Application & Payment.")
+            st.caption("Application & Official Channels.")
     elif current_lang == "Español":
         with col1:
             st.markdown("### 1️⃣ Paso 1: Cuándo")
-            st.caption("Fechas clave de IEP, fecha de nacimiento y estado.")
+            st.caption("Fechas clave, fecha de nacimiento y estado.")
         with col2:
             st.markdown("### 2️⃣ Paso 2: Qué")
-            st.caption("Necesidades, cobertura y comparación de planes.")
+            st.caption("Necesidades y comparación de planes.")
         with col3:
             st.markdown("### 3️⃣ Paso 3: Cómo")
-            st.caption("Solicitud paso a paso y pago.")
+            st.caption("Solicitud paso a paso.")
     elif current_lang == "한국어":
         with col1:
             st.markdown("### 1️⃣ 1단계: 언제")
-            st.caption("IEP 가입 기간, 생년월일 및 거주 주.")
+            st.caption("IEP 기간, 생년월일 및 거주 주.")
         with col2:
             st.markdown("### 2️⃣ 2단계: 무엇을")
             st.caption("보장 필요성 및 플랜 비교.")
         with col3:
             st.markdown("### 3️⃣ 3단계: 어떻게")
-            st.caption("단계별 신청 방법 및 납부 설정.")
+            st.caption("신청 방법 및 수속.")
     elif current_lang == "簡體中文":
         with col1:
             st.markdown("### 1️⃣ 第一步：WHEN 参保时机")
-            st.caption("出生年月、居住州与 IEP 黄金期限。")
+            st.caption("出生年月、居住州与黄金期限。")
         with col2:
             st.markdown("### 2️⃣ 第二步：WHAT 方案比对")
-            st.caption("医疗需求、两大路径与最适合方案。")
+            st.caption("医疗需求与两大路径解析。")
         with col3:
             st.markdown("### 3️⃣ 第三步：HOW 申办执行")
-            st.caption("逐步申请流程与保费扣款设定。")
+            st.caption("官方申请流程与快速通道。")
     else:
         with col1:
             st.markdown("### 1️⃣ 第一步：WHEN 參保時機")
-            st.caption("出生年月、居住州與 IEP 黃金期限。")
+            st.caption("出生年月、居住州與黃金期限。")
         with col2:
             st.markdown("### 2️⃣ 第二步：WHAT 方案比對")
-            st.caption("醫療需求、兩大路徑與最適合方案。")
+            st.caption("醫療需求與兩大路徑解析。")
         with col3:
             st.markdown("### 3️⃣ 第三步：HOW 申辦執行")
-            st.caption("逐步申請流程與保費扣款設定。")
+            st.caption("官方申請流程與快速通道。")
 
     st.markdown("---")
 
+    # 1分钟医保地图与避坑指南折叠卡片
     expander_title_map = {
-        "English": "🗺️ **1-Minute Medicare Map**",
-        "Español": "🗺️ **Mapa de Medicare de 1 Minuto**",
-        "한국어": "🗺️ **1분 메디케어 한눈에 보기**",
-        "簡體中文": "🗺️ **1分钟医保地图对照**",
-        "繁體中文": "🗺️ **1分鐘醫保地圖對照**"
+        "English": "🗺️ **1-Minute Medicare Map & Real-Life Pitfall Guide**",
+        "Español": "🗺️ **Mapa de Medicare de 1 Minuto y Guía Práctica**",
+        "한국어": "🗺️ **1분 메디케어 한눈에 보기 및 핵심 주의사항**",
+        "簡體中文": "🗺️ **1分钟医保地图与真实场景避坑指南**",
+        "繁體中文": "🗺️ **1分鐘醫保地圖與真實場景避坑指南**"
     }
     
     with st.expander(expander_title_map.get(current_lang, "🗺️ **1-Minute Medicare Map**"), expanded=True):
         if current_lang == "English":
             st.markdown("""
-* **Original Medicare (Government)**: Part A (Hospital) + Part B (Medical - 80% coverage, 20% gap).
-* **Part C (Medicare Advantage)**: Private all-in-one plans (A + B + usually D).
-* **Part D (Prescription Drugs)**: Standalone drug coverage.
-* **Medigap (Supplement)**: Private plans to cover Part B's 20% gap.
+* **Original Medicare (Gov)**: Part A (Hospital) + Part B (Medical - 80% paid, 20% gap NO limit).
+* **Part C (Medicare Advantage)**: Private all-in-one plans. *⚠️ Note: Insurers require Prior Auth and may DENY rehab coverage midway after 20-30 days.*
+* **Medigap (Supplement)**: Covers Part B's 20% gap with nationwide doctor access (Ideal for travel/snowbirds).
+* **🏠 Discharge Devices (DME - Walker/Bed)**: *Do NOT buy privately!* Must have a doctor's prescription before discharge to get reimbursed.
+* **🚨 Ambulance & Emergency**: Part B covers 80% for medically necessary emergencies; private taxis/rides are NOT covered.
             """)
         elif current_lang == "Español":
             st.markdown("""
-* **Original Medicare (Gobierno)**: Parte A (Hospital) + Parte B (Médica - 80% de cobertura, ¡20% de brecha!).
-* **Parte C (Medicare Advantage)**: Planes privados todo en uno (A + B + D).
-* **Parte D (Medicamentos)**: Cobertura de medicamentos.
-* **Medigap (Suplemento)**: Planes privados para cubrir la brecha del 20% de la Parte B.
+* **Original Medicare (Gobierno)**: Parte A (Hospital) + Parte B (Médica - 80% cubierto, 20% sin límite).
+* **Parte C (Medicare Advantage)**: Planes privados. *⚠️ Requiere autorización previa y puede denegar la rehabilitación.*
+* **Medigap (Suplemento)**: Cubre el 20% de la Parte B con acceso médico nacional (Ideal para viajes).
+* **🏠 Equipos del hogar (DME)**: Requiere receta médica antes del alta hospitalaria.
+* **🚨 Ambulancias**: Cubre el 80% solo para emergencias médicas reales.
             """)
         elif current_lang == "한국어":
             st.markdown("""
-* **Original Medicare (정부 메디케어)**: Part A (병원) + Part B (의료 - 80% 보장, 20% 본인 부담).
-* **Part C (Medicare Advantage)**: 민간 통합 플랜 (A + B + D).
-* **Part D (처방약)**: 약품 보장.
-* **Medigap (보충 보험)**: Part B의 20% 본인 부담금을 메워주는 민간 보험.
+* **Original Medicare (정부)**: Part A (병원) + Part B (의료 - 80% 보장, 20% 본인 부담).
+* **Part C (Medicare Advantage)**: 민간 통합 플랜. *⚠️ 재활 입원 중 보험사의 사전 승인거절 위험 주의.*
+* **Medigap (보충 보험)**: Part B 20% 부담금 보장 및 전국 병원 이용 가능.
+* **🏠 퇴원 후 가정용 의료기기 (DME)**: 퇴원 전 의사 처방전 필수.
+* **🚨 구급차**: 의료상 긴급한 경우에만 80% 보장.
             """)
         elif current_lang == "簡體中文":
             st.markdown("""
 * **Original Medicare (传统红蓝卡)**：Part A (住院) + Part B (门诊，政府给付 80%，自付 20% 无上限)。
-* **Part C (Medicare Advantage 优惠套餐)**：私人保险包办 (A + B + 通常含 D)。
-* **Part D (处方药专案)**：独立药物保险。
-* **Medigap (补充保险)**：填补 Part B 那 20% 自付额缺口。
+* **Part C (Medicare Advantage 优惠套餐)**：私人保险包办。*⚠️ 警告：需 Prior Authorization，康复中心 (Rehab) 30天后极易遭保险公司拒付 (Deny) 逼迫自费。*
+* **Medigap (补充保险)**：填补 20% 缺口，全美看诊无网络限制（适合跨州居住/频繁旅行）。
+* **🏠 出院居家设备 (DME - 病床/助行器)**：*切勿自行购买！* 必须由医生开处方并由社工预订方可报销。
+* **🚨 急诊与救护车**：Part B 仅报销“医疗紧急且必要”的救护车 80%；私人叫车或非紧急不可报销。
             """)
         else:
             st.markdown("""
 * **Original Medicare (傳統紅藍卡)**：Part A (住院) + Part B (門診，政府給付 80%，自付 20% 無上限)。
-* **Part C (Medicare Advantage 優惠套餐)**：私人保險包辦 (A + B + 通常含 D)。
-* **Part D (處方藥專案)**：獨立藥物保險。
-* **Medigap (補充保險)**：填補 Part B 那 20% 自付額缺口。
+* **Part C (Medicare Advantage 優惠套餐)**：私人保險包辦。*⚠️ 警告：需 Prior Authorization，康復中心 (Rehab) 30天後極易遭保險公司拒付 (Deny) 逼迫自費。*
+* **Medigap (補充保險)**：填補 20% 缺口，全美看診無網絡限制（適合跨州居住/頻繁旅行）。
+* **🏠 出院居家設備 (DME - 病床/助行器)**：*切勿自行購買！* 必須由醫生開處方並由社工預訂方可報銷。
+* **🚨 急診與救護車**：Part B 僅報銷「醫療緊急且必要」的救護車 80%；私人叫車或非緊急不可報銷。
             """)
 
     st.markdown("---")
@@ -449,8 +456,8 @@ if len(st.session_state.messages) == 0:
         "English": "💡 Quick start options:",
         "Español": "💡 Opciones de inicio rápido:",
         "한국어": "💡 빠른 시작 옵션:",
-        "簡體中文": "💡 您也可以直接点选以下身份快速开始：",
-        "繁體中文": "💡 您也可以直接點選以下身分快速開始："
+        "簡體中文": "💡 您可以点选以下身份快速开始：",
+        "繁體中文": "💡 您可以點選以下身分快速開始："
     }
     st.caption(q_caption_map.get(current_lang, "💡 Quick start options:"))
     
@@ -483,25 +490,25 @@ if len(st.session_state.messages) == 0:
         }
         if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Help parents")):
             p2_map = {
-                "English": "Hello! I am helping my parents start Step 1.",
-                "Español": "¡Hola! Estoy ayudando a mis padres a comenzar el Paso 1.",
-                "한국어": "안녕하세요! 부모님 메디케어 신청을 위해 1단계를 시작합니다.",
-                "簡體中文": "您好！我是帮长辈查询的子女，准备开始 Step 1。",
-                "繁體中文": "您好！我是幫長輩查詢的子女，準備開始 Step 1。"
+                "English": "Hello! I am helping my family member start Step 1.",
+                "Español": "¡Hola! Estoy ayudando a mi familiar a comenzar el Paso 1.",
+                "한국어": "안녕하세요! 가족 메디케어 신청을 위해 1단계를 시작합니다.",
+                "簡體中文": "您好！我是帮家人查询的，准备开始 Step 1。",
+                "繁體中文": "您好！我是幫家人查詢的，準備開始 Step 1。"
             }
             quick_prompt = p2_map.get(current_lang)
 
 has_user_replied = len(st.session_state.messages) > 0
 if current_lang == "English":
-    input_placeholder = "🎙️ Type your birth month/year and state here..." if not has_user_replied else "🎙️ Speak or type your reply here..."
+    input_placeholder = "🎙️ Type birth month/year and state here..." if not has_user_replied else "🎙️ Type your reply here..."
 elif current_lang == "Español":
     input_placeholder = "🎙️ Escriba su mes/año de nacimiento y estado aquí..."
 elif current_lang == "한국어":
     input_placeholder = "🎙️ 여기에 출생 월/년 및 거주 주를 입력하세요..."
 elif current_lang == "簡體中文":
-    input_placeholder = "🎙️ 请输入您的居住州与出生年月..."
+    input_placeholder = "🎙️ 请输入居住州与出生年月..."
 else:
-    input_placeholder = "🎙️ 請輸入您的居住州與出生年月..."
+    input_placeholder = "🎙️ 請輸入居住州與出生年月..."
 
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
@@ -526,11 +533,16 @@ if prompt or uploaded_file:
                 st.error(f"Notice: {e}")
 
 # -------------------------------------------------------------------
-# 7. Consultation Summary Section
+# 7. Consultation Summary & Official Portals
 # -------------------------------------------------------------------
 if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
-    st.header("📋 Consultation Summary & Sharing")
+    st.header("📋 Consultation Summary & Official Portals")
+
+    # 官方申请直通入口卡片
+    st.info("🏛️ **Official Application Portals / 官方申请快速通道**: \n\n"
+            "• **Social Security Administration (SSA)**: [Apply for Medicare Part A & B Online](https://www.ssa.gov/medicare) \n"
+            "• **Official Medicare Portal**: [Create / Sign in to Medicare.gov](https://www.medicare.gov)")
 
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
