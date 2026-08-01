@@ -61,7 +61,6 @@ def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    # 寻找真正正文输出的标志性锚点（优先保留最新的正文起始）
     content_anchors = [
         "Annual Premiums:", "Here is how to break down", "Two Critical Warnings:", 
         "Summary Strategy:", "Option 1:", "Option 2:", "Step 3:", "Step 1:", 
@@ -72,11 +71,9 @@ def sanitize_ai_output(raw_text, target_lang="English"):
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            # 确保提取出的不是草稿列表里的文本
             if len(candidate) > 20 and not any(bad in candidate for bad in ["Drafting Response:", "Self-Correction:", "User is helping", "Components of the estimate:"]):
                 return candidate
 
-    # 兜底逐行过滤
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
@@ -122,7 +119,7 @@ STRICT OUTPUT RULES:
 4. STEP 3 TRANSITION & CLOSURE:
    - When user has selected/understood their plan options, DO NOT ask endless open questions.
    - Warmly close Step 2 and transition to Step 3 (Application & Actionable Steps).
-   - Remind them they can apply via official portals (SSA.gov / Medicare.gov) or click "Generate Summary" on the sidebar.
+   - Remind them they can apply via official portals (SSA.gov / Medicare.gov / SHIP) or click "Generate Summary" on the sidebar.
 
 EXPERT KNOWLEDGE TO EMBED CONCISELY:
 - Supplement (Medigap) Scope: Clarify that Medigap covers Part B's 20% medical gap, but DOES NOT cover standalone prescription drugs (needs Part D) or routine dental/vision unless specified.
@@ -460,7 +457,6 @@ if prompt or uploaded_file:
         with st.spinner("Medicare Compass is working..."):
             try:
                 raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
-                # 强力双重清洗：保证存入 History 的永远是极致干净的文字
                 sanitized_text = sanitize_ai_output(raw_response, target_lang=current_lang)
                 st.markdown(sanitized_text)
                 st.session_state.messages.append({"role": "assistant", "content": sanitized_text})
@@ -475,9 +471,11 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
     st.header("📋 Consultation Summary & Official Portals")
 
-    st.info("🏛️ **Official Application Portals / 官方申请快速通道**: \n\n"
+    # 嵌入中立的 SHIP 官方中立辅导入口，权威度最大化
+    st.info("🏛️ **Official Application Portals & Free Assistance / 官方申办与免费中立辅导**: \n\n"
             "• **Social Security Administration (SSA)**: [Apply for Medicare Part A & B Online](https://www.ssa.gov/medicare) \n"
-            "• **Official Medicare Portal**: [Create / Sign in to Medicare.gov](https://www.medicare.gov)")
+            "• **Official Medicare Portal**: [Create / Sign in to Medicare.gov](https://www.medicare.gov) \n"
+            "• **Free Official Local Counseling (SHIP)**: [Find Free 1-on-1 Local Counseling at ShipHelp.org](https://www.shiphelp.org)")
 
     full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
     for m in st.session_state.messages:
