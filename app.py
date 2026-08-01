@@ -18,7 +18,7 @@ components.html(
     height=0,
 )
 
-# Typography & Styles (极致清爽 UI 样式)
+# Typography & Styles
 st.markdown("""
     <style>
         .block-container {
@@ -46,7 +46,6 @@ st.markdown("""
         .stChatInput input {
             font-size: 19px !important;
         }
-        /* 隐藏 Streamlit 默认的 Header anchor 图标，保持通透 */
         .css-1544g2n {
             padding-top: 1rem;
         }
@@ -57,32 +56,41 @@ st.markdown("""
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
 secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 
-# 外科手術式文本清洗器
+# 超强力文本清洗器：彻底粉碎 AI 内部思考日志 (Draft, Goal, Refining, Bullet checks)
 def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
-    if target_lang in ["繁體中文", "簡體中文", "한국어", "Español"]:
-        markers = ["您好", "你好", "안녕하세요", "¡Hola", "我們現在正式開始", "我们现在正式开始", "為了確保", "为了确保"]
-        for marker in markers:
-            if marker in raw_text:
-                idx = raw_text.rfind(marker)
-                clean_part = raw_text[idx:].strip()
-                clean_part = re.sub(r'\s*\([^)]*\)\??\s*Yes\.', '', clean_part)
-                clean_part = re.sub(r'\s*\(Explanation of IEP\)', '', clean_part)
-                clean_part = re.sub(r'\s*\(The question\)', '', clean_part)
-                clean_part = re.sub(r'\s*\(Closing/Process reminder\)', '', clean_part)
-                clean_part = clean_part.strip().strip('"').strip('」')
-                if len(clean_part) > 10:
-                    return clean_part
-
+    # 按行切割并过滤掉所有思考性标记
     lines = raw_text.split('\n')
     clean_lines = []
-    for line in lines:
-        if not any(bad in line for bad in ["User:", "Status:", "Persona:", "Constraint", "Language requirement:", "Process rule:", "Goal of Step", "Warm tone?", "Calculates IEP"]):
-            clean_lines.append(line)
     
-    return "\n".join(clean_lines).strip()
+    bad_keywords = [
+        "User wants", "Goal:", "Action:", "Greeting:", "Format:", "Draft 1", "Draft 2", 
+        "Refining", "Does it use", "Does it ask", "Does it include", "Is the date", 
+        "Current Date:", "Scenario", "Tone:", "Information Gathering:", "Why?", 
+        "No internal notes", "Pure English", "Warm and empathetic", "User says:"
+    ]
+    
+    for line in lines:
+        stripped = line.strip()
+        # 排除包含思考关键词的行
+        if any(bad.lower() in stripped.lower() for bad in bad_keywords):
+            continue
+        # 排除开头的思考列表符号
+        if stripped.startswith('o ') or stripped.startswith('▪ '):
+            if any(bad.lower() in stripped.lower() for bad in bad_keywords):
+                continue
+        clean_lines.append(line)
+        
+    final_text = "\n".join(clean_lines).strip()
+    
+    # 如果清洗后留下了被引用的正文（例如包含 "Hello! ..."），提取引號內的正文
+    quote_match = re.search(r'"([^"]{20,})"', final_text)
+    if quote_match and "Hello" in quote_match.group(1):
+        return quote_match.group(1).strip()
+        
+    return final_text if final_text else raw_text.strip()
 
 def generate_clean_response(user_input, target_lang="English", img_data=None):
     keys_to_try = [k for k in [primary_key, secondary_key] if k]
@@ -100,54 +108,38 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     }
     lang_rule = lang_instruction_map.get(target_lang, "Respond in the target language.")
 
-    # 官方标准的系统指令（独立隔离，绝不打印在界面上）
-    system_instruction_text = f"""You are Medicare Compass, a warm, highly empathetic, human Medicare advisor. {lang_rule}
-CRITICAL TIME ANCHOR: The CURRENT DATE IS AUGUST 2026.
+    system_instruction_text = f"""You are Medicare Compass, a warm, concise human advisor. {lang_rule}
+CRITICAL TIME ANCHOR: CURRENT DATE IS AUGUST 2026.
 
-STRICT FORMATTING & RESPONSE RULES:
-1. BULLET POINTS ONLY: Use concise bullet points for facts and options. Avoid long blocks of text! Keep it easy to read at a glance.
-2. ALWAYS ASK FOR STATE: In Step 1, if the user hasn't provided their State of Residency, ALWAYS ask for both their Birth Month/Year AND State of Residency (e.g., "Could you please share your birth month/year and your state of residency?").
-3. ACCURATE MONTH/AGE MATH:
-   - Current date is August 2026.
-   - If someone was born in April 1961, they ALREADY turned 65 in April 2026 (past), but they may still be in their 7-month IEP window (Jan 2026 - July/August 2026) or past it! Do NOT say "this coming April" for past months!
-4. NEVER PRINT INTERNAL THINKING or checklists. Output ONLY the final message to the user.
+STRICT OUTPUT RULES:
+1. OUTPUT ONLY THE FINAL DIRECT RESPONSE TO THE USER. NEVER WRITE DRAFTS, THOUGHTS, OR CHECKLISTS.
+2. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
+3. ACCURATE AGE MATH: Current date is August 2026. Born in April 1961 = Already turned 65 in April 2026.
 
-SUPPORTED USER SCENARIOS:
-1. Turning 65 in 2026: Calculate exact IEP (3 months before birth month to 3 months after).
-2. Applying for Family: Warmly ask for the family member's birth month/year and state.
-3. Early Planners (<65): Briefly explain IEP rules and welcome early prep.
-4. Past 65 / Switchers: Address Open Enrollment (AEP) or Special Enrollment (SEP).
+SUPPORTED SCENARIOS:
+- If user provides DOB + State: Calculate IEP window (3 months before birth month to 3 months after in 2026) and ask about health/lifestyle needs.
+- If user missing DOB or State: Politely ask for missing Birth Month/Year and State of Residency in concise bullet points.
 
-EXPERT KNOWLEDGE TO EMBED CONCISELY VIA BULLET POINTS WHEN RELEVANT:
-- Rehab/SNF Denial: Advantage (Part C) requires Prior Auth and commercial insurers often DENY coverage after 20-30 days in Rehab.
-- Durable Medical Equipment (DME): Doctors must write a prescription BEFORE hospital discharge to get reimbursed.
+EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
+- Rehab/SNF Denial: Advantage (Part C) Prior Auth often DENIES coverage after 20-30 days in Rehab.
+- Durable Medical Equipment (DME): Doctors must write prescription BEFORE hospital discharge.
 - ER & Ambulance: Part B covers 80% for medically necessary emergencies only.
-- Travel & Overseas: Medigap offers nationwide access & $50k emergency travel coverage; Advantage is strictly local network."""
+- Travel & Overseas: Medigap offers nationwide access & $50k emergency travel coverage."""
+
     for current_key in keys_to_try:
         try:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            valid_models = []
-            try:
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        valid_models.append(m.name)
-            except Exception:
-                pass
-
-            if not valid_models:
-                valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-2.5-flash"]
-
+            valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash", "gemini-2.5-flash"]
+            
             for m_name in valid_models:
                 try:
-                    # 使用 1.5/2.5 官方原生 system_instruction 参数
                     model = genai.GenerativeModel(
                         model_name=m_name,
                         system_instruction=system_instruction_text
                     )
                     
-                    # 组装纯粹的用户与模型对话历史
                     formatted_history = []
                     for m in st.session_state.messages[:-1]:
                         role = "user" if m["role"] == "user" else "model"
@@ -174,18 +166,14 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY VIA BULLET POINTS WHEN RELEVANT:
         raise last_exception
 
 # -------------------------------------------------------------------
-# 3. Sidebar Setup (极致瘦身与折叠收纳)
+# 3. Sidebar Setup
 # -------------------------------------------------------------------
 with st.sidebar:
-    # 唯一的品牌 Logo Header
     st.markdown("# 🧭 Medicare Compass™")
     st.caption("##### *powered by Care Compass™*")
     
-    user_lang = st.session_state.get("selected_language", "English")
-
     st.markdown("---")
 
-    # 1. 语言设定
     st.markdown("### 🌐 Language / 語言設定")
     current_lang = st.radio(
         "Select Language / 選擇語言:",
@@ -196,7 +184,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 2. 附件上传
     if current_lang == "English":
         upload_label = "📎 Upload Notice or Plan Photo (Optional):"
     elif current_lang == "Español":
@@ -222,7 +209,6 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # 3. 法律与隐私条款收纳折叠抽屉（Modal / Expander）
     legal_title_map = {
         "English": "⚖️ Legal, Privacy & Notices",
         "Español": "⚖️ Avisos Legales y Privacidad",
@@ -232,80 +218,17 @@ with st.sidebar:
     }
     
     with st.expander(legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False):
-        if current_lang == "English":
-            st.caption("""
+        st.caption("""
 🔒 **Zero-Data Retention Privacy**:
-We DO NOT store or track any of your personal inputs or photos. All data is permanently cleared immediately when you close or reset the app.
+We DO NOT store or track any of your personal inputs or photos. All data is cleared permanently upon close/reset.
 
-⚠️ **Official Fraud Warning**:
-Medicare will NEVER call or text to ask for your Social Security Number or banking info.
-
-ℹ️ **Disclaimer**:
-Educational guidance only. Regulations change; users MUST verify final choices with [Medicare.gov](https://www.medicare.gov) or SSA.
-
-🏛️ **Independent Tool**:
-Medicare Compass™ is not affiliated with the US Government, CMS, or SSA.
-            """)
-        elif current_lang == "Español":
-            st.caption("""
-🔒 **Compromiso de Privacidad**:
-NO almacenamos sus datos personales. Todo se borra permanentemente al cerrar o reiniciar.
-
-⚠️ **Aviso Anti-Fraude**:
-Medicare NUNCA lo llamará para pedirle su Número de Seguro Social.
-
-ℹ️ **Aviso Legal**:
-Guía educativa únicamente. Verifique siempre con [Medicare.gov](https://www.medicare.gov).
-
-🏛️ **Entidad Independiente**:
-No afiliada al Gobierno de EE. UU. o SSA.
-            """)
-        elif current_lang == "한국어":
-            st.caption("""
-🔒 **개인정보 보호**:
-귀하의 개인 정보를 저장하지 않습니다. 브라우저를 닫으면 모든 데이터가 삭제됩니다.
-
-⚠️ **사기 예방 경고**:
-메디케어는 절대로 사회보장번호를 전화로 요구하지 않습니다.
-
-ℹ️ **면책 조항**:
-교육용 안내입니다. 최종 사항은 [Medicare.gov](https://www.medicare.gov)에서 확인하세요.
-
-🏛️ **독립 도구**:
-미국 정부 기관과 관련이 없습니다.
-            """)
-        elif current_lang == "簡體中文":
-            st.caption("""
-🔒 **零数据留存隐私承诺**：
-本工具完全不储存任何个人输入资料或照片。页面关闭或重置后即刻永久清除。
-
-⚠️ **防诈骗官方警示**：
-Medicare 绝不会打电话或发短信向您索取社安号 (SSN) 或银行卡号。
-
-ℹ️ **免责声明**：
-本工具仅供教育与导航参考，政策每年调整，请务必于 [Medicare.gov](https://www.medicare.gov) 核对。
-
-🏛️ **非官方独立声明**：
-Medicare Compass™ 为独立辅助工具，不代表美国政府或 SSA 官方机构。
-            """)
-        else:
-            st.caption("""
-🔒 **零數據留存隱私承諾**：
-本工具完全不儲存任何個人輸入資料或照片。頁面關閉或重置後即刻永久清除。
-
-⚠️ **防詐騙官方警示**：
-Medicare 絕不會打電話或發簡訊向您索取社安號 (SSN) 或銀行帳號。
-
-ℹ️ **免責聲明**：
-本工具僅供教育與導航參考，政策每年動態調整，請務必至 [Medicare.gov](https://www.medicare.gov) 核對。
-
-🏛️ **非官方獨立聲明**：
-Medicare Compass™ 為獨立輔助工具，不代表美國政府或 SSA 官方機構。
-            """)
+⚠️ **Anti-Fraud Notice**: Medicare will NEVER call/text asking for SSN or banking details.
+ℹ️ **Disclaimer**: Educational guidance only; verify final choices with [Medicare.gov](https://www.medicare.gov).
+🏛️ **Independent Tool**: Not affiliated with the US Government, CMS, or SSA.
+        """)
 
     st.markdown("---")
 
-    # 4. 总结与重置按钮
     if current_lang == "English":
         summary_btn_label = "📋 Generate / Update Summary"
         reset_label = "🔄 Reset Conversation"
@@ -331,12 +254,11 @@ Medicare Compass™ 為獨立輔助工具，不代表美國政府或 SSA 官方�
         st.rerun()
 
 # -------------------------------------------------------------------
-# 4. Main Header & 1-Minute Medicare Map (主界面极简清爽化)
+# 4. Main Header & 1-Minute Medicare Map
 # -------------------------------------------------------------------
 top_container = st.container()
 
 with top_container:
-    # 顶部 3 步骤导航卡片
     col1, col2, col3 = st.columns(3)
     if current_lang == "English":
         with col1:
@@ -391,7 +313,6 @@ with top_container:
 
     st.markdown("---")
 
-    # 1分钟医保地图与避坑指南折叠卡片
     expander_title_map = {
         "English": "🗺️ **1-Minute Medicare Map & Real-Life Pitfall Guide**",
         "Español": "🗺️ **Mapa de Medicare de 1 Minuto y Guía Práctica**",
@@ -407,7 +328,7 @@ with top_container:
 * **Part C (Medicare Advantage)**: Private all-in-one plans. *⚠️ Note: Insurers require Prior Auth and may DENY rehab coverage midway after 20-30 days.*
 * **Medigap (Supplement)**: Covers Part B's 20% gap with nationwide doctor access (Ideal for travel/snowbirds).
 * **🏠 Discharge Devices (DME - Walker/Bed)**: *Do NOT buy privately!* Must have a doctor's prescription before discharge to get reimbursed.
-* **🚨 Ambulance & Emergency**: Part B covers 80% for medically necessary emergencies; private taxis/rides are NOT covered.
+* **🚨 Ambulance & Emergency**: Part B covers 80% for medically necessary emergencies only; private taxis/rides are NOT covered.
             """)
         elif current_lang == "Español":
             st.markdown("""
@@ -423,7 +344,6 @@ with top_container:
 * **Part C (Medicare Advantage)**: 민간 통합 플랜. *⚠️ 재활 입원 중 보험사의 사전 승인거절 위험 주의.*
 * **Medigap (보충 보험)**: Part B 20% 부담금 보장 및 전국 병원 이용 가능.
 * **🏠 퇴원 후 가정용 의료기기 (DME)**: 퇴원 전 의사 처방전 필수.
-* **🚨 구급차**: 의료상 긴급한 경우에만 80% 보장.
             """)
         elif current_lang == "簡體中文":
             st.markdown("""
@@ -445,7 +365,7 @@ with top_container:
     st.markdown("---")
 
 # -------------------------------------------------------------------
-# 5. Message History Setup
+# 5. Message History & Streamlined Quick Start Buttons
 # -------------------------------------------------------------------
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -460,62 +380,62 @@ for message in st.session_state.messages:
 quick_prompt = None
 if len(st.session_state.messages) == 0:
     q_caption_map = {
-        "English": "💡 Quick start options:",
-        "Español": "💡 Opciones de inicio rápido:",
-        "한국어": "💡 빠른 시작 옵션:",
-        "簡體中文": "💡 您可以点选以下身份快速开始：",
-        "繁體中文": "💡 您可以點選以下身分快速開始："
+        "English": "💡 Quick Start: Select who you are inquiring for:",
+        "Español": "💡 Inicio rápido: Seleccione para quién consulta:",
+        "한국어": "💡 빠른 시작: 신청 대상을 선택하세요:",
+        "簡體中文": "💡 快速开始：请选择您的查询身份：",
+        "繁體中文": "💡 快速開始：請選擇您的查詢身分："
     }
-    st.caption(q_caption_map.get(current_lang, "💡 Quick start options:"))
+    st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
     
     col_start1, col_start2 = st.columns(2)
     with col_start1:
         btn1_map = {
-            "English": "👴 I'm applying for myself",
-            "Español": "👴 Estoy solicitando para mí",
-            "한국어": "👴 본인 신청 (1단계 시작)",
-            "簡體中文": "👴 我是长者本人（开始 Step 1 导览）",
-            "繁體中文": "👴 我是長者本人（開始 Step 1 導覽）"
+            "English": "👴 Applying for Myself",
+            "Español": "👴 Solicitando para mí",
+            "한국어": "👴 본인 신청",
+            "簡體中文": "👴 我是长者本人",
+            "繁體中文": "👴 我是長者本人"
         }
-        if st.button(btn1_map.get(current_lang, "👴 Apply for myself")):
+        if st.button(btn1_map.get(current_lang, "👴 Myself")):
             p1_map = {
-                "English": "Hello! I am applying for myself and would like to start Step 1.",
-                "Español": "¡Hola! Estoy solicitando para mí y me gustaría comenzar el Paso 1.",
-                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작합니다.",
-                "簡體中文": "您好！我是长者本人，准备开始 Step 1。",
-                "繁體中文": "您好！我是長者本人，準備開始 Step 1。"
+                "English": "Hello! I am applying for myself. Please tell me what information you need from me to start Step 1.",
+                "Español": "¡Hola! Estoy solicitando para mí. ¿Qué información necesita para comenzar el Paso 1?",
+                "한국어": "안녕하세요! 본인 신청입니다. 1단계를 시작하기 위해 어떤 정보가 필요한가요?",
+                "簡體中文": "您好！我是长者本人，请问开始 Step 1 需要我提供哪些信息？",
+                "繁體中文": "您好！我是長者本人，請問開始 Step 1 需要我提供哪些資訊？"
             }
             quick_prompt = p1_map.get(current_lang)
 
     with col_start2:
         btn2_map = {
-            "English": "👨‍👩‍👧 I'm helping my parents",
-            "Español": "👨‍👩‍👧 Estoy ayudando a mis padres",
-            "한국어": "👨‍👩‍👧 부모님 도와드리기 (1단계 시작)",
-            "簡體中文": "👨‍👩‍👧 我是帮父母查询的子女（开始 Step 1）",
-            "繁體中文": "👨‍👩‍👧 我是幫父母查詢的子女（開始 Step 1）"
+            "English": "👨‍👩‍👧 Helping Family / Parents",
+            "Español": "👨‍👩‍👧 Ayudando a mi familia",
+            "한국어": "👨‍👩‍👧 부모님/가족 도와드리기",
+            "簡體中文": "👨‍👩‍👧 我是帮家人/父母查询",
+            "繁體中文": "👨‍👩‍👧 我是幫家人/父母查詢"
         }
-        if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Help parents")):
+        if st.button(btn2_map.get(current_lang, "👨‍👩‍👧 Helping Family")):
             p2_map = {
-                "English": "Hello! I am helping my family member start Step 1.",
-                "Español": "¡Hola! Estoy ayudando a mi familiar a comenzar el Paso 1.",
-                "한국어": "안녕하세요! 가족 메디케어 신청을 위해 1단계를 시작합니다.",
-                "簡體中文": "您好！我是帮家人查询的，准备开始 Step 1。",
-                "繁體中文": "您好！我是幫家人查詢的，準備開始 Step 1。"
+                "English": "Hello! I am helping my family member. Please tell me what information you need to start Step 1.",
+                "Español": "¡Hola! Estoy ayudando a un familiar. ¿Qué información necesita para el Paso 1?",
+                "한국어": "안녕하세요! 가족을 도와주는 중입니다. 1단계를 시작하기 위해 필요한 정보를 알려주세요.",
+                "簡體中文": "您好！我是帮家人查询，请问开始 Step 1 需要提供哪些信息？",
+                "繁體中文": "您好！我是幫家人查詢，請問開始 Step 1 需要提供哪些資訊？"
             }
             quick_prompt = p2_map.get(current_lang)
 
 has_user_replied = len(st.session_state.messages) > 0
 if current_lang == "English":
-    input_placeholder = "🎙️ Type birth month/year and state here..." if not has_user_replied else "🎙️ Type your reply here..."
+    input_placeholder = "🎙️ Enter Birth Month/Year & State (e.g., 04/1961, CA)..." if not has_user_replied else "🎙️ Type your reply here..."
 elif current_lang == "Español":
-    input_placeholder = "🎙️ Escriba su mes/año de nacimiento y estado aquí..."
+    input_placeholder = "🎙️ Ingrese mes/año de nacimiento y estado (ej. 04/1961, CA)..."
 elif current_lang == "한국어":
-    input_placeholder = "🎙️ 여기에 출생 월/년 및 거주 주를 입력하세요..."
+    input_placeholder = "🎙️ 출생 월/년 및 거주 주 입력 (예: 04/1961, CA)..."
 elif current_lang == "簡體中文":
-    input_placeholder = "🎙️ 请输入居住州与出生年月..."
+    input_placeholder = "🎙️ 请输入出生年月与居住州（例如：04/1961, CA）..."
 else:
-    input_placeholder = "🎙️ 請輸入居住州與出生年月..."
+    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：04/1961, CA）..."
 
 input_prompt = st.chat_input(input_placeholder)
 prompt = quick_prompt if quick_prompt else input_prompt
@@ -530,7 +450,7 @@ if prompt or uploaded_file:
         st.markdown(user_text)
 
     with st.chat_message("assistant"):
-        with st.spinner("Medicare Compass is analyzing..."):
+        with st.spinner("Medicare Compass is working..."):
             try:
                 clean_text = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
                 st.markdown(clean_text)
@@ -546,7 +466,6 @@ if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
     st.header("📋 Consultation Summary & Official Portals")
 
-    # 官方申请直通入口卡片
     st.info("🏛️ **Official Application Portals / 官方申请快速通道**: \n\n"
             "• **Social Security Administration (SSA)**: [Apply for Medicare Part A & B Online](https://www.ssa.gov/medicare) \n"
             "• **Official Medicare Portal**: [Create / Sign in to Medicare.gov](https://www.medicare.gov)")
