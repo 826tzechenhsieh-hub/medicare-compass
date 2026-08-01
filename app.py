@@ -1,9 +1,50 @@
+import re
+import urllib.parse
+import google.generativeai as genai
 import streamlit as st
 import streamlit.components.v1 as components
-import google.generativeai as genai
-import urllib.parse
-import re
 from PIL import Image
+
+
+# --------------------------------------------------
+# 1. 輔助函式：清洗 AI 回應中的思考過程與草稿標記
+# --------------------------------------------------
+def clean_response(text: str) -> str:
+    if not text:
+        return ""
+
+    # 1. 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
+    text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+
+    # 2. 針對流出的草稿/指示標籤進行切除
+    patterns = [
+        r"(Medigap \(Medicare Supplement\).*)",
+        r"(How it works:.*)",
+        r"(Medicare Advantage.*)",
+        r"(Final Content Plan:.*)",
+    ]
+
+    cleaned = text
+    for pattern in patterns:
+        match = re.search(pattern, text, re.DOTALL)
+        if match:
+            cleaned = match.group(1)
+            break
+
+    # 移除殘留的 Draft 關鍵字行
+    cleaned = re.sub(
+        r"^(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Follow-up|Did I include).*$\n?",
+        "",
+        cleaned,
+        flags=re.MULTILINE,
+    )
+
+    return cleaned.strip()
+
+
+# --------------------------------------------------
+# 2. 下方接著是你原本的 Streamlit 主程式 (st.set_page_config 等)
+# --------------------------------------------------
 
 # 1. Page Config
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
