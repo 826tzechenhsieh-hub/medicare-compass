@@ -61,27 +61,33 @@ def sanitize_ai_output(raw_text, target_lang="English"):
     if not raw_text:
         return raw_text
     
+    # 包含了所有可能出现的正文起始标题/锚点
     content_anchors = [
+        "Actionable Steps for Enrollment:", "Actionable Steps:", "Where to Apply:",
         "Annual Premiums:", "Here is how to break down", "Two Critical Warnings:", 
         "Summary Strategy:", "Option 1:", "Option 2:", "Step 3:", "Step 1:", 
-        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", "Based on your preference"
+        "Hello!", "您好", "你好", "¡Hola", "안녕하세요", "Based on your preference",
+        "That sounds like a great direction"
     ]
     
     for anchor in content_anchors:
         if anchor in raw_text:
             idx = raw_text.rfind(anchor)
             candidate = raw_text[idx:].strip()
-            if len(candidate) > 20 and not any(bad in candidate for bad in ["Drafting Response:", "Self-Correction:", "User is helping", "Components of the estimate:"]):
+            # 确保提取出来的不是草稿列表里的思考文本
+            if len(candidate) > 15 and not any(bad in candidate for bad in ["Drafting Response:", "Self-Correction:", "User wants to", "Components of the estimate:"]):
                 return candidate
 
+    # 兜底逐行过滤
     lines = raw_text.split('\n')
     clean_lines = []
     bad_keywords = [
-        "User is helping", "Components of the estimate:", "The goal:", "The \"Total Annual Cost\"", 
+        "User wants", "User is helping", "Components of the estimate:", "The goal:", "The \"Total Annual Cost\"", 
         "Monthly Premiums (Fixed)", "Intro:", "The Core Concept:", "Breakdown:", 
         "Comparison Strategy:", "Caveat:", "Use concise", "No wall of text", "No \"drafts\"", 
         "Direct response", "Headline:", "Bullet Points:", "Crucial Advice:", "English only?", 
-        "Concise?", "Correct Expert Knowledge?", "Self-Correction"
+        "Concise?", "Correct Expert Knowledge?", "Self-Correction", "Instruction:", "Acknowledge",
+        "Transition:", "Closing:"
     ]
     
     for line in lines:
