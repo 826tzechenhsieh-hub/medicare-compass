@@ -127,8 +127,23 @@ EXPERT KNOWLEDGE TO EMBED VIA CONCISE BULLETS WHEN RELEVANT:
             clean_key = str(current_key).strip().strip('"').strip("'")
             genai.configure(api_key=clean_key)
             
-            # 使用官方标准的 1.5-flash 模型，彻底解决 404 报错
-            valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
+            # 动态检测当前 API Key 可用的真实模型名称
+            valid_models = []
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        valid_models.append(m.name)
+            except Exception:
+                pass
+
+            # 如果检测失败，使用备用常用模型名组合
+            if not valid_models:
+                valid_models = [
+                    "gemini-1.5-flash",
+                    "models/gemini-1.5-flash",
+                    "gemini-1.5-pro",
+                    "models/gemini-1.5-pro"
+                ]
             
             for m_name in valid_models:
                 try:
