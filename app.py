@@ -175,26 +175,28 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
             model = genai.GenerativeModel(
                 model_name=m_name, system_instruction=final_instruction
             )
-                    formatted_history = []
-                    for m in st.session_state.messages[:-1]:
-                        role = "user" if m["role"] == "user" else "model"
-                        formatted_history.append({"role": role, "parts": [m["content"]]})
-                        
-                    chat = model.start_chat(history=formatted_history)
-                    
-                    if img_data:
-                        response = model.generate_content([user_input, img_data])
-                        raw_output = response.text
-                    else:
-                        response = chat.send_message(user_input)
-                        raw_output = response.text
-                        
-                    return sanitize_ai_output(clean_response(raw_output), target_lang=target_lang)
-                except Exception as inner_e:
-                    last_exception = inner_e
-                    continue
-        except Exception as outer_e:
-            last_exception = outer_e
+
+            formatted_history = []
+            for m in st.session_state.messages[:-1]:
+                role = "user" if m["role"] == "user" else "model"
+                formatted_history.append(
+                    {"role": role, "parts": [m["content"]]}
+                )
+
+            chat = model.start_chat(history=formatted_history)
+
+            if img_data:
+                response = model.generate_content([user_input, img_data])
+                raw_output = response.text
+            else:
+                response = chat.send_message(user_input)
+                raw_output = response.text
+
+            return sanitize_ai_output(
+                clean_response(raw_output), target_lang=target_lang
+            )
+        except Exception as inner_e:
+            last_exception = inner_e
             continue
 
     if last_exception:
