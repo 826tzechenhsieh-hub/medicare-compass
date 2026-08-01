@@ -202,15 +202,15 @@ with st.sidebar:
     st.markdown("---")
 
     if current_lang == "English":
-        upload_label = "📎 Upload Notice or Plan Photo (Optional):"
+        upload_label = "📎 Take Photo or Upload Notice/Plan (Optional):"
     elif current_lang == "Español":
-        upload_label = "📎 Cargar documento / foto (Opcional):"
+        upload_label = "📎 Tomar foto o cargar documento (Opcional):"
     elif current_lang == "한국어":
-        upload_label = "📎 서류 / 사진 업로드 (선택 사항):"
+        upload_label = "📎 사진 촬영 또는 서류 업로드 (선택 사항):"
     elif current_lang == "簡體中文":
-        upload_label = "📎 上传信件或保单照片（选填）："
+        upload_label = "📎 拍照或上传信件/保单照片（选填）："
     else:
-        upload_label = "📎 上傳信件或保單照片（選填）："
+        upload_label = "📎 拍照或上傳信件/保單照片（選填）："
 
     uploaded_file = st.file_uploader(upload_label, type=["png", "jpg", "jpeg", "pdf"])
     img_data = None
