@@ -5,7 +5,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 from PIL import Image
 
-
 # 1. 定義 AI 回應清洗函式
 def clean_response(text: str) -> str:
     if not text:
