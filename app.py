@@ -467,7 +467,7 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-  # 4. 執行對話與呼叫 AI (支援 8/26/1961 及 8/1961，防止計算卡死)
+  # 4. 執行對話與呼叫 AI (第一階段極簡化 + 客製頭像，解決 Stuck 與頭像 M 問題)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
         
@@ -477,63 +477,52 @@ if len(st.session_state.messages) == 0:
         with st.chat_message("user"):
             st.markdown(user_text)
 
-        with st.chat_message("assistant"):
+        # 使用自訂的 🧭 圖示取代預設的灰底 M
+        with st.chat_message("assistant", avatar="🧭"):
             with st.spinner("Analyzing..."):
                 import re
                 import calendar
 
-                # 支援各種日期格式：8/26/1961, 08/26/1961, 8/1961, 08/1961
                 date_match = re.search(r'(\d{1,2})/(?:(\d{1,2})/)?(\d{4})', user_text)
                 
-                # 只有在初次諮詢、且成功抓取到日期時才走精準計算
+                # 初次輸入：只專注在「時間軸」與「Step 1 / Step 2」，不放多餘 Tip 與容易卡住的提問
                 if date_match and len(st.session_state.messages) <= 2:
                     try:
                         month = int(date_match.group(1))
                         year = int(date_match.group(3))
-                        
                         turn_65_year = year + 65
                         
-                        # 安全計算開頭月份與年份 (月 - 3)
-                        if month > 3:
-                            start_m = month - 3
-                            start_y = turn_65_year
-                        else:
-                            start_m = month - 3 + 12
-                            start_y = turn_65_year - 1
+                        start_m = month - 3 if month > 3 else month - 3 + 12
+                        start_y = turn_65_year if month > 3 else turn_65_year - 1
 
-                        # 安全計算結束月份與年份 (月 + 3)
-                        if month <= 9:
-                            end_m = month + 3
-                            end_y = turn_65_year
-                        else:
-                            end_m = month + 3 - 12
-                            end_y = turn_65_year + 1
+                        end_m = month + 3 if month <= 9 else month + 3 - 12
+                        end_y = turn_65_year if month <= 9 else turn_65_year + 1
 
                         start_m_name = calendar.month_name[start_m]
                         end_m_name = calendar.month_name[end_m]
                         birth_m_name = calendar.month_name[month]
                         end_day = calendar.monthrange(end_y, end_m)[1]
 
+                        # 將 Tip 移走，留到 Step 2 解答完畢後才出現
                         final_output = (
                             f"### 🗓️ Your Personalized Medicare Timeline\n\n"
                             f"**Key Milestones:**\n"
                             f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
                             f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
                             f"**Recommended Next Steps:**\n"
-                            f"* **Step 1**: Check active employer group coverage (if still working) to see if you can delay Part B.\n"
-                            f"* **Step 2**: Compare **Original Medicare (+ Medigap)** vs. **Medicare Advantage** based on your doctor and drug needs.\n\n"
-                            f"💡 *Tip: Once you choose your preferred plan pathway, you can submit your official enrollment through **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**.*\n\n"
-                            f"--- \n"
-                            f"**Would you like me to explain:**\n"
-                            f"1️⃣ The difference between Original Medicare and Medicare Advantage?\n"
-                            f"2️⃣ How employer coverage works with Medicare?"
+                            f"* **Step 1**: Check active employer coverage (if still working) to see if you can delay Part B.\n"
+                            f"* **Step 2**: Compare **Original Medicare (+ Medigap)** vs. **Medicare Advantage** based on your doctor and drug needs."
                         )
-                    except Exception as e:
-                        # 備用方案：萬一計算出錯，降級讓 AI 處理
+                    except Exception:
                         final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 else:
-                    final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
-                
+                    # 後續對話：正常的 AI 諮詢（在此階段的回答結尾會自動加上溫馨 Tip）
+                    raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                    
+                    # 只有在回答第二階段問題時，才把 Tip 附在最下方
+                    tip_suffix = "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
+                    final_output = raw_response.strip() + tip_suffix
+
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
 # -------------------------------------------------------------------
