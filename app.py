@@ -435,8 +435,8 @@ if len(st.session_state.messages) == 0:
             st.markdown("<br>", unsafe_allow_html=True)
             quick_btn_label = f"⚡ 點擊直接使用上次記憶提交: {st.session_state.saved_user_input}"
             if st.button(quick_btn_label, type="primary", use_container_width=True):
-                # 修正 1：直接使用 saved_user_input，不再重複疊加 role_prefix
-                st.session_state.messages.append({"role": role, "content": st.session_state.saved_user_input})
+                # 直接使用 "user" 作為 role 即可
+                st.session_state.messages.append({"role": "user", "content": st.session_state.saved_user_input})
                 st.rerun()
 
     # 動態 Placeholder: 提示使用者下一步可以打什麼
