@@ -198,12 +198,12 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
                         response = chat.send_message(user_input)
                         raw_output = response.text
 
-                    return sanitize_ai_output(
-                        clean_response(raw_output), target_lang=target_lang
-                    )
-        except Exception as inner_e:
-            last_exception = inner_e
-            continue
+                        return sanitize_ai_output(
+                            clean_response(raw_output), target_lang=target_lang
+                        )
+            except Exception as inner_e:
+                last_exception = inner_e
+                continue
 
     if last_exception:
         raise last_exception
