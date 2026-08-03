@@ -133,30 +133,25 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     if not valid_models:
         valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
-    # 1. 建立嚴格的 System Instruction，絕不允許輸出 Draft / Intent / Thinking
+    # 極簡且嚴格的系統指令，禁止任何 Self-check、Draft 或 Checklist
     strict_system_instruction = (
-        f"You are Medicare Compass, a helpful and warm assistant for seniors.\n"
-        f"Target Language for Response: {target_lang}\n\n"
-        f"CRITICAL RULES:\n"
-        f"1. Directly answer the senior in a clear, friendly, and respectful tone.\n"
-        f"2. DO NOT include any internal thoughts, drafts (Draft 1, Draft 2), planning, intent analysis, or step-by-step reasoning in your output.\n"
-        f"3. Output ONLY the final conversational message that should be shown to the user."
+        f"You are Medicare Compass, a warm, professional, and clear assistant for seniors.\n"
+        f"Respond in: {target_lang}.\n"
+        f"DIRECTIVE: Respond ONLY with the final message to the user. "
+        f"NEVER include checklists, self-verification steps (e.g. 'Clear? Yes'), drafts, or internal thinking."
     )
 
     last_exception = None
     for m_name in valid_models:
         try:
-            # 將系統指令明確載入模型中
             model = genai.GenerativeModel(
                 model_name=m_name, 
                 system_instruction=strict_system_instruction
             )
 
-            # 2. 格式化對話紀錄，避免重複串接舊文字
             formatted_history = []
             for m in st.session_state.messages[:-1]:
                 role = "user" if m["role"] == "user" else "model"
-                # 確保舊訊息乾淨純粹
                 formatted_history.append({"role": role, "parts": [str(m["content"])]})
 
             chat = model.start_chat(history=formatted_history)
@@ -167,8 +162,6 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
                 response = chat.send_message(user_input)
 
             raw_text = response.text
-
-            # 3. 過濾與清理（確保萬無一失）
             clean_text = sanitize_ai_output(clean_response(raw_text), target_lang=target_lang)
             return clean_text
 
@@ -431,16 +424,17 @@ if len(st.session_state.messages) == 0:
             st.session_state.user_role_type = "family"
             st.rerun()
 
-    # 預設 prompt 為 None，避免 NameError
+    # 1. 安全初始化，防範 NameError
     prompt = None
 
+    # 2. 本地記憶按鈕
     if st.session_state.get("saved_user_input"):
         st.markdown("<br>", unsafe_allow_html=True)
         quick_btn_label = f"⚡ 點擊直接使用上次記憶提交: {st.session_state.saved_user_input}"
         if st.button(quick_btn_label, type="primary", use_container_width=True):
             prompt = st.session_state.saved_user_input
 
-    # 動態 Placeholder: 提示使用者下一步可以打什麼
+    # 3. 輸入框 Placeholder
     if not has_user_replied:
         input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
     else:
@@ -462,6 +456,18 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
+    # 4. 執行對話與呼叫 AI (第 468 行)
+    if prompt or uploaded_file:
+        user_text = prompt if prompt else "Please review this uploaded document."
+        st.session_state.messages.append({"role": "user", "content": user_text})
+        with st.chat_message("user"):
+            st.markdown(user_text)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Analyzing..."):
+                response_text = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "model", "content": response_text})
 # -------------------------------------------------------------------
 # 6. Response Execution
 # -------------------------------------------------------------------
