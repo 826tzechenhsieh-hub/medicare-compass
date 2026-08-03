@@ -133,41 +133,44 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     if not valid_models:
         valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
+    # 1. 建立嚴格的 System Instruction，絕不允許輸出 Draft / Intent / Thinking
+    strict_system_instruction = (
+        f"You are Medicare Compass, a helpful and warm assistant for seniors.\n"
+        f"Target Language for Response: {target_lang}\n\n"
+        f"CRITICAL RULES:\n"
+        f"1. Directly answer the senior in a clear, friendly, and respectful tone.\n"
+        f"2. DO NOT include any internal thoughts, drafts (Draft 1, Draft 2), planning, intent analysis, or step-by-step reasoning in your output.\n"
+        f"3. Output ONLY the final conversational message that should be shown to the user."
+    )
+
     last_exception = None
     for m_name in valid_models:
         try:
-            # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
-            # 取得系統提示詞，若未定義則使用預設字串
-            sys_text = globals().get("system_instruction_text") or globals().get("SYSTEM_PROMPT") or "You are a helpful Medicare Compass assistant."
-
-            final_instruction = (
-                str(sys_text)
-                + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
-            )
-
+            # 將系統指令明確載入模型中
             model = genai.GenerativeModel(
-                model_name=m_name, system_instruction=final_instruction
+                model_name=m_name, 
+                system_instruction=strict_system_instruction
             )
 
+            # 2. 格式化對話紀錄，避免重複串接舊文字
             formatted_history = []
             for m in st.session_state.messages[:-1]:
                 role = "user" if m["role"] == "user" else "model"
-                formatted_history.append(
-                    {"role": role, "parts": [m["content"]]}
-                )
+                # 確保舊訊息乾淨純粹
+                formatted_history.append({"role": role, "parts": [str(m["content"])]})
 
             chat = model.start_chat(history=formatted_history)
 
             if img_data:
                 response = model.generate_content([user_input, img_data])
-                raw_output = response.text
             else:
                 response = chat.send_message(user_input)
-                raw_output = response.text
 
-            return sanitize_ai_output(
-                clean_response(raw_output), target_lang=target_lang
-            )
+            raw_text = response.text
+
+            # 3. 過濾與清理（確保萬無一失）
+            clean_text = sanitize_ai_output(clean_response(raw_text), target_lang=target_lang)
+            return clean_text
 
         except Exception as inner_e:
             last_exception = inner_e
