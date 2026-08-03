@@ -133,9 +133,8 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     if not valid_models:
         valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
-    # 極簡且嚴格的系統指令，禁止任何 Self-check、Draft 或 Checklist
-    # 嚴格的 Prompt：要求超精簡、列點、重點標粗體，適合長者閱讀
-   strict_system_instruction = (
+    # 嚴格的系統指令
+    strict_system_instruction = (
         f"You are Medicare Compass, an expert assistant.\n"
         f"Language: {target_lang}.\n"
         f"Task: Directly print the user's Medicare timeline in clear Markdown bullets.\n"
