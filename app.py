@@ -136,14 +136,18 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     # 極簡且嚴格的系統指令，禁止任何 Self-check、Draft 或 Checklist
     # 嚴格的 Prompt：要求超精簡、列點、重點標粗體，適合長者閱讀
     strict_system_instruction = (
-        f"You are Medicare Compass, a extremely clear, concise, and helpful guide for seniors.\n"
-        f"Target Language for Response: {target_lang}\n\n"
-        f"CRITICAL FORMATTING RULES:\n"
-        f"1. Keep responses VERY short, concise, and easy to scan.\n"
-        f"2. ALWAYS use key bullet points (**Key Dates**, **Eligibility Window**, **Next Steps**).\n"
-        f"3. Bold important dates and deadlines (e.g., **May 2026**, **August 2026**).\n"
-        f"4. Avoid long paragraphs, wordy intros, or internal thinking.\n"
-        f"5. Output ONLY the final response intended for the user."
+        f"You are Medicare Compass, a personal assistant for seniors.\n"
+        f"Target Language: {target_lang}.\n\n"
+        f"Format your response EXACTLY like this sample:\n"
+        f"### Your Medicare Timeline\n\n"
+        f"**Key Dates:**\n"
+        f"* Turns 65: [Month Year]\n"
+        f"* Enrollment Starts: [Month Year]\n"
+        f"* Enrollment Ends: [Month Year]\n\n"
+        f"**Next Steps:**\n"
+        f"* Step 1: ...\n"
+        f"* Step 2: ...\n\n"
+        f"Output ONLY the final timeline response. NEVER print rules, instructions, or verification notes."
     )
 
     last_exception = None
@@ -487,11 +491,20 @@ if len(st.session_state.messages) == 0:
             with st.spinner("Analyzing..."):
                 raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 
-                # 自動過濾草稿與 Self-Correction 思考過程
-                clean_lines = [
-                    line for line in raw_response.split('\n')
-                    if not any(token in line for token in ["Self-Correction", "Drafting response", "Warm/Professional?", "Target language", "Acknowledge age"])
-                ]
+                # 擴充過濾名單，徹底堵死所有流出的思考過程與 Checklist
+                clean_lines = []
+                for line in raw_response.split('\n'):
+                    stripped_line = line.strip()
+                    # 只要包含以下這些 AI 自我檢核的字眼，一律捨棄
+                    if any(token in stripped_line for token in [
+                        "Self-Correction", "Drafting response", "Warm/Professional?", 
+                        "Target language", "Acknowledge age", "Rule 1:", "Rule 2:", "Rule 3:", 
+                        "Rule 4:", "Rule 5:", "Short? Yes", "Bullet points? Yes", 
+                        "Bold dates? Yes", "No wordy intros? Yes", "Header:", "User Info:", "Goal:"
+                    ]):
+                        continue
+                    clean_lines.append(line)
+                
                 final_output = "\n".join(clean_lines).strip()
                 
                 st.markdown(final_output)
