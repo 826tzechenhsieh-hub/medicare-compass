@@ -467,11 +467,10 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-   # 4. 執行對話與呼叫 AI (乾淨單一執行區塊，絕不重複)
+  # 4. 執行對話與呼叫 AI (Python 精準計算，徹底解決 AI 算錯年齡與雜訊問題)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
         
-        # 避免畫面重複印出兩次使用者輸入
         if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_text:
             st.session_state.messages.append({"role": "user", "content": user_text})
 
@@ -480,41 +479,48 @@ if len(st.session_state.messages) == 0:
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing..."):
-                raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                # 判斷是否為首次輸入出生年月與州別
+                import re
+                from datetime import datetime
                 
-                # -------------------------------------------------------------
-                # 手術刀邏輯：如果回應中包含 "May 2026:" 或 "Your Medicare Timeline"，
-                # 我們直接從那裡「切開」，丟棄前面所有的 System Instruction 雜訊！
-                # -------------------------------------------------------------
-                clean_lines = []
-                for line in raw_response.split('\n'):
-                    s_line = line.strip()
-                    # 徹底黑名單：包含這些工程師/指示關鍵字的行一律丟棄
-                    if any(token in s_line for token in [
-                        "Task:", "Constraints:", "Date of Birth", "Location:", 
-                        "Age 65", "Calculation:", "Timeline milestones:", 
-                        "User Input:", "Format:", "Yes.", "No "
-                    ]):
-                        continue
-                    clean_lines.append(line)
-
-                # 去除重複行（因為 AI 喜歡把 May 2026 / August 2026 重複印三四遍）
-                final_unique_lines = []
-                for line in clean_lines:
-                    if line not in final_unique_lines:
-                        final_unique_lines.append(line)
-
-                final_output = "\n".join(final_unique_lines).strip()
+                # 抓取月份/年份/州 (支援 8/26/1961 或 8/1961)
+                date_match = re.search(r'(\d{1,2})/(?:(\d{1,2})/)?(\d{4})', user_text)
                 
-                # 如果過濾完發現是空的，至少給予最基本乾淨的提示
-                if not final_output:
+                if date_match and not len(st.session_state.messages) > 2:
+                    month = int(date_match.group(1))
+                    year = int(date_match.group(3))
+                    
+                    # 計算滿 65 歲的年月
+                    turn_65_year = year + 65
+                    turn_65_month = month
+                    
+                    # Medicare IEP 官方精準規則：生日當月前 3 個月1號，到生日當月後 3 個月最後一天
+                    # 5月1日 ~ 11月30日
+                    start_month_str = datetime(turn_65_year, month, 1).strftime("%B 1, %Y")
+                    # 計算開頭與結束月份名稱
+                    import calendar
+                    start_m_name = calendar.month_name[(month - 3 - 1) % 12 + 1]
+                    start_y = turn_65_year - 1 if month <= 3 else turn_65_year
+                    
+                    end_m_idx = (month + 3 - 1) % 12 + 1
+                    end_m_name = calendar.month_name[end_m_idx]
+                    end_y = turn_65_year + 1 if month >= 10 else turn_65_year
+                    end_day = calendar.monthrange(end_y, end_m_idx)[1]
+
                     final_output = (
-                        "### 🗓️ Your Medicare Timeline\n\n"
-                        "* **May 2026**: Initial Enrollment Period (IEP) Begins\n"
-                        "* **August 2026**: 65th Birthday (Full Medicare Eligibility)\n"
-                        "* **November 2026**: Initial Enrollment Period (IEP) Ends"
+                        f"### 🗓️ Your Personalized Medicare Timeline\n\n"
+                        f"**Key Milestones:**\n"
+                        f"* **Turning 65**: {calendar.month_name[month]} {turn_65_year}\n"
+                        f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
+                        f"**Next Steps:**\n"
+                        f"* **Step 1**: Check if you have active employer group coverage (if working).\n"
+                        f"* **Step 2**: Compare Original Medicare (Parts A & B) + Medigap vs. Medicare Advantage.\n"
+                        f"* **Step 3**: Sign up online at **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**."
                     )
-
+                else:
+                    # 一般對話交給 AI 回答
+                    final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
 # -------------------------------------------------------------------
