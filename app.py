@@ -456,23 +456,30 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-    # 4. 執行對話與呼叫 AI (第 468 行)
+    # 4. 執行對話與呼叫 AI (只保留這一段，絕不重複！)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
-        st.session_state.messages.append({"role": "user", "content": user_text})
+        
+        # 避免畫面重複印出兩次使用者輸入
+        if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_text:
+            st.session_state.messages.append({"role": "user", "content": user_text})
+
         with st.chat_message("user"):
             st.markdown(user_text)
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing..."):
-                response_text = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
-                st.markdown(response_text)
-                st.session_state.messages.append({"role": "model", "content": response_text})
-# -------------------------------------------------------------------
-# 6. Response Execution
-# -------------------------------------------------------------------
-if prompt or uploaded_file:
-    user_text = prompt if prompt else "Please review this uploaded document."
+                raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                
+                # 自動過濾草稿與 Self-Correction
+                clean_lines = [
+                    line for line in raw_response.split('\n')
+                    if not any(token in line for token in ["Self-Correction", "Drafting response", "Warm/Professional?", "Target language", "Acknowledge age"])
+                ]
+                final_output = "\n".join(clean_lines).strip()
+                
+                st.markdown(final_output)
+                st.session_state.messages.append({"role": "model", "content": final_output})
     st.session_state.messages.append({"role": "user", "content": user_text})
     with st.chat_message("user"):
         st.markdown(user_text)
