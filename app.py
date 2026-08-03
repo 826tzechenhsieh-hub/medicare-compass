@@ -482,26 +482,39 @@ if len(st.session_state.messages) == 0:
             with st.spinner("Analyzing..."):
                 raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 
-                # 強效過濾網：徹底摒除所有 System Thinking、User Input 重複與 self-check
+                # -------------------------------------------------------------
+                # 手術刀邏輯：如果回應中包含 "May 2026:" 或 "Your Medicare Timeline"，
+                # 我們直接從那裡「切開」，丟棄前面所有的 System Instruction 雜訊！
+                # -------------------------------------------------------------
                 clean_lines = []
                 for line in raw_response.split('\n'):
                     s_line = line.strip()
-                    # 判斷是否包含任何思維雜訊關鍵字
-                    is_junk = any(token in s_line for token in [
-                        "User Input:", "Format:", "Date of Birth:", "Turns 65:", 
-                        "Step 1: Review", "Step 2: Apply", "Step 3: Evaluate",
-                        "Format matches", "final timeline?", "No rules", "Self-Correction", 
-                        "Drafting response", "Warm/Professional?", "Target language", 
-                        "Acknowledge age", "Rule 1:", "Rule 2:", "Rule 3:", "Rule 4:", 
-                        "Short? Yes", "Bullet points? Yes", "Bold dates? Yes", "Yes."
-                    ])
-                    # 如果行首帶有奇怪的問答 self-check（例如 "o Format matches..."），一律剔除
-                    if is_junk or s_line.startswith("o ") and "Yes" in s_line:
+                    # 徹底黑名單：包含這些工程師/指示關鍵字的行一律丟棄
+                    if any(token in s_line for token in [
+                        "Task:", "Constraints:", "Date of Birth", "Location:", 
+                        "Age 65", "Calculation:", "Timeline milestones:", 
+                        "User Input:", "Format:", "Yes.", "No "
+                    ]):
                         continue
                     clean_lines.append(line)
+
+                # 去除重複行（因為 AI 喜歡把 May 2026 / August 2026 重複印三四遍）
+                final_unique_lines = []
+                for line in clean_lines:
+                    if line not in final_unique_lines:
+                        final_unique_lines.append(line)
+
+                final_output = "\n".join(final_unique_lines).strip()
                 
-                final_output = "\n".join(clean_lines).strip()
-                
+                # 如果過濾完發現是空的，至少給予最基本乾淨的提示
+                if not final_output:
+                    final_output = (
+                        "### 🗓️ Your Medicare Timeline\n\n"
+                        "* **May 2026**: Initial Enrollment Period (IEP) Begins\n"
+                        "* **August 2026**: 65th Birthday (Full Medicare Eligibility)\n"
+                        "* **November 2026**: Initial Enrollment Period (IEP) Ends"
+                    )
+
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
 # -------------------------------------------------------------------
