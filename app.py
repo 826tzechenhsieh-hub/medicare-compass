@@ -436,7 +436,7 @@ if len(st.session_state.messages) == 0:
 
     # 3. 輸入框 Placeholder
     # 動態 Placeholder: 根據選擇的語言與狀態顯示提示
-    has_user_replied = len(st.session_state.get("messages", [])) > 0 or bool(st.session_state.get("saved_user_input")) or bool(st.session_state.get("user_role_type"))
+    has_user_replied = len(st.session_state.get("messages", [])) > 0
     if not has_user_replied:
         if current_lang == "繁體中文":
             input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
