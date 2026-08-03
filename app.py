@@ -456,7 +456,7 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-    # 4. 執行對話與呼叫 AI (只保留這一段，絕不重複！)
+   # 4. 執行對話與呼叫 AI (乾淨單一執行區塊，絕不重複)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
         
@@ -471,7 +471,7 @@ if len(st.session_state.messages) == 0:
             with st.spinner("Analyzing..."):
                 raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 
-                # 自動過濾草稿與 Self-Correction
+                # 自動過濾草稿與 Self-Correction 思考過程
                 clean_lines = [
                     line for line in raw_response.split('\n')
                     if not any(token in line for token in ["Self-Correction", "Drafting response", "Warm/Professional?", "Target language", "Acknowledge age"])
@@ -480,21 +480,6 @@ if len(st.session_state.messages) == 0:
                 
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
-    st.session_state.messages.append({"role": "user", "content": user_text})
-    with st.chat_message("user"):
-        st.markdown(user_text)
-
-    with st.chat_message("assistant"):
-        with st.spinner("Medicare Compass is working..."):
-            try:
-                raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=img_data)
-                sanitized_text = sanitize_ai_output(raw_response, target_lang=current_lang)
-                st.markdown(sanitized_text)
-                st.session_state.messages.append({"role": "assistant", "content": sanitized_text})
-                st.rerun()
-            except Exception as e:
-                st.error(f"Notice: {e}")
-
 # -------------------------------------------------------------------
 # 7. Consultation Summary & SHIP Official Portals
 # -------------------------------------------------------------------
