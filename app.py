@@ -135,19 +135,11 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
     # 極簡且嚴格的系統指令，禁止任何 Self-check、Draft 或 Checklist
     # 嚴格的 Prompt：要求超精簡、列點、重點標粗體，適合長者閱讀
-    strict_system_instruction = (
-        f"You are Medicare Compass, a personal assistant for seniors.\n"
-        f"Target Language: {target_lang}.\n\n"
-        f"Format your response EXACTLY like this sample:\n"
-        f"### Your Medicare Timeline\n\n"
-        f"**Key Dates:**\n"
-        f"* Turns 65: [Month Year]\n"
-        f"* Enrollment Starts: [Month Year]\n"
-        f"* Enrollment Ends: [Month Year]\n\n"
-        f"**Next Steps:**\n"
-        f"* Step 1: ...\n"
-        f"* Step 2: ...\n\n"
-        f"Output ONLY the final timeline response. NEVER print rules, instructions, or verification notes."
+   strict_system_instruction = (
+        f"You are Medicare Compass, an expert assistant.\n"
+        f"Language: {target_lang}.\n"
+        f"Task: Directly print the user's Medicare timeline in clear Markdown bullets.\n"
+        f"DO NOT reflect, re-state user input, check formatting, or include any 'Yes/No' evaluations."
     )
 
     last_exception = None
@@ -491,17 +483,21 @@ if len(st.session_state.messages) == 0:
             with st.spinner("Analyzing..."):
                 raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 
-                # 擴充過濾名單，徹底堵死所有流出的思考過程與 Checklist
+                # 強效過濾網：徹底摒除所有 System Thinking、User Input 重複與 self-check
                 clean_lines = []
                 for line in raw_response.split('\n'):
-                    stripped_line = line.strip()
-                    # 只要包含以下這些 AI 自我檢核的字眼，一律捨棄
-                    if any(token in stripped_line for token in [
-                        "Self-Correction", "Drafting response", "Warm/Professional?", 
-                        "Target language", "Acknowledge age", "Rule 1:", "Rule 2:", "Rule 3:", 
-                        "Rule 4:", "Rule 5:", "Short? Yes", "Bullet points? Yes", 
-                        "Bold dates? Yes", "No wordy intros? Yes", "Header:", "User Info:", "Goal:"
-                    ]):
+                    s_line = line.strip()
+                    # 判斷是否包含任何思維雜訊關鍵字
+                    is_junk = any(token in s_line for token in [
+                        "User Input:", "Format:", "Date of Birth:", "Turns 65:", 
+                        "Step 1: Review", "Step 2: Apply", "Step 3: Evaluate",
+                        "Format matches", "final timeline?", "No rules", "Self-Correction", 
+                        "Drafting response", "Warm/Professional?", "Target language", 
+                        "Acknowledge age", "Rule 1:", "Rule 2:", "Rule 3:", "Rule 4:", 
+                        "Short? Yes", "Bullet points? Yes", "Bold dates? Yes", "Yes."
+                    ])
+                    # 如果行首帶有奇怪的問答 self-check（例如 "o Format matches..."），一律剔除
+                    if is_junk or s_line.startswith("o ") and "Yes" in s_line:
                         continue
                     clean_lines.append(line)
                 
