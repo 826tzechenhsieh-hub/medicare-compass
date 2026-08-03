@@ -170,44 +170,44 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
             if not valid_models:
                 valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
-            for m_name in valid_models:
-        try:
-            # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
-            final_instruction = (
-                str(system_instruction_text)
-                + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
+for m_name in valid_models:
+    try:
+        # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
+        final_instruction = (
+            str(system_instruction_text)
+            + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
+        )
+
+        model = genai.GenerativeModel(
+            model_name=m_name, system_instruction=final_instruction
+        )
+
+        formatted_history = []
+        for m in st.session_state.messages[:-1]:
+            role = "user" if m["role"] == "user" else "model"
+            formatted_history.append(
+                {"role": role, "parts": [m["content"]]}
             )
 
-            model = genai.GenerativeModel(
-                model_name=m_name, system_instruction=final_instruction
-            )
+        chat = model.start_chat(history=formatted_history)
 
-            formatted_history = []
-            for m in st.session_state.messages[:-1]:
-                role = "user" if m["role"] == "user" else "model"
-                formatted_history.append(
-                    {"role": role, "parts": [m["content"]]}
-                )
+        if img_data:
+            response = model.generate_content([user_input, img_data])
+            raw_output = response.text
+        else:
+            response = chat.send_message(user_input)
+            raw_output = response.text
 
-            chat = model.start_chat(history=formatted_history)
+        return sanitize_ai_output(
+            clean_response(raw_output), target_lang=target_lang
+        )
 
-            if img_data:
-                response = model.generate_content([user_input, img_data])
-                raw_output = response.text
-            else:
-                response = chat.send_message(user_input)
-                raw_output = response.text
+    except Exception as inner_e:
+        last_exception = inner_e
+        continue
 
-            return sanitize_ai_output(
-                clean_response(raw_output), target_lang=target_lang
-            )
-
-        except Exception as inner_e:
-            last_exception = inner_e
-            continue
-
-    if last_exception:
-        raise last_exception
+if last_exception:
+    raise last_exception
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
