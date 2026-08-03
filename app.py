@@ -122,92 +122,56 @@ def sanitize_ai_output(raw_text, target_lang="English"):
     return final_text if final_text else raw_text.strip()
 
 def generate_clean_response(user_input, target_lang="English", img_data=None):
-    keys_to_try = [k for k in [primary_key, secondary_key] if k]
-    if not keys_to_try:
-        raise ValueError("NO_API_KEY")
+    valid_models = []
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                valid_models.append(m.name)
+    except Exception:
+        pass
+
+    if not valid_models:
+        valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
     last_exception = None
-
-    lang_instruction_map = {
-        "English": "Respond purely in English.",
-        "Español": "Respond purely in Spanish.",
-        "繁體中文": "請完全使用『繁體中文』回答，嚴禁使用簡體字與英文思考標註。",
-        "簡體中文": "请完全使用『简体中文』回答，严禁使用繁体字与英文思考标签。",
-        "한국어": "Respond purely in Korean."
-    }
-    lang_rule = lang_instruction_map.get(target_lang, "Respond in the target language.")
-
-    system_instruction_text = f"""You are Medicare Compass, a warm, concise human advisor. {lang_rule}
-CRITICAL TIME ANCHOR: CURRENT DATE IS AUGUST 2026.
-
-STRICT OUTPUT RULES:
-1. NEVER WRITE DRAFTS, THOUGHTS, DRAFTING PROCESS, OR CHECKLISTS.
-2. OUTPUT ONLY THE FINAL DIRECT CONVERSATIONAL RESPONSE TO THE USER.
-3. ALWAYS USE CONCISE BULLET POINTS FOR FACTS/OPTIONS. NO WALL OF TEXT.
-4. MISSING STATE GUIDANCE:
-   - If user provided DOB/birth year but NO state (e.g. only "8/26/1961"), acknowledge their IEP dates warmly, then PROACTIVELY ASK: "Which state do you currently reside in (e.g., NJ, VA, CA)? Knowing your state helps me give exact local plan guidance."
-
-EXPERT KNOWLEDGE TO EMBED CONCISELY:
-- Supplement (Medigap) Scope: Clarify that Medigap covers Part B's 20% medical gap, but DOES NOT cover standalone prescription drugs (needs Part D) or routine dental/vision unless specified.
-- Rehab/SNF Denial: Advantage (Part C) Prior Auth often DENIES coverage after 20-30 days in Rehab.
-- Durable Medical Equipment (DME): Doctors must write prescription BEFORE hospital discharge.
-- ER & Ambulance: Part B covers 80% for medically necessary emergencies only.
-- Travel & Overseas: Medigap offers nationwide access & $50k emergency travel coverage."""
-
-    for current_key in keys_to_try:
+    for m_name in valid_models:
         try:
-            clean_key = str(current_key).strip().strip('"').strip("'")
-            genai.configure(api_key=clean_key)
-            
-            valid_models = []
-            try:
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        valid_models.append(m.name)
-            except Exception:
-                pass
-
-            if not valid_models:
-                valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
-
-for m_name in valid_models:
-    try:
-        # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
-        final_instruction = (
-            str(system_instruction_text)
-            + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
-        )
-
-        model = genai.GenerativeModel(
-            model_name=m_name, system_instruction=final_instruction
-        )
-
-        formatted_history = []
-        for m in st.session_state.messages[:-1]:
-            role = "user" if m["role"] == "user" else "model"
-            formatted_history.append(
-                {"role": role, "parts": [m["content"]]}
+            # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
+            final_instruction = (
+                str(system_instruction_text)
+                + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
             )
 
-        chat = model.start_chat(history=formatted_history)
+            model = genai.GenerativeModel(
+                model_name=m_name, system_instruction=final_instruction
+            )
 
-        if img_data:
-            response = model.generate_content([user_input, img_data])
-            raw_output = response.text
-        else:
-            response = chat.send_message(user_input)
-            raw_output = response.text
+            formatted_history = []
+            for m in st.session_state.messages[:-1]:
+                role = "user" if m["role"] == "user" else "model"
+                formatted_history.append(
+                    {"role": role, "parts": [m["content"]]}
+                )
 
-        return sanitize_ai_output(
-            clean_response(raw_output), target_lang=target_lang
-        )
+            chat = model.start_chat(history=formatted_history)
 
-    except Exception as inner_e:
-        last_exception = inner_e
-        continue
+            if img_data:
+                response = model.generate_content([user_input, img_data])
+                raw_output = response.text
+            else:
+                response = chat.send_message(user_input)
+                raw_output = response.text
 
-if last_exception:
-    raise last_exception
+            return sanitize_ai_output(
+                clean_response(raw_output), target_lang=target_lang
+            )
+
+        except Exception as inner_e:
+            last_exception = inner_e
+            continue
+
+    if last_exception:
+        raise last_exception
 
 # -------------------------------------------------------------------
 # 3. Sidebar Setup
