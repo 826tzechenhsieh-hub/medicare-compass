@@ -137,8 +137,11 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     for m_name in valid_models:
         try:
             # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
+            # 取得系統提示詞，若未定義則使用預設字串
+            sys_text = globals().get("system_instruction_text") or globals().get("SYSTEM_PROMPT") or "You are a helpful Medicare Compass assistant."
+
             final_instruction = (
-                str(system_instruction_text)
+                str(sys_text)
                 + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior"
             )
 
