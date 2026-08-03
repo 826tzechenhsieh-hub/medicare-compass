@@ -171,36 +171,36 @@ EXPERT KNOWLEDGE TO EMBED CONCISELY:
                 valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
             for m_name in valid_models:
-        try:
-            # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
-            final_instruction = (
-                str(system_instruction_text)
-                + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior user.\n- NEVER include internal planning, meta-data tags (such as 'User wants to know', 'Constraint 1:', 'Role:'), or checklist confirmations (such as 'Concise bullet points used').\n- Begin your response IMMEDIATELY with the greeting or direct explanation."
-            )
+                try:
+                    # 在傳給模型前，強制加入禁止輸出草稿與思考過程的嚴格規則
+                    final_instruction = (
+                        str(system_instruction_text)
+                        + "\n\nCRITICAL OUTPUT RULE:\n- Output ONLY the final conversational response intended for the senior user.\n- NEVER include internal planning, meta-data tags (such as 'User wants to know', 'Constraint 1:', 'Role:'), or checklist confirmations (such as 'Concise bullet points used').\n- Begin your response IMMEDIATELY with the greeting or direct explanation."
+                    )
 
-            model = genai.GenerativeModel(
-                model_name=m_name, system_instruction=final_instruction
-            )
+                    model = genai.GenerativeModel(
+                        model_name=m_name, system_instruction=final_instruction
+                    )
 
-            formatted_history = []
-            for m in st.session_state.messages[:-1]:
-                role = "user" if m["role"] == "user" else "model"
-                formatted_history.append(
-                    {"role": role, "parts": [m["content"]]}
-                )
+                    formatted_history = []
+                    for m in st.session_state.messages[:-1]:
+                        role = "user" if m["role"] == "user" else "model"
+                        formatted_history.append(
+                            {"role": role, "parts": [m["content"]]}
+                        )
 
-            chat = model.start_chat(history=formatted_history)
+                    chat = model.start_chat(history=formatted_history)
 
-            if img_data:
-                response = model.generate_content([user_input, img_data])
-                raw_output = response.text
-            else:
-                response = chat.send_message(user_input)
-                raw_output = response.text
+                    if img_data:
+                        response = model.generate_content([user_input, img_data])
+                        raw_output = response.text
+                    else:
+                        response = chat.send_message(user_input)
+                        raw_output = response.text
 
-            return sanitize_ai_output(
-                clean_response(raw_output), target_lang=target_lang
-            )
+                    return sanitize_ai_output(
+                        clean_response(raw_output), target_lang=target_lang
+                    )
         except Exception as inner_e:
             last_exception = inner_e
             continue
