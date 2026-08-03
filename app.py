@@ -467,26 +467,28 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-  # 4. 執行對話與呼叫 AI (第一階段極簡化 + 客製頭像，解決 Stuck 與頭像 M 問題)
+  # 4. 執行對話與呼叫 AI (徹底防止 Stuck、確保續問有回應、修復頭像 M)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
         
         if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_text:
             st.session_state.messages.append({"role": "user", "content": user_text})
 
+        # 先印出歷程中最後一則 user 輸入
         with st.chat_message("user"):
             st.markdown(user_text)
 
-        # 使用自訂的 🧭 圖示取代預設的灰底 M
+        # 顯示 AI 助手回應 (明確指定 🧭 圖示)
         with st.chat_message("assistant", avatar="🧭"):
             with st.spinner("Analyzing..."):
                 import re
                 import calendar
 
+                # 判斷是否為「第一次」輸入出生日期 (只針對包含日期的初次提示)
                 date_match = re.search(r'(\d{1,2})/(?:(\d{1,2})/)?(\d{4})', user_text)
-                
-                # 初次輸入：只專注在「時間軸」與「Step 1 / Step 2」，不放多餘 Tip 與容易卡住的提問
-                if date_match and len(st.session_state.messages) <= 2:
+                is_first_input = len(st.session_state.messages) <= 2
+
+                if date_match and is_first_input:
                     try:
                         month = int(date_match.group(1))
                         year = int(date_match.group(3))
@@ -503,7 +505,6 @@ if len(st.session_state.messages) == 0:
                         birth_m_name = calendar.month_name[month]
                         end_day = calendar.monthrange(end_y, end_m)[1]
 
-                        # 將 Tip 移走，留到 Step 2 解答完畢後才出現
                         final_output = (
                             f"### 🗓️ Your Personalized Medicare Timeline\n\n"
                             f"**Key Milestones:**\n"
@@ -516,10 +517,10 @@ if len(st.session_state.messages) == 0:
                     except Exception:
                         final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 else:
-                    # 後續對話：正常的 AI 諮詢（在此階段的回答結尾會自動加上溫馨 Tip）
+                    # 💡 關鍵修復：後續所有提問（包含 reply "I'm not working and want to compare"），100% 強制走 AI 諮詢！
                     raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                     
-                    # 只有在回答第二階段問題時，才把 Tip 附在最下方
+                    # 只有在第二階段回答時，才在最底下溫馨附上 SSA 申請連結 Tip
                     tip_suffix = "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
                     final_output = raw_response.strip() + tip_suffix
 
