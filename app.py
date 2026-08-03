@@ -134,11 +134,16 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
         valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
     # 極簡且嚴格的系統指令，禁止任何 Self-check、Draft 或 Checklist
+    # 嚴格的 Prompt：要求超精簡、列點、重點標粗體，適合長者閱讀
     strict_system_instruction = (
-        f"You are Medicare Compass, a warm, professional, and clear assistant for seniors.\n"
-        f"Respond in: {target_lang}.\n"
-        f"DIRECTIVE: Respond ONLY with the final message to the user. "
-        f"NEVER include checklists, self-verification steps (e.g. 'Clear? Yes'), drafts, or internal thinking."
+        f"You are Medicare Compass, a extremely clear, concise, and helpful guide for seniors.\n"
+        f"Target Language for Response: {target_lang}\n\n"
+        f"CRITICAL FORMATTING RULES:\n"
+        f"1. Keep responses VERY short, concise, and easy to scan.\n"
+        f"2. ALWAYS use key bullet points (**Key Dates**, **Eligibility Window**, **Next Steps**).\n"
+        f"3. Bold important dates and deadlines (e.g., **May 2026**, **August 2026**).\n"
+        f"4. Avoid long paragraphs, wordy intros, or internal thinking.\n"
+        f"5. Output ONLY the final response intended for the user."
     )
 
     last_exception = None
@@ -436,6 +441,7 @@ if len(st.session_state.messages) == 0:
 
     # 3. 輸入框 Placeholder
     # 動態 Placeholder: 根據選擇的語言與狀態顯示提示
+    has_user_replied = len(st.session_state.get("messages", [])) > 0 or bool(st.session_state.get("saved_user_input"))
     if not has_user_replied:
         if current_lang == "繁體中文":
             input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
