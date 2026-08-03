@@ -467,7 +467,7 @@ if len(st.session_state.messages) == 0:
         prompt = role_prefix + input_prompt
         st.session_state.saved_user_input = prompt
 
-  # 4. 執行對話與呼叫 AI (Python 精準計算，徹底解決 AI 算錯年齡與雜訊問題)
+  # 4. 執行對話與呼叫 AI (支援 8/26/1961 及 8/1961，防止計算卡死)
     if prompt or uploaded_file:
         user_text = prompt if prompt else "Please review this uploaded document."
         
@@ -479,46 +479,55 @@ if len(st.session_state.messages) == 0:
 
         with st.chat_message("assistant"):
             with st.spinner("Analyzing..."):
-                # 判斷是否為首次輸入出生年月與州別
                 import re
-                from datetime import datetime
-                
-                # 抓取月份/年份/州 (支援 8/26/1961 或 8/1961)
+                import calendar
+
+                # 支援各種日期格式：8/26/1961, 08/26/1961, 8/1961, 08/1961
                 date_match = re.search(r'(\d{1,2})/(?:(\d{1,2})/)?(\d{4})', user_text)
                 
-                if date_match and not len(st.session_state.messages) > 2:
-                    month = int(date_match.group(1))
-                    year = int(date_match.group(3))
-                    
-                    # 計算滿 65 歲的年月
-                    turn_65_year = year + 65
-                    turn_65_month = month
-                    
-                    # Medicare IEP 官方精準規則：生日當月前 3 個月1號，到生日當月後 3 個月最後一天
-                    # 5月1日 ~ 11月30日
-                    start_month_str = datetime(turn_65_year, month, 1).strftime("%B 1, %Y")
-                    # 計算開頭與結束月份名稱
-                    import calendar
-                    start_m_name = calendar.month_name[(month - 3 - 1) % 12 + 1]
-                    start_y = turn_65_year - 1 if month <= 3 else turn_65_year
-                    
-                    end_m_idx = (month + 3 - 1) % 12 + 1
-                    end_m_name = calendar.month_name[end_m_idx]
-                    end_y = turn_65_year + 1 if month >= 10 else turn_65_year
-                    end_day = calendar.monthrange(end_y, end_m_idx)[1]
+                # 只有在初次諮詢、且成功抓取到日期時才走精準計算
+                if date_match and len(st.session_state.messages) <= 2:
+                    try:
+                        month = int(date_match.group(1))
+                        year = int(date_match.group(3))
+                        
+                        turn_65_year = year + 65
+                        
+                        # 安全計算開頭月份與年份 (月 - 3)
+                        if month > 3:
+                            start_m = month - 3
+                            start_y = turn_65_year
+                        else:
+                            start_m = month - 3 + 12
+                            start_y = turn_65_year - 1
 
-                    final_output = (
-                        f"### 🗓️ Your Personalized Medicare Timeline\n\n"
-                        f"**Key Milestones:**\n"
-                        f"* **Turning 65**: {calendar.month_name[month]} {turn_65_year}\n"
-                        f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
-                        f"**Next Steps:**\n"
-                        f"* **Step 1**: Check if you have active employer group coverage (if working).\n"
-                        f"* **Step 2**: Compare Original Medicare (Parts A & B) + Medigap vs. Medicare Advantage.\n"
-                        f"* **Step 3**: Sign up online at **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**."
-                    )
+                        # 安全計算結束月份與年份 (月 + 3)
+                        if month <= 9:
+                            end_m = month + 3
+                            end_y = turn_65_year
+                        else:
+                            end_m = month + 3 - 12
+                            end_y = turn_65_year + 1
+
+                        start_m_name = calendar.month_name[start_m]
+                        end_m_name = calendar.month_name[end_m]
+                        birth_m_name = calendar.month_name[month]
+                        end_day = calendar.monthrange(end_y, end_m)[1]
+
+                        final_output = (
+                            f"### 🗓️ Your Personalized Medicare Timeline\n\n"
+                            f"**Key Milestones:**\n"
+                            f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
+                            f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
+                            f"**Next Steps:**\n"
+                            f"* **Step 1**: Check if you have active employer group coverage (if working).\n"
+                            f"* **Step 2**: Compare Original Medicare (Parts A & B) + Medigap vs. Medicare Advantage.\n"
+                            f"* **Step 3**: Sign up online at **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**."
+                        )
+                    except Exception as e:
+                        # 備用方案：萬一計算出錯，降級讓 AI 處理
+                        final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 else:
-                    # 一般對話交給 AI 回答
                     final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
                 
                 st.markdown(final_output)
