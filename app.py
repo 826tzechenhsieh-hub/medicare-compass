@@ -432,28 +432,38 @@ if len(st.session_state.messages) == 0:
             st.rerun()
 
     if st.session_state.saved_user_input:
-        st.markdown("<br>", unsafe_allow_html=True)
-        quick_btn_label = f"⚡ 點擊直接使用上次記憶提交：{st.session_state.saved_user_input}"
-        if st.button(quick_btn_label, type="primary", use_container_width=True):
-            role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
-            auto_prompt = role_prefix + st.session_state.saved_user_input
-            st.session_state.messages.append({"role": "user", "content": auto_prompt})
-            st.rerun()
+            st.markdown("<br>", unsafe_allow_html=True)
+            quick_btn_label = f"⚡ 點擊直接使用上次記憶提交: {st.session_state.saved_user_input}"
+            if st.button(quick_btn_label, type="primary", use_container_width=True):
+                # 修正 1：直接使用 saved_user_input，不再重複疊加 role_prefix
+                st.session_state.messages.append({"role": role, "content": st.session_state.saved_user_input})
+                st.rerun()
 
-# 動態 Placeholder：提示使用者下一步可以打什麼
-if not has_user_replied:
-    input_placeholder = "🎙️ 請輸入出生年月與居住州（例如：8/26/1961, NJ）..."
-else:
-    input_placeholder = "🎙️ 請輸入您居住的州（例如：NJ, VA, CA）或繼續提問..." if current_lang == "繁體中文" else "🎙️ Enter your state (e.g. NJ, VA) or question..."
+    # 動態 Placeholder: 提示使用者下一步可以打什麼
+    if not has_user_replied:
+        input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
+    else:
+        # 修正 2：已經輸入過資料後，切換成通用的提問引導
+        if current_lang == "繁體中文":
+            input_placeholder = "💬 請輸入您想諮詢的 Medicare 問題..."
+        elif current_lang == "簡體中文":
+            input_placeholder = "💬 请输入您想咨询的 Medicare 问题..."
+        elif current_lang == "Español":
+            input_placeholder = "💬 Escriba su pregunta sobre Medicare..."
+        elif current_lang == "한국어":
+            input_placeholder = "💬 Medicare에 대해 질문을 입력하세요..."
+        else:
+            input_placeholder = "💬 Ask any follow-up question about Medicare..."
 
-input_prompt = st.chat_input(input_placeholder)
+    input_prompt = st.chat_input(input_placeholder)
 
-if input_prompt:
-    st.session_state.saved_user_input = input_prompt
-    role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family Member] "
-    prompt = role_prefix + input_prompt
-else:
-    prompt = None
+    if input_prompt:
+        role_prefix = "[Applying for Myself] " if st.session_state.user_role_type == "self" else "[Helping Family/Parents] "
+        prompt = role_prefix + input_prompt
+        # 修正 3：儲存時存帶有 prefix 的完整 Prompt，或純文字
+        st.session_state.saved_user_input = prompt
+    else:
+        prompt = None
 
 # -------------------------------------------------------------------
 # 6. Response Execution
