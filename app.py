@@ -435,8 +435,18 @@ if len(st.session_state.messages) == 0:
             prompt = st.session_state.saved_user_input
 
     # 3. 輸入框 Placeholder
+    # 動態 Placeholder: 根據選擇的語言與狀態顯示提示
     if not has_user_replied:
-        input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
+        if current_lang == "繁體中文":
+            input_placeholder = "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
+        elif current_lang == "簡體中文":
+            input_placeholder = "✍️ 请输入出生年月与居住州 (例如: 8/26/1961, NJ) ..."
+        elif current_lang == "Español":
+            input_placeholder = "✍️ Ingrese su fecha de nacimiento y estado (p. ej. 8/26/1961, NJ) ..."
+        elif current_lang == "한국어":
+            input_placeholder = "✍️ 생년월일과 주를 입력하세요 (예: 8/26/1961, NJ) ..."
+        else:
+            input_placeholder = "✍️ Please enter Date of Birth & State (e.g. 8/26/1961, NJ) ..."
     else:
         if current_lang == "繁體中文":
             input_placeholder = "💬 請輸入您想諮詢的 Medicare 問題..."
