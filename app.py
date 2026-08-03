@@ -519,10 +519,14 @@ if len(st.session_state.messages) == 0:
                             f"**Key Milestones:**\n"
                             f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
                             f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
-                            f"**Next Steps:**\n"
-                            f"* **Step 1**: Check if you have active employer group coverage (if working).\n"
-                            f"* **Step 2**: Compare Original Medicare (Parts A & B) + Medigap vs. Medicare Advantage.\n"
-                            f"* **Step 3**: Sign up online at **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**."
+                            f"**Recommended Next Steps:**\n"
+                            f"* **Step 1**: Check active employer group coverage (if still working) to see if you can delay Part B.\n"
+                            f"* **Step 2**: Compare **Original Medicare (+ Medigap)** vs. **Medicare Advantage** based on your doctor and drug needs.\n\n"
+                            f"💡 *Tip: Once you choose your preferred plan pathway, you can submit your official enrollment through **[SSA.gov](https://www.ssa.gov)** starting **{start_m_name} 1, {start_y}**.*\n\n"
+                            f"--- \n"
+                            f"**Would you like me to explain:**\n"
+                            f"1️⃣ The difference between Original Medicare and Medicare Advantage?\n"
+                            f"2️⃣ How employer coverage works with Medicare?"
                         )
                     except Exception as e:
                         # 備用方案：萬一計算出錯，降級讓 AI 處理
