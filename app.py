@@ -16,10 +16,10 @@ def clean_response(text: str) -> str:
   if not text:
     return ""
 
-  # 1. 移除 <think>...</think> 或 <thought>... 標籤
+  # 移除 <think>...</think> 或 <thought>... 標籤
   text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
-  # 2. 強效清理 AI 自我檢查與草稿痕跡 (Chain of Thought & Constraint Checks)
+  # 強效清理 AI 自我檢查與草稿痕跡
   cleanup_patterns = [
       r"^\s*[\*•\-]?\s*Directly print.*$",
       r"^\s*[\*•\-]?\s*Markdown bullets\?.*$",
@@ -41,7 +41,6 @@ def clean_response(text: str) -> str:
   for pattern in cleanup_patterns:
     text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
-  # 3. 移除殘留的 Metadata 標籤
   metadata_patterns = [
       (
           r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ"
@@ -62,7 +61,6 @@ def clean_response(text: str) -> str:
   for pattern in metadata_patterns:
     text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
-  # 4. 若包含真正的回答標頭，只截取標頭後面的精華內容
   if "### 🗓️ Your Medicare Timeline" in text:
     idx = text.find("### 🗓️ Your Medicare Timeline")
     text = text[idx:]
@@ -155,8 +153,9 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
   strict_system_instruction = (
       f"You are Medicare Compass, an expert assistant.\nLanguage:"
       f" {target_lang}.\nTask: Explain Medicare options clearly using real-life"
-      " doctor access and drug needs scenarios.\nDO NOT reflect, re-state user"
-      " input, check formatting, or include any internal evaluation notes."
+      " doctor access (freedom to travel vs local network) and drug needs"
+      " scenarios.\nDO NOT reflect, re-state user input, check formatting, or"
+      " include any internal evaluation notes."
   )
 
   last_exception = None
@@ -196,14 +195,22 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
 
 # --------------------------------------------------
-# 2. Page Configuration & Custom CSS
+# 2. Page Configuration & Custom CSS (視覺顏色優化)
 # --------------------------------------------------
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
+# 強效強制置頂 JavaScript
 components.html(
     """
     <script>
-        window.parent.document.querySelector('section.main').scrollTo(0, 0);
+        function forceScrollTop() {
+            var mainSec = window.parent.document.querySelector('section.main');
+            if (mainSec) mainSec.scrollTop = 0;
+            window.parent.scrollTo(0, 0);
+        }
+        forceScrollTop();
+        setTimeout(forceScrollTop, 300);
+        setTimeout(forceScrollTop, 800);
     </script>
     """,
     height=0,
@@ -236,6 +243,22 @@ st.markdown(
         }
         .stChatInput input {
             font-size: 19px !important;
+        }
+        
+        /* 雙色路徑卡片視覺樣式 (無 Tension 柔和色系) */
+        .pathway-a-box {
+            background-color: #f0f7ff;
+            border-left: 6px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .pathway-b-box {
+            background-color: #f0fdf4;
+            border-left: 6px solid #16a34a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
         }
         .warning-card {
             background-color: #fffbe2;
@@ -461,60 +484,7 @@ if app_mode == "MAIN_AI":
   top_container = st.container()
 
   with top_container:
-    col1, col2, col3 = st.columns(3)
-    if current_lang == "English":
-      with col1:
-        st.markdown("### 1️⃣ Step 1: When")
-        st.caption("IEP Timing, Date of Birth & State.")
-      with col2:
-        st.markdown("### 2️⃣ Step 2: What")
-        st.caption("Freedom to See Doctors vs. Bundled Plans.")
-      with col3:
-        st.markdown("### 3️⃣ Step 3: How")
-        st.caption("Application & Official Channels.")
-    elif current_lang == "Español":
-      with col1:
-        st.markdown("### 1️⃣ Paso 1: Cuándo")
-        st.caption("Fechas clave, fecha de nacimiento y estado.")
-      with col2:
-        st.markdown("### 2️⃣ Paso 2: Qué")
-        st.caption("Libertad de médicos vs. Plan paquete.")
-      with col3:
-        st.markdown("### 3️⃣ Paso 3: Cómo")
-        st.caption("Solicitud paso a paso.")
-    elif current_lang == "한국어":
-      with col1:
-        st.markdown("### 1️⃣ 1단계: 언제")
-        st.caption("IEP 기간, 생년월일 및 거주 주.")
-      with col2:
-        st.markdown("### 2️⃣ 2단계: 무엇을")
-        st.caption("의사 선택 자유 vs 민간 패키지 플랜.")
-      with col3:
-        st.markdown("### 3️⃣ 3단계: 어떻게")
-        st.caption("신청 방법 및 수속.")
-    elif current_lang == "簡體中文":
-      with col1:
-        st.markdown("### 1️⃣ 第一步：WHEN 参保时机")
-        st.caption("出生年月、居住州与黄金期限。")
-      with col2:
-        st.markdown("### 2️⃣ 第二步：WHAT 方案比对")
-        st.caption("全美看诊自由 vs 私人優惠套餐。")
-      with col3:
-        st.markdown("### 3️⃣ 第三步：HOW 申办执行")
-        st.caption("官方申请流程与快速通道。")
-    else:
-      with col1:
-        st.markdown("### 1️⃣ 第一步：WHEN 參保時機")
-        st.caption("出生年月、居住州與黃金期限。")
-      with col2:
-        st.markdown("### 2️⃣ 第二步：WHAT 方案比對")
-        st.caption("全美看診自由 vs 私人優惠套餐。")
-      with col3:
-        st.markdown("### 3️⃣ 第三步：HOW 申辦執行")
-        st.caption("官方申請流程與快速通道。")
-
-    st.markdown("---")
-
+    # 整合後的單一精簡卡片 (去除頂部 Step 1-2-3 重複區塊)
     expander_title_map = {
         "English": (
             "🗺️ **1-Minute Medicare Guide: Two Major Pathways Explained**"
@@ -535,43 +505,85 @@ if app_mode == "MAIN_AI":
     ):
       if current_lang == "English":
         st.markdown("""
-* **Pathway 🅰️ Original Medicare (+ Medigap + Part D)**: 
-  * *Best for*: Freedom to see **ANY doctor/hospital in the U.S.** that accepts Medicare. No network limits, no doctor referrals needed. (Part D drug plan purchased separately).
-* **Pathway 🅱️ Medicare Advantage (Part C)**: 
-  * *Best for*: People who prefer an **all-in-one bundled package** managed by private insurers. Uses local doctor networks (HMO/PPO) and includes drug coverage, but requires prior approvals for specialized care.
-* **🏠 Discharge Devices (DME - Walker/Bed)**: *Do NOT buy privately!* Must get a doctor's prescription before hospital discharge for Medicare reimbursement.
-* **🚨 Emergency Services**: Medicare covers 80% for medically necessary emergency ambulance; private rides are NOT covered.
-            """)
+<div class="pathway-a-box">
+  <h4 style="margin-top:0; color:#1e40af;">💙 Pathway 🅰️ Original Medicare + Medigap + Part D</h4>
+  <ul>
+    <li><b>Best for</b>: People who want total freedom to see <b>ANY doctor/hospital in the U.S.</b> that accepts Medicare. Ideal for frequent travelers or snowbirds.</li>
+    <li><b>Doctor Access</b>: No network limits, no referrals needed to see specialists.</li>
+    <li><b>Drugs</b>: Requires a separate standalone Part D prescription plan.</li>
+  </ul>
+</div>
+
+<div class="pathway-b-box">
+  <h4 style="margin-top:0; color:#166534;">💚 Pathway 🅱️ Medicare Advantage (Part C Bundled Plan)</h4>
+  <ul>
+    <li><b>Best for</b>: People who prefer an <b>all-in-one bundled package</b> managed by private insurers with lower monthly premiums.</li>
+    <li><b>Doctor Access</b>: Restricted to local doctor networks (HMO/PPO). May require referrals for specialists.</li>
+    <li><b>Drugs & Extras</b>: Usually includes drug coverage (Part D) and extra perks (Dental/Vision).</li>
+  </ul>
+</div>
+
+* **🏠 Discharge Medical Devices**: *Do NOT buy privately!* Must get a doctor's prescription before hospital discharge for Medicare reimbursement.
+* **🚨 Emergency Ambulance**: Part B covers 80% for medically necessary emergencies only; private rides/taxis are NOT covered.
+            """, unsafe_allow_html=True)
       elif current_lang == "Español":
         st.markdown("""
-* **Vía 🅰️ Original Medicare (+ Medigap + Parte D)**: Libre elección de cualquier médico u hospital en EE. UU. sin restricciones de red ni referencias.
-* **Vía 🅱️ Medicare Advantage (Parte C)**: Paquete todo en uno gestionado por aseguradoras privadas. Usa redes locales (HMO/PPO) e incluye medicinas.
-* **🏠 Equipos médicos (DME)**: Requiere receta médica antes del alta hospitalaria.
-            """)
+<div class="pathway-a-box">
+  <h4 style="margin-top:0; color:#1e40af;">💙 Vía 🅰️ Original Medicare + Medigap + Parte D</h4>
+  <p>Libre elección de cualquier médico u hospital en EE. UU. sin restricciones de red ni referencias. Ideal para quienes viajan con frecuencia.</p>
+</div>
+<div class="pathway-b-box">
+  <h4 style="margin-top:0; color:#166534;">💚 Vía 🅱️ Medicare Advantage (Parte C)</h4>
+  <p>Paquete todo en uno gestionado por aseguradoras privadas con primas mensuales más bajas. Usa redes locales (HMO/PPO).</p>
+</div>
+            """, unsafe_allow_html=True)
       elif current_lang == "한국어":
         st.markdown("""
-* **경로 🅰️ Original Medicare (+ Medigap + Part D)**: 네트워크 제한 없이 미국 내 모든 의사/병원 자유 이용.
-* **경로 🅱️ Medicare Advantage (Part C)**: 민간 보험사의 통합 패키지. 지정된 지역 네트워크(HMO/PPO) 이용.
-* **🏠 가정용 의료기기 (DME)**: 퇴원 전 의사 처방전 필수.
-            """)
+<div class="pathway-a-box">
+  <h4 style="margin-top:0; color:#1e40af;">💙 경로 🅰️ Original Medicare + Medigap + Part D</h4>
+  <p>네트워크 제한 및 진료 의뢰서 없이 미국 내 모든 의사/병원 자유 이용. 타주 이동이 잦은 분에게 최적.</p>
+</div>
+<div class="pathway-b-box">
+  <h4 style="margin-top:0; color:#166534;">💚 경로 🅱️ Medicare Advantage (Part C 패키지)</h4>
+  <p>낮은 월 보험료로 민간 보험사가 제공하는 통합 패키지. 지정된 지역 네트워크(HMO/PPO) 이용.</p>
+</div>
+            """, unsafe_allow_html=True)
       elif current_lang == "簡體中文":
         st.markdown("""
-* **路径 🅰️ 传统红蓝卡組合 (Original Medicare + Medigap + Part D 药保)**：
-  * *适合人群*：追求**全美看诊自由**。全美只要收 Medicare 的医生/医院皆可直接看，无需转诊单（No Referral）。
-* **路径 🅱️ 优惠套餐 (Medicare Advantage / Part C)**：
-  * *适合人群*：喜欢**私人保险公司一包到底**。限制在当地指定网络看诊 (HMO/PPO)，含药保与牙科等福利，但看专科需預先審查。
-* **🏠 出院居家设备 (DME - 病床/助行器)**：*切勿自行购买！* 必须由医生开处方并由社工预订方可报销。
-* **🚨 急诊与救护车**：Part B 仅报销“医疗紧急且必要”的救护车 80%；私人叫车不可报销。
-            """)
+<div class="pathway-a-box">
+  <h4 style="margin-top:0; color:#1e40af;">💙 路径 🅰️ 传统红蓝卡组合 (Original Medicare + Medigap + Part D 药保)</h4>
+  <ul>
+    <li><b>适合人群</b>：追求<b>全美看诊自由</b>、經常跨州居住或旅行者。</li>
+    <li><b>看病网络</b>：全美只要收 Medicare 的医生/医院皆可直接看，无需转诊单 (No Referral)。</li>
+  </ul>
+</div>
+
+<div class="pathway-b-box">
+  <h4 style="margin-top:0; color:#166534;">💚 路径 🅱️ 优惠套餐 (Medicare Advantage / Part C)</h4>
+  <ul>
+    <li><b>适合人群</b>：喜欢<b>低月保费、私人保险公司一包到底</b>者。</li>
+    <li><b>看病网络</b>：限制在当地指定网络看诊 (HMO/PPO)，含药保与牙科福利，但看专科需預先審查。</li>
+  </ul>
+</div>
+            """, unsafe_allow_html=True)
       else:
         st.markdown("""
-* **路徑 🅰️ 傳統紅藍卡組合 (Original Medicare + Medigap + Part D 藥保)**：
-  * *適合人群*：追求**全美看診自由**。全美只要收 Medicare 的醫生/醫院皆可直接看，無需轉診單（No Referral）。
-* **路徑 🅱️ 優惠套餐 (Medicare Advantage / Part C)**：
-  * *適合人群*：喜歡**私人保險公司一包到底**。限制在當地指定網絡看診 (HMO/PPO)，含藥保與牙科等福利，但看專科需預先審查。
-* **🏠 出院居家設備 (DME - 病床/助行器)**：*切勿自行購買！* 必須由醫生開處方並由社工預訂方可報銷。
-* **🚨 急診與救護車**：Part B 僅報銷「醫療緊急且必要」的救護車 80%；私人叫車不可報銷。
-            """)
+<div class="pathway-a-box">
+  <h4 style="margin-top:0; color:#1e40af;">💙 路徑 🅰️ 傳統紅藍卡組合 (Original Medicare + Medigap + Part D 藥保)</h4>
+  <ul>
+    <li><b>適合人群</b>：追求<b>全美看診自由</b>、經常跨州居住或旅行者。</li>
+    <li><b>看病網絡</b>：全美只要收 Medicare 的醫生/醫院皆可直接看，無需轉診單 (No Referral)。</li>
+  </ul>
+</div>
+
+<div class="pathway-b-box">
+  <h4 style="margin-top:0; color:#166534;">💚 路徑 🅱️ 優惠套餐 (Medicare Advantage / Part C)</h4>
+  <ul>
+    <li><b>適合人群</b>：喜歡<b>低月保費、私人保險公司一包到底</b>者。</li>
+    <li><b>看病網絡</b>：限制在當地指定網絡看診 (HMO/PPO)，含藥保與牙科福利，但看專科需預先審查。</li>
+  </ul>
+</div>
+            """, unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -591,22 +603,22 @@ if app_mode == "MAIN_AI":
   if len(st.session_state.messages) == 0:
     q_caption_map = {
         "English": (
-            "💡 **Step 1 Quick Start**: Choose who you are inquiring for, then"
-            " enter details below:"
+            "💡 **Quick Start**: Select identity, then enter **Birth Month/Year"
+            " & State** below:"
         ),
         "Español": (
-            "💡 **Paso 1 Inicio rápido**: Elija para quién consulta e ingrese"
-            " los datos abajo:"
+            "💡 **Inicio rápido**: Elija su rol e ingrese **Mes/Año de"
+            " nacimiento y Estado**:"
         ),
         "한국어": (
-            "💡 **1단계 빠른 시작**: 신청 대상을 선택한 후, 아래에 정보를"
+            "💡 **빠른 시작**: 신분을 선택하고 아래에 **생년월 및 거주 주**를"
             " 입력하세요:"
         ),
         "簡體中文": (
-            "💡 **Step 1 快速开始**：请先选择查询身份，并在下方输入**出生年月与居住州**："
+            "💡 **快速开始**：请先选择身份，并在下方输入**出生年月与居住州**："
         ),
         "繁體中文": (
-            "💡 **Step 1 快速開始**：請先選擇查詢身分，並在下方輸入**出生年月與居住州**："
+            "💡 **快速開始**：請先選擇身分，並在下方輸入**出生年月與居住州**："
         ),
     }
     st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
@@ -678,29 +690,32 @@ if app_mode == "MAIN_AI":
       ):
         prompt = st.session_state.saved_user_input
 
+  # --------------------------------------------------
+  # 🔧 修正 1: 輸入框 Placeholder (改為僅 Month/Year，無固定 Date)
+  # --------------------------------------------------
   has_history = len(st.session_state.get("messages", [])) > 0
 
   if not has_history:
     if current_lang == "繁體中文":
       input_placeholder = (
-          "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
+          "✍️ 請輸入出生年月與居住州 (例如: 08/1961, NJ) ..."
       )
     elif current_lang == "簡體中文":
       input_placeholder = (
-          "✍️ 请输入出生年月与居住州 (例如: 8/26/1961, NJ) ..."
+          "✍️ 请输入出生年月与居住州 (例如: 08/1961, NJ) ..."
       )
     elif current_lang == "Español":
       input_placeholder = (
-          "✍️ Ingrese su fecha de nacimiento y estado (p. ej. 8/26/1961, NJ)"
+          "✍️ Ingrese su mes/año de nacimiento y estado (p. ej. 08/1961, NJ)"
           " ..."
       )
     elif current_lang == "한국어":
       input_placeholder = (
-          "✍️ 생년월일과 주를 입력하세요 (예: 8/26/1961, NJ) ..."
+          "✍️ 생년월과 주를 입력하세요 (예: 08/1961, NJ) ..."
       )
     else:
       input_placeholder = (
-          "✍️ Please enter Date of Birth & State (e.g. 8/26/1961, NJ) ..."
+          "✍️ Please enter Birth Month/Year & State (e.g. 08/1961, NJ) ..."
       )
   else:
     if current_lang == "繁體中文":
@@ -760,6 +775,7 @@ if app_mode == "MAIN_AI":
             birth_m_name = calendar.month_name[month]
             end_day = calendar.monthrange(end_y, end_m)[1]
 
+            # 🔧 修正 2: Step 2 導引文字白話化 (移除抽象的 Lifestyle)
             final_output = (
                 f"### 🗓️ Your Personalized Medicare Timeline\n\n"
                 f"**Key Milestones:**\n"
@@ -770,10 +786,11 @@ if app_mode == "MAIN_AI":
                 f"**Recommended Next Steps:**\n"
                 f"* **Step 1**: Check active employer coverage (if still"
                 " working) to see if you can delay Part B.\n"
-                f"* **Step 2**: Compare **Pathway 🅰️ Freedom to See Any"
+                f"* **Step 2**: Compare **Pathway 🅰️ Total Freedom to See Any"
                 " Doctor (Original Medicare + Medigap)** vs. **Pathway 🅱️"
                 " All-in-One Bundled Package (Medicare Advantage)** based on"
-                " your lifestyle and prescription needs."
+                " your need for cross-state doctor choices or prescription"
+                " drugs."
             )
           except Exception:
             final_output = generate_clean_response(
@@ -1113,18 +1130,18 @@ END:VCALENDAR"""
     )
 
 # --------------------------------------------------
-# 5. 頁面自動滾動修正
+# 5. 頁面置頂 JavaScript 執行
 # --------------------------------------------------
 st.markdown(
     """
     <script>
-        function scrollToTop() {
-            var mainContainer = window.parent.document.querySelector(".main");
-            if (mainContainer) mainContainer.scrollTop = 0;
+        function forceScrollTop() {
+            var mainSec = window.parent.document.querySelector("section.main");
+            if (mainSec) mainSec.scrollTop = 0;
             window.parent.scrollTo(0, 0);
         }
-        scrollToTop();
-        setTimeout(scrollToTop, 200);
+        forceScrollTop();
+        setTimeout(forceScrollTop, 300);
     </script>
 """,
     unsafe_allow_html=True,
