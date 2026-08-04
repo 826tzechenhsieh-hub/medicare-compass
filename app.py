@@ -10,35 +10,56 @@ import streamlit.components.v1 as components
 
 
 # --------------------------------------------------
-# 1. AI 回應清洗與衛生處理函式
+# 1. AI 回應清洗與衛生處理函式 (強效防思考過程洩漏版)
 # --------------------------------------------------
 def clean_response(text: str) -> str:
-  if not text:
-    return ""
-  text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+    if not text:
+        return ""
 
-  metadata_patterns = [
-      (
-          r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ"
-          r" Context|Closing|Greeting|Persona|Context|Check|Did"
-          r" I|Follow-up):.*$\n?"
-      ),
-      (
-          r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert"
-          r" knowledge|Current date|Ensure tone|Wait, did I).*$\n?"
-      ),
-      (
-          r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final"
-          r" Content Plan|User wants to know|Constraint \d+:|Ensure tone"
-          r" is).*$\n?"
-      ),
-  ]
-  for pattern in metadata_patterns:
-    text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
+    # 1. 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
+    text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
-  return text.strip()
+    # 2. 強效移除 AI 內部思考過程 (Chain of Thought Leakage)
+    cot_patterns = [
+        r"User Status:.*?\n",
+        r"Constraints:.*?\n",
+        r"Wait,.*?\n",
+        r"Refining the output.*?\n",
+        r"Comparison Content:.*?\n",
+        r"Timeline Content:.*?\n",
+        r"^\s*[\*•\-]\s*User Status:.*$",
+        r"^\s*[\*•\-]\s*Age/DOB:.*$",
+        r"^\s*[\*•\-]\s*Employment:.*$",
+        r"^\s*[\*•\-]\s*Request:.*$",
+        r"^\s*[\*•\-]\s*Constraints:.*$",
+        r"^\s*[\*•\-]\s*Wait,.*$",
+        r"^\s*[\*•\-]\s*No \"Yes/No\".*$",
+        r"^\s*[\*•\-]\s*No \"You said...\".*$",
+        r"^\s*[\*•\-]\s*Direct Markdown bullets.*$",
+    ]
 
+    for pattern in cot_patterns:
+        text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
+    # 3. 移除殘留的 Metadata 標籤
+    metadata_patterns = [
+        r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ Context|Closing|Greeting|Persona|Context|Check|Did I|Follow-up):.*$\n?",
+        r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert knowledge|Current date|Ensure tone|Wait, did I).*$\n?",
+        r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final Content Plan|User wants to know|Constraint \d+:|Ensure tone is).*$\n?",
+    ]
+
+    for pattern in metadata_patterns:
+        text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
+
+    # 4. 如果文字中包含真正的回答標頭，只截取標頭後面的精華內容
+    if "### 🗓️ Your Medicare Timeline" in text:
+        idx = text.find("### 🗓️ Your Medicare Timeline")
+        text = text[idx:]
+    elif "🗓️ Your Medicare Timeline" in text:
+        idx = text.find("🗓️ Your Medicare Timeline")
+        text = text[idx:]
+
+    return text.strip()
 def sanitize_ai_output(raw_text, target_lang="English"):
   if not raw_text:
     return raw_text
