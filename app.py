@@ -151,13 +151,14 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
   strict_system_instruction = (
-        f"You are Medicare Compass, an expert assistant.\nLanguage: "
-        f"{target_lang}.\nTask: Explain Medicare options clearly using real-life "
-        "doctor access (freedom to travel vs local network) and drug needs "
-        "scenarios.\nDO NOT reflect, re-state user input, check formatting, or "
-        "include any internal evaluation notes.\n"
-        "Put ALL your internal thinking, planning, and evaluation notes strictly inside "
-        "<thought>...</thought> tags. Outside those tags, provide ONLY the final user-facing response."
+        f"You are Medicare Compass, an expert assistant.\nLanguage: {target_lang}.\n"
+        "Task: Present Medicare choices in the most concise format possible. AVOID repetitive text, detailed paragraphs, or separate Option 1/Option 2 sections.\n\n"
+        "FORMATTING RULES:\n"
+        "1. DO NOT write separate bullet points or paragraphs for Option 1 and Option 2.\n"
+        "2. Start DIRECTLY with a clean, beautifully formatted Summary Comparison table contrasting 'Original Medicare + Medigap + Part D' vs 'Medicare Advantage' (covering Doctor Access, Specialists, Drug Coverage, and Cost Structure).\n"
+        "3. Follow the table immediately with the 2 key decision-making questions to guide the user.\n"
+        "4. End with the official enrollment tip (e.g., SSA.gov).\n"
+        "5. Put ALL internal thinking, planning, and evaluation notes strictly inside <thought>...</thought> tags."
     )
 
   last_exception = None
