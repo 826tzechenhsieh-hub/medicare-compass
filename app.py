@@ -10,56 +10,69 @@ import streamlit.components.v1 as components
 
 
 # --------------------------------------------------
-# 1. AI 回應清洗與衛生處理函式 (強效防思考過程洩漏版)
+# 1. AI 回應清洗與衛生處理函式 (強效防草稿與思考過程洩漏)
 # --------------------------------------------------
 def clean_response(text: str) -> str:
-    if not text:
-        return ""
+  if not text:
+    return ""
 
-    # 1. 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
-    text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+  # 1. 移除 <think>...</think> 或 <thought>... 標籤
+  text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
-    # 2. 強效移除 AI 內部思考過程 (Chain of Thought Leakage)
-    cot_patterns = [
-        r"User Status:.*?\n",
-        r"Constraints:.*?\n",
-        r"Wait,.*?\n",
-        r"Refining the output.*?\n",
-        r"Comparison Content:.*?\n",
-        r"Timeline Content:.*?\n",
-        r"^\s*[\*•\-]\s*User Status:.*$",
-        r"^\s*[\*•\-]\s*Age/DOB:.*$",
-        r"^\s*[\*•\-]\s*Employment:.*$",
-        r"^\s*[\*•\-]\s*Request:.*$",
-        r"^\s*[\*•\-]\s*Constraints:.*$",
-        r"^\s*[\*•\-]\s*Wait,.*$",
-        r"^\s*[\*•\-]\s*No \"Yes/No\".*$",
-        r"^\s*[\*•\-]\s*No \"You said...\".*$",
-        r"^\s*[\*•\-]\s*Direct Markdown bullets.*$",
-    ]
+  # 2. 強效清理 AI 自我檢查與草稿痕跡 (Chain of Thought & Constraint Checks)
+  cleanup_patterns = [
+      r"^\s*[\*•\-]?\s*Directly print.*$",
+      r"^\s*[\*•\-]?\s*Markdown bullets\?.*$",
+      r"^\s*[\*•\-]?\s*No reflection/restatement\?.*$",
+      r"^\s*[\*•\-]?\s*No 'Yes/No'\?.*$",
+      r"^\s*[\*•\-]?\s*\*Final Polish\.\*.*$",
+      r"^\s*[\*•\-]?\s*User Status:.*$",
+      r"^\s*[\*•\-]?\s*Age/DOB:.*$",
+      r"^\s*[\*•\-]?\s*Employment:.*$",
+      r"^\s*[\*•\-]?\s*Request:.*$",
+      r"^\s*[\*•\-]?\s*Constraints:.*$",
+      r"^\s*[\*•\-]?\s*Wait,.*$",
+      r"^\s*[\*•\-]?\s*Refining the output.*$",
+      r"User Status:.*?\n",
+      r"Constraints:.*?\n",
+      r"Wait,.*?\n",
+  ]
 
-    for pattern in cot_patterns:
-        text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
+  for pattern in cleanup_patterns:
+    text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
-    # 3. 移除殘留的 Metadata 標籤
-    metadata_patterns = [
-        r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ Context|Closing|Greeting|Persona|Context|Check|Did I|Follow-up):.*$\n?",
-        r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert knowledge|Current date|Ensure tone|Wait, did I).*$\n?",
-        r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final Content Plan|User wants to know|Constraint \d+:|Ensure tone is).*$\n?",
-    ]
+  # 3. 移除殘留的 Metadata 標籤
+  metadata_patterns = [
+      (
+          r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ"
+          r" Context|Closing|Greeting|Persona|Context|Check|Did"
+          r" I|Follow-up):.*$\n?"
+      ),
+      (
+          r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert"
+          r" knowledge|Current date|Ensure tone|Wait, did I).*$\n?"
+      ),
+      (
+          r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final"
+          r" Content Plan|User wants to know|Constraint \d+:|Ensure tone"
+          r" is).*$\n?"
+      ),
+  ]
 
-    for pattern in metadata_patterns:
-        text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
+  for pattern in metadata_patterns:
+    text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
-    # 4. 如果文字中包含真正的回答標頭，只截取標頭後面的精華內容
-    if "### 🗓️ Your Medicare Timeline" in text:
-        idx = text.find("### 🗓️ Your Medicare Timeline")
-        text = text[idx:]
-    elif "🗓️ Your Medicare Timeline" in text:
-        idx = text.find("🗓️ Your Medicare Timeline")
-        text = text[idx:]
+  # 4. 若包含真正的回答標頭，只截取標頭後面的精華內容
+  if "### 🗓️ Your Medicare Timeline" in text:
+    idx = text.find("### 🗓️ Your Medicare Timeline")
+    text = text[idx:]
+  elif "🗓️ Your Medicare Timeline" in text:
+    idx = text.find("🗓️ Your Medicare Timeline")
+    text = text[idx:]
 
-    return text.strip()
+  return text.strip()
+
+
 def sanitize_ai_output(raw_text, target_lang="English"):
   if not raw_text:
     return raw_text
@@ -141,9 +154,9 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
   strict_system_instruction = (
       f"You are Medicare Compass, an expert assistant.\nLanguage:"
-      f" {target_lang}.\nTask: Directly print the user's Medicare timeline in"
-      " clear Markdown bullets.\nDO NOT reflect, re-state user input, check"
-      " formatting, or include any 'Yes/No' evaluations."
+      f" {target_lang}.\nTask: Explain Medicare options clearly using real-life"
+      " doctor access and drug needs scenarios.\nDO NOT reflect, re-state user"
+      " input, check formatting, or include any internal evaluation notes."
   )
 
   last_exception = None
@@ -455,7 +468,7 @@ if app_mode == "MAIN_AI":
         st.caption("IEP Timing, Date of Birth & State.")
       with col2:
         st.markdown("### 2️⃣ Step 2: What")
-        st.caption("Needs, Coverage & Plan Options.")
+        st.caption("Freedom to See Doctors vs. Bundled Plans.")
       with col3:
         st.markdown("### 3️⃣ Step 3: How")
         st.caption("Application & Official Channels.")
@@ -465,7 +478,7 @@ if app_mode == "MAIN_AI":
         st.caption("Fechas clave, fecha de nacimiento y estado.")
       with col2:
         st.markdown("### 2️⃣ Paso 2: Qué")
-        st.caption("Necesidades y comparación de planes.")
+        st.caption("Libertad de médicos vs. Plan paquete.")
       with col3:
         st.markdown("### 3️⃣ Paso 3: Cómo")
         st.caption("Solicitud paso a paso.")
@@ -475,7 +488,7 @@ if app_mode == "MAIN_AI":
         st.caption("IEP 기간, 생년월일 및 거주 주.")
       with col2:
         st.markdown("### 2️⃣ 2단계: 무엇을")
-        st.caption("보장 필요성 및 플랜 비교.")
+        st.caption("의사 선택 자유 vs 민간 패키지 플랜.")
       with col3:
         st.markdown("### 3️⃣ 3단계: 어떻게")
         st.caption("신청 방법 및 수속.")
@@ -485,7 +498,7 @@ if app_mode == "MAIN_AI":
         st.caption("出生年月、居住州与黄金期限。")
       with col2:
         st.markdown("### 2️⃣ 第二步：WHAT 方案比对")
-        st.caption("医疗需求与两大路径解析。")
+        st.caption("全美看诊自由 vs 私人優惠套餐。")
       with col3:
         st.markdown("### 3️⃣ 第三步：HOW 申办执行")
         st.caption("官方申请流程与快速通道。")
@@ -495,7 +508,7 @@ if app_mode == "MAIN_AI":
         st.caption("出生年月、居住州與黃金期限。")
       with col2:
         st.markdown("### 2️⃣ 第二步：WHAT 方案比對")
-        st.caption("醫療需求與兩大路徑解析。")
+        st.caption("全美看診自由 vs 私人優惠套餐。")
       with col3:
         st.markdown("### 3️⃣ 第三步：HOW 申辦執行")
         st.caption("官方申請流程與快速通道。")
@@ -504,58 +517,60 @@ if app_mode == "MAIN_AI":
 
     expander_title_map = {
         "English": (
-            "🗺️ **1-Minute Medicare Map & Real-Life Pitfall Guide**"
+            "🗺️ **1-Minute Medicare Guide: Two Major Pathways Explained**"
         ),
-        "Español": "🗺️ **Mapa de Medicare de 1 Minuto y Guía Práctica**",
-        "한국어": (
-            "🗺️ **1분 메디케어 한눈에 보기 및 핵심 주의사항**"
+        "Español": (
+            "🗺️ **Guía de 1 Minuto: Explicación de las Dos Vías Principales**"
         ),
-        "簡體中文": "🗺️ **1分钟医保地图与真实场景避坑指南**",
-        "繁體中文": "🗺️ **1分鐘醫保地圖與真實場景避坑指南**",
+        "한국어": "🗺️ **1분 메디케어 가이드: 두 가지 핵심 선택 경로**",
+        "簡體中文": "🗺️ **1分钟医保指南：两大核心路径白话解析**",
+        "繁體中文": "🗺️ **1分鐘醫保指南：兩大核心路徑白話解析**",
     }
 
     with st.expander(
-        expander_title_map.get(current_lang, "🗺️ **1-Minute Medicare Map**"),
+        expander_title_map.get(
+            current_lang, "🗺️ **1-Minute Medicare Guide**"
+        ),
         expanded=True,
     ):
       if current_lang == "English":
         st.markdown("""
-* **Original Medicare (Gov)**: Part A (Hospital) + Part B (Medical - 80% paid, 20% gap NO limit).
-* **Part C (Medicare Advantage)**: Private all-in-one plans. *⚠️ Note: Insurers require Prior Auth and may DENY rehab coverage midway after 20-30 days.*
-* **Medigap (Supplement)**: Covers Part B's 20% gap with nationwide doctor access (Ideal for travel/snowbirds).
-* **🏠 Discharge Devices (DME - Walker/Bed)**: *Do NOT buy privately!* Must have a doctor's prescription before discharge to get reimbursed.
-* **🚨 Ambulance & Emergency**: Part B covers 80% for medically necessary emergencies only; private taxis/rides are NOT covered.
+* **Pathway 🅰️ Original Medicare (+ Medigap + Part D)**: 
+  * *Best for*: Freedom to see **ANY doctor/hospital in the U.S.** that accepts Medicare. No network limits, no doctor referrals needed. (Part D drug plan purchased separately).
+* **Pathway 🅱️ Medicare Advantage (Part C)**: 
+  * *Best for*: People who prefer an **all-in-one bundled package** managed by private insurers. Uses local doctor networks (HMO/PPO) and includes drug coverage, but requires prior approvals for specialized care.
+* **🏠 Discharge Devices (DME - Walker/Bed)**: *Do NOT buy privately!* Must get a doctor's prescription before hospital discharge for Medicare reimbursement.
+* **🚨 Emergency Services**: Medicare covers 80% for medically necessary emergency ambulance; private rides are NOT covered.
             """)
       elif current_lang == "Español":
         st.markdown("""
-* **Original Medicare (Gobierno)**: Parte A (Hospital) + Parte B (Médica - 80% cubierto, 20% sin límite).
-* **Parte C (Medicare Advantage)**: Planes privados. *⚠️ Requiere autorización previa y puede denegar la rehabilitación.*
-* **Medigap (Suplemento)**: Cubre el 20% de la Parte B con acceso médico nacional (Ideal para viajes).
-* **🏠 Equipos del hogar (DME)**: Requiere receta médica antes del alta hospitalaria.
-* **🚨 Ambulancias**: Cubre el 80% solo para emergencias médicas reales.
+* **Vía 🅰️ Original Medicare (+ Medigap + Parte D)**: Libre elección de cualquier médico u hospital en EE. UU. sin restricciones de red ni referencias.
+* **Vía 🅱️ Medicare Advantage (Parte C)**: Paquete todo en uno gestionado por aseguradoras privadas. Usa redes locales (HMO/PPO) e incluye medicinas.
+* **🏠 Equipos médicos (DME)**: Requiere receta médica antes del alta hospitalaria.
             """)
       elif current_lang == "한국어":
         st.markdown("""
-* **Original Medicare (정부)**: Part A (병원) + Part B (의료 - 80% 보장, 20% 본인 부담).
-* **Part C (Medicare Advantage)**: 민간 통합 플랜. *⚠️ 재활 입원 중 보험사의 사전 승인거절 위험 주의.*
-* **Medigap (보충 보험)**: Part B 20% 부담금 보장 및 전국 병원 이용 가능.
-* **🏠 퇴원 후 가정용 의료기기 (DME)**: 퇴원 전 의사 처방전 필수.
+* **경로 🅰️ Original Medicare (+ Medigap + Part D)**: 네트워크 제한 없이 미국 내 모든 의사/병원 자유 이용.
+* **경로 🅱️ Medicare Advantage (Part C)**: 민간 보험사의 통합 패키지. 지정된 지역 네트워크(HMO/PPO) 이용.
+* **🏠 가정용 의료기기 (DME)**: 퇴원 전 의사 처방전 필수.
             """)
       elif current_lang == "簡體中文":
         st.markdown("""
-* **Original Medicare (传统红蓝卡)**：Part A (住院) + Part B (门诊，政府给付 80%，自付 20% 无上限)。
-* **Part C (Medicare Advantage 优惠套餐)**：私人保险包办。*⚠️ 警告：需 Prior Authorization，康复中心 (Rehab) 30天后极易遭保险公司拒付 (Deny) 逼迫自费。*
-* **Medigap (补充保险)**：填补 20% 缺口，全美看诊无网络限制（适合跨州居住/频繁旅行）。
+* **路径 🅰️ 传统红蓝卡組合 (Original Medicare + Medigap + Part D 药保)**：
+  * *适合人群*：追求**全美看诊自由**。全美只要收 Medicare 的医生/医院皆可直接看，无需转诊单（No Referral）。
+* **路径 🅱️ 优惠套餐 (Medicare Advantage / Part C)**：
+  * *适合人群*：喜欢**私人保险公司一包到底**。限制在当地指定网络看诊 (HMO/PPO)，含药保与牙科等福利，但看专科需預先審查。
 * **🏠 出院居家设备 (DME - 病床/助行器)**：*切勿自行购买！* 必须由医生开处方并由社工预订方可报销。
-* **🚨 急诊与救护车**：Part B 仅报销“医疗紧急且必要”的救护车 80%；私人叫车或非紧急不可报销。
+* **🚨 急诊与救护车**：Part B 仅报销“医疗紧急且必要”的救护车 80%；私人叫车不可报销。
             """)
       else:
         st.markdown("""
-* **Original Medicare (傳統紅藍卡)**：Part A (住院) + Part B (門診，政府給付 80%，自付 20% 無上限)。
-* **Part C (Medicare Advantage 優惠套餐)**：私人保險包辦。*⚠️ 警告：需 Prior Authorization，康復中心 (Rehab) 30天後極易遭保險公司拒付 (Deny) 逼迫自費。*
-* **Medigap (補充保險)**：填補 20% 缺口，全美看診無網絡限制（適合跨州居住/頻繁旅行）。
+* **路徑 🅰️ 傳統紅藍卡組合 (Original Medicare + Medigap + Part D 藥保)**：
+  * *適合人群*：追求**全美看診自由**。全美只要收 Medicare 的醫生/醫院皆可直接看，無需轉診單（No Referral）。
+* **路徑 🅱️ 優惠套餐 (Medicare Advantage / Part C)**：
+  * *適合人群*：喜歡**私人保險公司一包到底**。限制在當地指定網絡看診 (HMO/PPO)，含藥保與牙科等福利，但看專科需預先審查。
 * **🏠 出院居家設備 (DME - 病床/助行器)**：*切勿自行購買！* 必須由醫生開處方並由社工預訂方可報銷。
-* **🚨 急診與救護車**：Part B 僅報銷「醫療緊急且必要」的救護車 80%；私人叫車或非緊急不可報銷。
+* **🚨 急診與救護車**：Part B 僅報銷「醫療緊急且必要」的救護車 80%；私人叫車不可報銷。
             """)
 
     st.markdown("---")
@@ -755,8 +770,10 @@ if app_mode == "MAIN_AI":
                 f"**Recommended Next Steps:**\n"
                 f"* **Step 1**: Check active employer coverage (if still"
                 " working) to see if you can delay Part B.\n"
-                f"* **Step 2**: Compare **Original Medicare (+ Medigap)** vs."
-                " **Medicare Advantage** based on your doctor and drug needs."
+                f"* **Step 2**: Compare **Pathway 🅰️ Freedom to See Any"
+                " Doctor (Original Medicare + Medigap)** vs. **Pathway 🅱️"
+                " All-in-One Bundled Package (Medicare Advantage)** based on"
+                " your lifestyle and prescription needs."
             )
           except Exception:
             final_output = generate_clean_response(
