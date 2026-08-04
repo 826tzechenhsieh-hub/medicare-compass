@@ -10,12 +10,11 @@ import streamlit.components.v1 as components
 
 
 # --------------------------------------------------
-# 1. AI 回應清洗與衛生處理函式 (原封不動保留)
+# 1. AI 回應清洗與衛生處理函式
 # --------------------------------------------------
 def clean_response(text: str) -> str:
   if not text:
     return ""
-  # 移除 <think>...</think> 或 <thought>...</thought> 標籤及其內容
   text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
 
   metadata_patterns = [
@@ -163,7 +162,7 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
 
 # --------------------------------------------------
-# 2. Page Configuration & Custom CSS (原封不動保留)
+# 2. Page Configuration & Custom CSS
 # --------------------------------------------------
 st.set_page_config(page_title="Medicare Compass", page_icon="🧭", layout="centered")
 
@@ -224,42 +223,92 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# API Keys Initialization
+# API Keys
 primary_key = st.secrets.get("GEMINI_API_KEY", None)
-secondary_key = st.secrets.get("GEMINI_API_KEY_SECONDARY", None)
 if primary_key:
   genai.configure(api_key=primary_key)
 
 # --------------------------------------------------
-# 3. Sidebar Setup & 功能模組選單 (整合新舊選單)
+# 3. Sidebar Setup & 功能模組選單 (支援多語言同步)
 # --------------------------------------------------
 with st.sidebar:
   st.markdown("# 🧭 Medicare Compass™")
   st.caption("##### *powered by Care Compass™*")
   st.markdown("---")
 
-  # 🆕 模組選擇切換器
-  st.markdown("### 🧩 功能導航模組")
-  app_mode = st.radio(
-      "請選擇服務功能：",
-      [
-          "💬 智慧醫保諮詢 (Main AI Navigator)",
-          "🔄 Plan 轉換決策助理 (Why-When-How)",
-          "📋 1-Page SHIP 諮詢準備單",
-          "📅 SHIP 預約行事曆提醒",
-      ],
-      index=0,
-  )
-
-  st.markdown("---")
-
   st.markdown("### 🌐 Language / 語言設定")
   current_lang = st.radio(
       "Select Language / 選擇語言:",
       ["English", "Español", "繁體中文", "簡體中文", "한국어"],
-      index=2,
+      index=0,
       key="selected_language",
   )
+
+  st.markdown("---")
+
+  nav_title_map = {
+      "English": "🧩 Navigation Modules",
+      "Español": "🧩 Módulos de Navegación",
+      "한국어": "🧩 탐색 모듈",
+      "簡體中文": "🧩 功能导航模块",
+      "繁體中文": "🧩 功能導航模組",
+  }
+
+  nav_label_map = {
+      "English": "Select Service / Module:",
+      "Español": "Seleccionar módulo:",
+      "한국어": "모듈 선택:",
+      "簡體中文": "请选择服务功能：",
+      "繁體中文": "請選擇服務功能：",
+  }
+
+  m1_text = {
+      "English": "💬 Main AI Navigator",
+      "Español": "💬 Navegador AI Principal",
+      "한국어": "💬 메인 AI 내비게이터",
+      "簡體中文": "💬 智慧医保咨询 (Main AI)",
+      "繁體中文": "💬 智慧醫保諮詢 (Main AI)",
+  }[current_lang]
+
+  m2_text = {
+      "English": "🔄 Plan Switching Assistant (Why-When-How)",
+      "Español": "🔄 Asistente de Cambio de Plan",
+      "한국어": "🔄 플랜 변경 의사결정 도우미",
+      "簡體中文": "🔄 Plan 转换决策助理 (Why-When-How)",
+      "繁體中文": "🔄 Plan 轉換決策助理 (Why-When-How)",
+  }[current_lang]
+
+  m3_text = {
+      "English": "📋 1-Page SHIP Prep Summary",
+      "Español": "📋 Resumen de Preparación SHIP",
+      "한국어": "📋 1페이지 SHIP 상담 준비표",
+      "簡體中文": "📋 1-Page SHIP 咨询准备单",
+      "繁體中文": "📋 1-Page SHIP 諮詢準備單",
+  }[current_lang]
+
+  m4_text = {
+      "English": "📅 SHIP Appointment Reminder",
+      "Español": "📅 Recordatorio de Cita SHIP",
+      "한국어": "📅 SHIP 예약 일정 알림",
+      "簡體中文": "📅 SHIP 预约行事历提醒",
+      "繁體中文": "📅 SHIP 預約行事曆提醒",
+  }[current_lang]
+
+  st.markdown(f"### {nav_title_map[current_lang]}")
+  selected_module_label = st.radio(
+      nav_label_map[current_lang],
+      [m1_text, m2_text, m3_text, m4_text],
+      index=0,
+  )
+
+  if selected_module_label == m1_text:
+    app_mode = "MAIN_AI"
+  elif selected_module_label == m2_text:
+    app_mode = "SWITCH_ASSISTANT"
+  elif selected_module_label == m3_text:
+    app_mode = "SHIP_PREP"
+  else:
+    app_mode = "CALENDAR_ICS"
 
   st.markdown("---")
 
@@ -276,7 +325,6 @@ with st.sidebar:
       st.rerun()
     st.markdown("---")
 
-  # 上傳照片區域
   upload_label_map = {
       "English": "📎 Take Photo or Upload Notice/Plan (Optional):",
       "Español": "📎 Tomar foto o cargar documento (Opcional):",
@@ -303,7 +351,6 @@ with st.sidebar:
 
   st.markdown("---")
 
-  # 法律聲明區域
   legal_title_map = {
       "English": "⚖️ Legal, Privacy & Notices",
       "Español": "⚖️ Avisos Legales y Privacidad",
@@ -311,7 +358,6 @@ with st.sidebar:
       "簡體中文": "⚖️ 法律声明、隐私与非官方提示",
       "繁體中文": "⚖️ 法律聲明、隱私與非官方提示",
   }
-
   with st.expander(
       legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False
   ):
@@ -326,8 +372,7 @@ We DO NOT store or track any of your inputs on our servers. Any remembered input
 
   st.markdown("---")
 
-  # 按鈕重設與總結
-  if app_mode == "💬 智慧醫保諮詢 (Main AI Navigator)":
+  if app_mode == "MAIN_AI":
     summary_btn_label = (
         "📋 Generate / Update Summary"
         if current_lang == "English"
@@ -372,13 +417,13 @@ We DO NOT store or track any of your inputs on our servers. Any remembered input
       st.rerun()
 
 # --------------------------------------------------
-# 4. 模組分流與執行邏輯 (Module Routing)
+# 4. 模組分流與執行邏輯
 # --------------------------------------------------
 
 # --------------------------------------------------
-# 🅰️ 模組 1: 原本的「💬 智慧醫保諮詢」 (完全保留您的核心邏輯)
+# 🅰️ 模組 1: 💬 智慧醫保諮詢 (Main AI Navigator)
 # --------------------------------------------------
-if app_mode == "💬 智慧醫保諮詢 (Main AI Navigator)":
+if app_mode == "MAIN_AI":
   top_container = st.container()
 
   with top_container:
@@ -494,7 +539,6 @@ if app_mode == "💬 智慧醫保諮詢 (Main AI Navigator)":
 
     st.markdown("---")
 
-  # 狀態初始化
   if "user_role_type" not in st.session_state:
     st.session_state.user_role_type = "self"
   if "messages" not in st.session_state:
@@ -598,131 +642,121 @@ if app_mode == "💬 智慧醫保諮詢 (Main AI Navigator)":
       ):
         prompt = st.session_state.saved_user_input
 
-    is_timeline_rendered = (
-        len(st.session_state.get("messages", [])) > 0
-        or bool(prompt)
-        or bool(st.session_state.get("saved_user_input"))
-    )
+  has_history = len(st.session_state.get("messages", [])) > 0
 
-    if not is_timeline_rendered:
-      if current_lang == "繁體中文":
-        input_placeholder = (
-            "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
-        )
-      elif current_lang == "簡體中文":
-        input_placeholder = (
-            "✍️ 请输入出生年月与居住州 (例如: 8/26/1961, NJ) ..."
-        )
-      elif current_lang == "Español":
-        input_placeholder = (
-            "✍️ Ingrese su fecha de nacimiento y estado (p. ej. 8/26/1961, NJ)"
-            " ..."
-        )
-      elif current_lang == "한국어":
-        input_placeholder = (
-            "✍️ 생년월일과 주를 입력하세요 (예: 8/26/1961, NJ) ..."
-        )
-      else:
-        input_placeholder = (
-            "✍️ Please enter Date of Birth & State (e.g. 8/26/1961, NJ) ..."
-        )
+  if not has_history:
+    if current_lang == "繁體中文":
+      input_placeholder = (
+          "✍️ 請輸入出生年月與居住州 (例如: 8/26/1961, NJ) ..."
+      )
+    elif current_lang == "簡體中文":
+      input_placeholder = (
+          "✍️ 请输入出生年月与居住州 (例如: 8/26/1961, NJ) ..."
+      )
+    elif current_lang == "Español":
+      input_placeholder = (
+          "✍️ Ingrese su fecha de nacimiento y estado (p. ej. 8/26/1961, NJ)"
+          " ..."
+      )
+    elif current_lang == "한국어":
+      input_placeholder = (
+          "✍️ 생년월일과 주를 입력하세요 (예: 8/26/1961, NJ) ..."
+      )
     else:
-      if current_lang == "繁體中文":
-        input_placeholder = "💬 請輸入您想諮詢的 Medicare 問題..."
-      elif current_lang == "簡體中文":
-        input_placeholder = "💬 请输入您想咨询的 Medicare 问题..."
-      elif current_lang == "Español":
-        input_placeholder = "💬 Escriba su pregunta sobre Medicare..."
-      elif current_lang == "한국어":
-        input_placeholder = "💬 Medicare에 대해 질문을 입력하세요..."
-      else:
-        input_placeholder = "💬 Ask any follow-up question about Medicare..."
-
-    input_prompt = st.chat_input(input_placeholder)
-
-    if input_prompt:
-      role_prefix = (
-          "[Applying for Myself] "
-          if st.session_state.get("user_role_type") == "self"
-          else "[Helping Family/Parents] "
+      input_placeholder = (
+          "✍️ Please enter Date of Birth & State (e.g. 8/26/1961, NJ) ..."
       )
-      prompt = role_prefix + input_prompt
-      st.session_state.saved_user_input = prompt
+  else:
+    if current_lang == "繁體中文":
+      input_placeholder = "💬 請輸入您想諮詢的 Medicare 問題..."
+    elif current_lang == "簡體中文":
+      input_placeholder = "💬 请输入您想咨询的 Medicare 问题..."
+    elif current_lang == "Español":
+      input_placeholder = "💬 Escriba su pregunta sobre Medicare..."
+    elif current_lang == "한국어":
+      input_placeholder = "💬 Medicare에 대해 질문을 입력하세요..."
+    else:
+      input_placeholder = "💬 Ask any follow-up question about Medicare..."
 
-    if prompt or uploaded_file:
-      user_text = (
-          prompt if prompt else "Please review this uploaded document."
-      )
+  prompt = None
+  input_prompt = st.chat_input(input_placeholder)
 
-      if (
-          not st.session_state.messages
-          or st.session_state.messages[-1]["content"] != user_text
-      ):
-        st.session_state.messages.append(
-            {"role": "user", "content": user_text}
-        )
+  if input_prompt:
+    role_prefix = (
+        "[Applying for Myself] "
+        if st.session_state.get("user_role_type") == "self"
+        else "[Helping Family/Parents] "
+    )
+    prompt = role_prefix + input_prompt
+    st.session_state.saved_user_input = prompt
 
-      with st.chat_message("user"):
-        st.markdown(user_text)
+  if prompt or uploaded_file:
+    user_text = prompt if prompt else "Please review this uploaded document."
 
-      with st.chat_message("assistant", avatar="🧭"):
-        with st.spinner("Analyzing..."):
-          date_match = re.search(
-              r"(\d{1,2})/(?:(\d{1,2})/)?(\d{4})", user_text
-          )
-          is_first_input = len(st.session_state.messages) <= 2
+    if (
+        not st.session_state.messages
+        or st.session_state.messages[-1]["content"] != user_text
+    ):
+      st.session_state.messages.append({"role": "user", "content": user_text})
 
-          if date_match and is_first_input:
-            try:
-              month = int(date_match.group(1))
-              year = int(date_match.group(3))
-              turn_65_year = year + 65
+    with st.chat_message("user"):
+      st.markdown(user_text)
 
-              start_m = month - 3 if month > 3 else month - 3 + 12
-              start_y = turn_65_year if month > 3 else turn_65_year - 1
+    with st.chat_message("assistant", avatar="🧭"):
+      with st.spinner("Analyzing..."):
+        date_match = re.search(r"(\d{1,2})/(?:(\d{1,2})/)?(\d{4})", user_text)
+        is_first_input = len(st.session_state.messages) <= 2
 
-              end_m = month + 3 if month <= 9 else month + 3 - 12
-              end_y = turn_65_year if month <= 9 else turn_65_year + 1
+        if date_match and is_first_input:
+          try:
+            month = int(date_match.group(1))
+            year = int(date_match.group(3))
+            turn_65_year = year + 65
 
-              start_m_name = calendar.month_name[start_m]
-              end_m_name = calendar.month_name[end_m]
-              birth_m_name = calendar.month_name[month]
-              end_day = calendar.monthrange(end_y, end_m)[1]
+            start_m = month - 3 if month > 3 else month - 3 + 12
+            start_y = turn_65_year if month > 3 else turn_65_year - 1
 
-              final_output = (
-                  f"### 🗓️ Your Personalized Medicare Timeline\n\n"
-                  f"**Key Milestones:**\n"
-                  f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
-                  f"* **Initial Enrollment Period (IEP)**:"
-                  f" **{start_m_name} 1, {start_y} – {end_m_name} {end_day},"
-                  f" {end_y}** (7-Month Window)\n\n"
-                  f"**Recommended Next Steps:**\n"
-                  f"* **Step 1**: Check active employer coverage (if still"
-                  " working) to see if you can delay Part B.\n"
-                  f"* **Step 2**: Compare **Original Medicare (+ Medigap)**"
-                  " vs. **Medicare Advantage** based on your doctor and drug"
-                  " needs."
-              )
-            except Exception:
-              final_output = generate_clean_response(
-                  user_text, target_lang=current_lang, img_data=uploaded_file
-              )
-          else:
-            raw_response = generate_clean_response(
+            end_m = month + 3 if month <= 9 else month + 3 - 12
+            end_y = turn_65_year if month <= 9 else turn_65_year + 1
+
+            start_m_name = calendar.month_name[start_m]
+            end_m_name = calendar.month_name[end_m]
+            birth_m_name = calendar.month_name[month]
+            end_day = calendar.monthrange(end_y, end_m)[1]
+
+            final_output = (
+                f"### 🗓️ Your Personalized Medicare Timeline\n\n"
+                f"**Key Milestones:**\n"
+                f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
+                f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1,"
+                f" {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month"
+                " Window)\n\n"
+                f"**Recommended Next Steps:**\n"
+                f"* **Step 1**: Check active employer coverage (if still"
+                " working) to see if you can delay Part B.\n"
+                f"* **Step 2**: Compare **Original Medicare (+ Medigap)** vs."
+                " **Medicare Advantage** based on your doctor and drug needs."
+            )
+          except Exception:
+            final_output = generate_clean_response(
                 user_text, target_lang=current_lang, img_data=uploaded_file
             )
-            tip_suffix = (
-                "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit"
-                " your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
-            )
-            final_output = raw_response.strip() + tip_suffix
-
-          st.markdown(final_output)
-          st.session_state.messages.append(
-              {"role": "model", "content": final_output}
+        else:
+          raw_response = generate_clean_response(
+              user_text, target_lang=current_lang, img_data=uploaded_file
           )
+          tip_suffix = (
+              "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit"
+              " your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
+          )
+          final_output = raw_response.strip() + tip_suffix
 
-  # 評估總結區塊
+        st.markdown(final_output)
+        st.session_state.messages.append(
+            {"role": "model", "content": final_output}
+        )
+        st.rerun()
+
   if st.session_state.show_summary and len(st.session_state.messages) >= 2:
     st.markdown("---")
     st.markdown(
@@ -854,70 +888,76 @@ if app_mode == "💬 智慧醫保諮詢 (Main AI Navigator)":
           use_container_width=True,
       )
 
-
 # --------------------------------------------------
-# 🆕 模組 2: 「🔄 Plan 轉換決策助理 (Why-When-How)」
+# 🆕 模組 2: 🔄 Plan 轉換決策助理 (Switching Assistant)
 # --------------------------------------------------
-elif app_mode == "🔄 Plan 轉換決策助理 (Why-When-How)":
-  st.markdown("## 🔄 Medicare Plan 轉換決策助理")
+elif app_mode == "SWITCH_ASSISTANT":
+  st.markdown("## 🔄 Medicare Plan Switching Assistant")
   st.caption(
-      "中立客觀診斷：協助您精準評估「為什麼改 (Why)、何時能改 (When)、怎麼改"
-      " (How)」，避開轉保陷阱。"
+      "Neutral & Objective Guidance: Evaluate Why, When, and How to change your"
+      " Medicare Plan."
   )
   st.markdown("---")
 
-  # Step 1: WHY
-  st.subheader("Step 1: 🔍 WHY - 請問您這次考慮更換方案的主要原因是？")
+  st.subheader("Step 1: 🔍 WHY - What is your primary reason for switching?")
   reason = st.selectbox(
-      "請選擇最符合您狀況的選項：",
+      "Select the option that best describes your situation:",
       [
-          "--- 請選擇原因 ---",
-          "💰 費用變貴了（保費上漲、藥費 Copay 變高、自付額增加）",
-          "🩺 醫生/醫院不收了（常用的診所或主治醫師跳出 Network）",
-          "🏠 人生變故/搬家（搬家移居到新 ZIP Code、剛退休失去雇主保險）",
-          "💊 用藥需求改變（開始吃新的昂貴專科藥物，目前方案不給付）",
-          "🤷 單純想比價（想了解市場上有沒有比現在更高 CP 值的方案）",
+          "--- Select a Reason ---",
+          "💰 Higher Costs (Premium, Copay, or Deductible increased)",
+          (
+              "🩺 Doctor/Hospital Out of Network (Primary doctor no longer"
+              " accepted)"
+          ),
+          (
+              "🏠 Life Change/Relocation (Moved to new ZIP Code, retired, or"
+              " lost employer insurance)"
+          ),
+          (
+              "💊 Drug Coverage Change (Need new specialty medication not"
+              " covered)"
+          ),
+          "🤷 Rate Shopping (Looking for better value/coverage)",
       ],
   )
 
-  if reason != "--- 請選擇原因 ---":
-    # Step 2: WHEN
+  if reason != "--- Select a Reason ---":
     st.write("---")
-    st.subheader("Step 2: ⏰ WHEN - 轉換時間窗口與資格判定")
+    st.subheader("Step 2: ⏰ WHEN - Time Window & Eligibility Check")
 
     move_recent = st.radio(
-        "您是否在過去 60 天內有搬家移居、居住地變更，或剛失去原有的團體/雇主保險？",
-        ["否", "是"],
+        "Have you moved, changed residence, or lost employer coverage in the"
+        " last 60 days?",
+        ["No", "Yes"],
     )
 
-    if move_recent == "是":
+    if move_recent == "Yes":
       st.markdown(
           """
             <div class="warning-card">
-                <strong>💡 系統檢測結果：符合 SEP (特殊轉保期 Special Enrollment Period)！</strong><br>
-                因為您近期有重大居住或保險變動，您在變動發生後的 <b>60 天內</b> 可以隨時免費更換方案，不需要等待 10 月的年度開放期！
+                <strong>💡 Qualification Detected: You qualify for a SEP (Special Enrollment Period)!</strong><br>
+                Because of your recent life event, you can switch plans for free within <b>60 days</b> of the change—no need to wait for the Fall Open Enrollment!
             </div>
             """,
           unsafe_allow_html=True,
       )
     else:
       st.info("""
-            📅 **目前適用標準時間窗口：**
-            * **AEP (年度開放轉保期 10/15 - 12/7)**：所有人皆可自由更換 Advantage (Part C) 或處方藥保 (Part D)。
-            * **OEP (Advantage 開放期 1/1 - 3/31)**：已參加 Part C 者，可調整為另一個 Part C 或退回 Original Medicare。
+            📅 **Standard Time Windows:**
+            * **AEP (Annual Enrollment Period: Oct 15 – Dec 7)**: Open to everyone to switch Part C/D plans.
+            * **OEP (Advantage Open Enrollment: Jan 1 – Mar 31)**: Open to current Medicare Advantage members.
             """)
 
-    # Step 3: HOW
     st.write("---")
-    st.subheader("Step 3: 🚀 HOW - 最佳替換步驟與防坑指南")
+    st.subheader("Step 3: 🚀 HOW - Action Plan & Crucial Warnings")
 
     st.markdown(
         """
         <div class="card-box">
-            <h4>📋 關鍵轉換風險提示（防坑指南）</h4>
+            <h4>📋 Crucial Warnings Before Switching</h4>
             <ul>
-                <li><b>⚠️ 醫療核保風險 (Medical Underwriting)：</b>若您打算從 Medicare Advantage (Part C) 換回 Original Medicare 並加購 Medigap 補充險，在多數州可能需要通過健康告知，若有重大病史可能面臨拒保或保費加成。</li>
-                <li><b>💊 藥單 Formulary 核對：</b>更換 Part D 藥保或 Part C 時，請務必先將常吃藥物於 Medicare.gov 進行比對，確認新方案是否有涵蓋。</li>
+                <li><b>⚠️ Medical Underwriting Risk:</b> Switching from Medicare Advantage back to Original Medicare + Medigap may require health screening in most states, which could lead to denial or higher rates based on pre-existing conditions.</li>
+                <li><b>💊 Formulary Check:</b> Always verify that your current medications are covered on the new plan's Formulary at Medicare.gov.</li>
             </ul>
         </div>
         """,
@@ -925,84 +965,83 @@ elif app_mode == "🔄 Plan 轉換決策助理 (Why-When-How)":
     )
 
     st.success(
-        "💡 建議下一步：您可以前往 Sidebar 選單點擊「📋 1-Page SHIP"
-        " 諮詢準備單」，將您的需求自動產出成摘要帶去尋找 SHIP 免費義工協助辦理！"
+        "💡 Next Step: Select '📋 1-Page SHIP Prep Summary' in the sidebar to"
+        " export a 1-Page Summary for a local SHIP counselor!"
     )
 
-
 # --------------------------------------------------
-# 🆕 模組 3: 「📋 1-Page SHIP 諮詢準備單」
+# 🆕 模組 3: 📋 1-Page SHIP 諮詢準備單 (SHIP Prep)
 # --------------------------------------------------
-elif app_mode == "📋 1-Page SHIP 諮詢準備單":
-  st.markdown("## 📋 1-Page SHIP 諮詢準備單")
+elif app_mode == "SHIP_PREP":
+  st.markdown("## 📋 1-Page SHIP Counseling Prep Form")
   st.caption(
-      "排隊等待 SHIP 真人諮詢期間，先填寫此單。一鍵生成標準 1-Page Summary，見義工時效率提升"
-      " 300%！"
+      "Fill out this form while waiting for your SHIP appointment to generate a"
+      " 1-Page Summary for 3x faster counseling!"
   )
   st.markdown("---")
 
   with st.form("ship_prep_form"):
     col1, col2 = st.columns(2)
     with col1:
-      zip_code = st.text_input("居住地 ZIP Code", "90210")
+      zip_code = st.text_input("ZIP Code", "90210")
       current_plan = st.text_input(
-          "目前保險方案名稱", "e.g. UnitedHealthcare Medicare Advantage"
+          "Current Plan Name", "e.g. UnitedHealthcare Medicare Advantage"
       )
     with col2:
-      monthly_cost = st.text_input("目前每月保費 ($)", "0")
+      monthly_cost = st.text_input("Monthly Premium ($)", "0")
       primary_concern = st.text_input(
-          "這次最想諮詢的核心問題", "保費上漲且藥費變貴，想評估更換方案"
+          "Primary Concern / Question",
+          "Premium increased and drug copays are too high",
       )
 
     meds = st.text_area(
-        "目前常吃的處方藥物清單（名稱 / 劑量 / 頻率）",
+        "Current Medications (Name / Dosage / Frequency)",
         "1. Lipitor 20mg (Daily)\n2. Metformin 500mg (Twice daily)",
     )
 
-    submitted = st.form_submit_button("一鍵生成 1-Page Summary 診斷單")
+    submitted = st.form_submit_button("Generate 1-Page Summary")
 
   if submitted:
     st.markdown("---")
     st.markdown(
         f"""
         <div class="card-box" style="border: 2px solid #2563eb; background-color: #ffffff;">
-            <h3 style="text-align:center; color:#1e3a8a; margin-top:0;">🩺 Medicare Compass - SHIP 諮詢前置準備單</h3>
+            <h3 style="text-align:center; color:#1e3a8a; margin-top:0;">🩺 Medicare Compass - SHIP Counseling Summary</h3>
             <hr>
-            <p><b>📍 居住 ZIP Code：</b> {zip_code} | <b>現有方案：</b> {current_plan} (${monthly_cost}/月)</p>
-            <p><b>❓ 諮詢核心訴求：</b> {primary_concern}</p>
-            <p><b>💊 完整藥物清單：</b><br>{meds.replace(chr(10), '<br>')}</p>
+            <p><b>📍 ZIP Code:</b> {zip_code} | <b>Current Plan:</b> {current_plan} (${monthly_cost}/mo)</p>
+            <p><b>❓ Primary Concern:</b> {primary_concern}</p>
+            <p><b>💊 Medication List:</b><br>{meds.replace(chr(10), '<br>')}</p>
             <hr>
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom:0;">提示：本單由 Medicare Compass 演算法預篩，零廣告、不收集個人隱私，請印出或截圖帶至 SHIP 諮詢現場。</p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom:0;">Zero-ad, privacy-first algorithm output. Print or screenshot this page for your SHIP appointment.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-
 # --------------------------------------------------
-# 🆕 模組 4: 「📅 SHIP 預約行事曆提醒」
+# 🆕 模組 4: 📅 SHIP 預約行事曆提醒 (Calendar ICS)
 # --------------------------------------------------
-elif app_mode == "📅 SHIP 預約行事曆提醒":
-  st.markdown("## 📅 SHIP 預約行事曆提醒 (.ics Generator)")
+elif app_mode == "CALENDAR_ICS":
+  st.markdown("## 📅 SHIP Appointment Calendar Reminder (.ics)")
   st.caption(
-      "SHIP 排隊要等好幾個星期，怕忘記？填入預約時間，一鍵加進 Google / Apple"
-      " Calendar，自動帶入行前準備備忘錄！"
+      "Never forget your SHIP appointment! Add it directly to your Google or"
+      " Apple Calendar with built-in prep notes."
   )
   st.markdown("---")
 
   col1, col2 = st.columns(2)
   with col1:
     appt_date = st.date_input(
-        "預約日期", datetime.date.today() + timedelta(days=14)
+        "Appointment Date", datetime.date.today() + timedelta(days=14)
     )
   with col2:
-    appt_time = st.time_input("預約時間", datetime.time(10, 0))
+    appt_time = st.time_input("Appointment Time", datetime.time(10, 0))
 
   location = st.text_input(
-      "諮詢地點或方式", "e.g. 電話諮詢 / 本地 Community Center"
+      "Location / Method", "e.g. Phone Call / Local Community Center"
   )
 
-  if st.button("📅 產生行事曆邀請檔 (.ics)", type="primary"):
+  if st.button("📅 Generate Calendar File (.ics)", type="primary"):
     dt_start = datetime.datetime.combine(appt_date, appt_time)
     dt_end = dt_start + timedelta(hours=1)
 
@@ -1010,33 +1049,33 @@ elif app_mode == "📅 SHIP 預約行事曆提醒":
 VERSION:2.0
 PRODID:-//Medicare Compass//SHIP Appointment//EN
 BEGIN:VEVENT
-SUMMARY:🩺 SHIP Medicare 官方專家諮詢
+SUMMARY:🩺 SHIP Medicare Official Counseling
 DTSTART:{dt_start.strftime('%Y%m%dT%H%M%S')}
 DTEND:{dt_end.strftime('%Y%m%dT%H%M%S')}
 LOCATION:{location}
-DESCRIPTION:📌 行前準備清單：\\n1. 開啟 Medicare Compass App 帶上您的「1-Page SHIP 準備單」。\\n2. 帶齊所有常吃藥物的藥罐。\\n3. 準備好紅藍卡 (Medicare Card) 與現有保費單。
+DESCRIPTION:📌 Checklist for Counseling:\\n1. Bring your 1-Page Summary from Medicare Compass App.\\n2. Bring all current prescription drug bottles.\\n3. Bring your Medicare Red, White & Blue card.
 BEGIN:VALARM
 TRIGGER:-PT24H
 ACTION:DISPLAY
-DESCRIPTION:明天有 SHIP Medicare 諮詢，請記得準備 1-Page Summary 與藥罐！
+DESCRIPTION:SHIP Counseling tomorrow! Remember to bring your 1-Page Summary and drug bottles.
 END:VALARM
 END:VEVENT
 END:VCALENDAR"""
 
     st.download_button(
-        label="💾 下載 .ics 檔案（點擊自動存入手機/電腦日曆）",
+        label="💾 Download .ics File (Click to Add to Calendar)",
         data=ics_content,
         file_name="ship_appointment.ics",
         mime="text/calendar",
         use_container_width=True,
     )
     st.success(
-        "行事曆檔案已成功生成！點擊上方按鈕下載後，點開檔案即可存入 iPhone Apple"
-        " Calendar 或 Android Google Calendar。"
+        "Calendar file created! Click above to download and open on your phone"
+        " or computer."
     )
 
 # --------------------------------------------------
-# 5. 頁面自動滾動修正 (原封不動保留)
+# 5. 頁面自動滾動修正
 # --------------------------------------------------
 st.markdown(
     """
