@@ -21,23 +21,30 @@ def clean_response(text: str) -> str:
 
   # 強效清理 AI 自我檢查與草稿痕跡
   cleanup_patterns = [
-      r"^\s*[\*•\-]?\s*Directly print.*$",
-      r"^\s*[\*•\-]?\s*Markdown bullets\?.*$",
-      r"^\s*[\*•\-]?\s*No reflection/restatement\?.*$",
-      r"^\s*[\*•\-]?\s*No 'Yes/No'\?.*$",
-      r"^\s*[\*•\-]?\s*\*Final Polish\.\*.*$",
-      r"^\s*[\*•\-]?\s*User Status:.*$",
-      r"^\s*[\*•\-]?\s*Age/DOB:.*$",
-      r"^\s*[\*•\-]?\s*Employment:.*$",
-      r"^\s*[\*•\-]?\s*Request:.*$",
-      r"^\s*[\*•\-]?\s*Constraints:.*$",
-      r"^\s*[\*•\-]?\s*Wait,.*$",
-      r"^\s*[\*•\-]?\s*Refining the output.*$",
-      r"User Status:.*?\n",
-      r"Constraints:.*?\n",
-      r"Wait,.*?\n",
-  ]
-
+        r"^\s*[\*\-]?\s*Directly print.*$",
+        r"^\s*[\*\-]?\s*Markdown bullets\?.*$",
+        r"^\s*[\*\-]?\s*No reflection/restatement\?.*$",
+        r"^\s*[\*\-]?\s*No 'Yes/No'\?.*$",
+        r"^\s*[\*\-]?\s*Final Polish\..*$",
+        r"^\s*[\*\-]?\s*User Status:.*$",
+        r"^\s*[\*\-]?\s*Age/DOB:.*$",
+        r"^\s*[\*\-]?\s*Employment:.*$",
+        r"^\s*[\*\-]?\s*Request:.*$",
+        r"^\s*[\*\-]?\s*Constraints:.*$",
+        r"^\s*[\*\-]?\s*Wait,.*$",
+        r"^\s*[\*\-]?\s*Refining the output.*$",
+        r"^\s*[\*\-]?\s*Self-Correction:.*$",
+        r"^\s*[\*\-]?\s*Table Construction:.*$",
+        r"^\s*[\*\-]?\s*Refined Questions:.*$",
+        r"^\s*[\*\-]?\s*Selection:.*$",
+        r"^\s*[\*\-]?\s*Goal:.*$",
+        r"^\s*[\*\-]?\s*Columns:.*$",
+        r"^\s*[\*\-]?\s*Rows:.*$",
+        r"User Status:.*?\n",
+        r"Constraints:.*?\n",
+        r"Wait,.*?\n",
+        r"Self-Correction:.*?\n",
+    ]
   for pattern in cleanup_patterns:
     text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
 
@@ -152,13 +159,13 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
 
   strict_system_instruction = (
         f"You are Medicare Compass, an expert assistant.\nLanguage: {target_lang}.\n"
-        "Task: Present Medicare choices in the most concise format possible. AVOID repetitive text, detailed paragraphs, or separate Option 1/Option 2 sections.\n\n"
-        "FORMATTING RULES:\n"
-        "1. DO NOT write separate bullet points or paragraphs for Option 1 and Option 2.\n"
-        "2. Start DIRECTLY with a clean, beautifully formatted Summary Comparison table contrasting 'Original Medicare + Medigap + Part D' vs 'Medicare Advantage' (covering Doctor Access, Specialists, Drug Coverage, and Cost Structure).\n"
-        "3. Follow the table immediately with the 2 key decision-making questions to guide the user.\n"
-        "4. End with the official enrollment tip (e.g., SSA.gov).\n"
-        "5. Put ALL internal thinking, planning, and evaluation notes strictly inside <thought>...</thought> tags."
+        "Task: Present Medicare choices concisely.\n\n"
+        "CRITICAL RULE: DO NOT output any internal evaluation, thinking, rule-checking, or self-correction notes outside the <thought> tag.\n"
+        "Put ALL internal logic strictly inside <thought>...</thought> tags.\n\n"
+        "FINAL OUTPUT FORMAT (Output ONLY this structure after </thought>):\n"
+        "1. A Summary Comparison table contrasting 'Original Medicare + Medigap + Part D' vs 'Medicare Advantage'.\n"
+        "2. Followed immediately by 2 Key Decision-Making Questions.\n"
+        "3. Conclude with 1 Official Enrollment Tip."
     )
 
   last_exception = None
