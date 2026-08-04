@@ -151,12 +151,14 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     valid_models = ["gemini-1.5-flash", "models/gemini-1.5-flash"]
 
   strict_system_instruction = (
-      f"You are Medicare Compass, an expert assistant.\nLanguage:"
-      f" {target_lang}.\nTask: Explain Medicare options clearly using real-life"
-      " doctor access (freedom to travel vs local network) and drug needs"
-      " scenarios.\nDO NOT reflect, re-state user input, check formatting, or"
-      " include any internal evaluation notes."
-  )
+        f"You are Medicare Compass, an expert assistant.\nLanguage: "
+        f"{target_lang}.\nTask: Explain Medicare options clearly using real-life "
+        "doctor access (freedom to travel vs local network) and drug needs "
+        "scenarios.\nDO NOT reflect, re-state user input, check formatting, or "
+        "include any internal evaluation notes.\n"
+        "Put ALL your internal thinking, planning, and evaluation notes strictly inside "
+        "<thought>...</thought> tags. Outside those tags, provide ONLY the final user-facing response."
+    )
 
   last_exception = None
   for m_name in valid_models:
