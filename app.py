@@ -545,19 +545,19 @@ if app_mode == "MAIN_AI":
                   )
               )
           )
-      )
-      btn_type2 = (
-          "primary"
-          if st.session_state.user_role_type == "family"
-          else "secondary"
-      )
-      if st.button(btn2_label, use_container_width=True, type=btn_type2):
-        st.session_state.user_role_type = "family"
-        st.rerun()
+     )
+        btn_type2 = (
+            "primary"
+            if st.session_state.user_role_type == "family"
+            else "secondary"
+        )
+        if st.button(btn2_label, use_container_width=True, type=btn_type2):
+            st.session_state.user_role_type = "family"
+            st.rerun()
 
     prompt = None
 
-   if st.session_state.get("saved_user_input"):
+    if st.session_state.get("saved_user_input"):
         st.markdown("<br>", unsafe_allow_html=True)
         quick_btn_label = (
             f"⚡ 點擊直接使用上次記憶提交: {st.session_state.saved_user_input}"
@@ -571,7 +571,6 @@ if app_mode == "MAIN_AI":
     # 修正 1: 輸入框 Placeholder (改為僅 Month/Year, 無固定 Date)
     # ------------------------------------------------------------------
     has_history = len(st.session_state.get("messages", [])) > 0
-
     if not has_history:
         if current_lang == "繁體中文":
             input_placeholder = (
