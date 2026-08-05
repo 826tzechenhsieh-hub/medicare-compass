@@ -395,49 +395,31 @@ We DO NOT store or track any of your inputs on our servers. Any remembered input
 
   st.markdown("---")
 
-  if app_mode == "MAIN_AI":
-    summary_btn_label = (
-        "📋 Generate / Update Summary"
-        if current_lang == "English"
-        else (
-            "📋 Generar Resumen"
-            if current_lang == "Español"
-            else (
-                "📋 요약 생성"
-                if current_lang == "한국어"
-                else (
-                    "📋 生成/更新咨询总结"
-                    if current_lang == "簡體中文"
-                    else "📋 生成 / 更新諮詢總結"
-                )
-            )
-        )
-    )
-    reset_label = (
-        "🔄 Reset Conversation"
-        if current_lang == "English"
-        else (
-            "🔄 Reiniciar"
-            if current_lang == "Español"
-            else (
-                "🔄 대화 재설정"
-                if current_lang == "한국어"
-                else (
-                    "🔄 重新开始咨询"
-                    if current_lang == "簡體中文"
-                    else "🔄 重新開始諮詢"
-                )
-            )
-        )
-    )
+ if app_mode == "MAIN_AI":
+        summary_btn_map = {
+            "English": "📝 Generate / Update Summary",
+            "Español": "📝 Generar Resumen",
+            "한국어": "📝 요약 생성",
+            "簡體中文": "📝 生成/更新咨询总结",
+            "繁體中文": "📝 生成/更新諮詢總結",
+        }
+        summary_btn_label = summary_btn_map.get(current_lang, summary_btn_map["繁體中文"])
 
-    if st.button(summary_btn_label, use_container_width=True, type="primary"):
-      st.session_state.show_summary = True
+        reset_btn_map = {
+            "English": "🔄 Reset Conversation",
+            "Español": "🔄 Reiniciar",
+            "한국어": "🔄 대화 재설정",
+            "簡體中文": "🔄 重新开始咨询",
+            "繁體中文": "🔄 重新開始諮詢",
+        }
+        reset_label = reset_btn_map.get(current_lang, reset_btn_map["繁體中文"])
 
-    if st.button(reset_label, use_container_width=True):
-      st.session_state.messages = []
-      st.session_state.show_summary = False
-      st.rerun()
+        if st.button(summary_btn_label, use_container_width=True, type="primary"):
+            st.session_state.show_summary = True
+
+        if st.button(reset_label, use_container_width=True):
+            st.session_state.messages = []
+            st.rerun()
 
 # --------------------------------------------------
 # 4. 模組分流與執行邏輯
