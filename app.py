@@ -347,23 +347,24 @@ with st.sidebar:
         st.info("Saved user input found.")
     st.markdown("---")
 
-  upload_label_map = {
-      "English": "📎 Take Photo or Upload Notice/Plan (Optional):",
-      "Español": "📎 Tomar foto o cargar documento (Opcional):",
-      "한국어": "📎 사진 촬영 또는 서류 업로드 (선택 사항):",
-      "簡體中文": "📎 拍照或上传信件/保单照片（选填）：",
-      "繁體中文": "📎 拍照或上傳信件/保單照片（選填）：",
-  }
-  uploaded_file = st.file_uploader(
-      upload_label_map.get(current_lang, "📎 上傳照片"),
-      type=["png", "jpg", "jpeg", "pdf"],
-  )
-  img_data = None
-  if uploaded_file:
-    try:
-      img_data = Image.open(uploaded_file)
-      st.success("File attached!")
-    except Exception:
+    upload_label_map = {
+        "English": "📷 Take Photo or Upload Notice/Plan (Optional):",
+        "Español": "📷 Tomar foto o cargar documento (Opcional):",
+        "한국어": "📷 사진 촬영 또는 서류 업로드 (선택 사항):",
+        "簡體中文": "📷 拍照或上传信件/保单照片 (选填):",
+        "繁體中文": "📷 拍照或上傳信件/保單照片 (選填):",
+    }
+    uploaded_file = st.file_uploader(
+        upload_label_map.get(current_lang, "📷 上傳照片"),
+        type=["png", "jpg", "jpeg", "pdf"],
+    )
+    img_data = None
+    if uploaded_file:
+        try:
+            img_data = Image.open(uploaded_file)
+            st.success("File attached!")
+        except Exception:
+            pass
       st.warning("File uploaded.")
 
   if not primary_key:
