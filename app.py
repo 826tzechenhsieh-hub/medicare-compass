@@ -322,7 +322,7 @@ with st.sidebar:
         "繁體中文": "📅 SHIP 預約行事曆提醒",
     }[current_lang]
 
-  st.markdown(f"### {nav_title_map[current_lang]}")
+    st.markdown(f"### {nav_title_map[current_lang]}")
     selected_module_label = st.radio(
         nav_label_map[current_lang],
         [m1_text, m2_text, m3_text, m4_text],
