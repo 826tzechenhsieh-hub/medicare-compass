@@ -323,34 +323,28 @@ with st.sidebar:
     }[current_lang]
 
   st.markdown(f"### {nav_title_map[current_lang]}")
-  selected_module_label = st.radio(
-      nav_label_map[current_lang],
-      [m1_text, m2_text, m3_text, m4_text],
-      index=0,
-  )
-
-  if selected_module_label == m1_text:
-    app_mode = "MAIN_AI"
-  elif selected_module_label == m2_text:
-    app_mode = "SWITCH_ASSISTANT"
-  elif selected_module_label == m3_text:
-    app_mode = "SHIP_PREP"
-  else:
-    app_mode = "CALENDAR_ICS"
-
-  st.markdown("---")
-
-  if (
-      "saved_user_input" in st.session_state
-      and st.session_state.saved_user_input
-  ):
-    st.markdown(
-        "💾 **本地設備記憶 (Local Memory)**:\n"
-        f"`{st.session_state.saved_user_input}`"
+    selected_module_label = st.radio(
+        nav_label_map[current_lang],
+        [m1_text, m2_text, m3_text, m4_text],
+        index=0,
     )
-    if st.button("🗑️ 清除本地記憶 (Clear Memory)", use_container_width=True):
-      st.session_state.saved_user_input = ""
-      st.rerun()
+
+    if selected_module_label == m1_text:
+        app_mode = "MAIN_AI"
+    elif selected_module_label == m2_text:
+        app_mode = "SWITCH_ASSISTANT"
+    elif selected_module_label == m3_text:
+        app_mode = "SHIP_PREP"
+    else:
+        app_mode = "CALENDAR_ICS"
+
+    st.markdown("---")
+
+    if (
+        "saved_user_input" in st.session_state
+        and st.session_state.saved_user_input
+    ):
+        st.info("Saved user input found.")
     st.markdown("---")
 
   upload_label_map = {
