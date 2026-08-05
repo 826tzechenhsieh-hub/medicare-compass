@@ -501,59 +501,33 @@ if app_mode == "MAIN_AI":
         st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
 
         col_start1, col_start2 = st.columns(2)
-    with col_start1:
-      btn1_label = "👴 " + (
-          "Applying for Myself"
-          if current_lang == "English"
-          else (
-              "我是长者本人"
-              if current_lang == "簡體中文"
-              else (
-                  "我是長者本人"
-                  if current_lang == "繁體中文"
-                  else (
-                      "Solicitando para mí"
-                      if current_lang == "Español"
-                      else "본인 신청"
-                  )
-              )
-          )
-      )
-      btn_type1 = (
-          "primary"
-          if st.session_state.user_role_type == "self"
-          else "secondary"
-      )
-      if st.button(btn1_label, use_container_width=True, type=btn_type1):
-        st.session_state.user_role_type = "self"
-        st.rerun()
+        with col_start1:
+            btn1_map = {
+                "English": "👨‍⚕️ Applying for Myself",
+                "Español": "👨‍⚕️ Aplicando para mí mismo",
+                "한국어": "👨‍⚕️ 본인 신청",
+                "簡體中文": "👨‍⚕️ 我是长者本人",
+                "繁體中文": "👨‍⚕️ 我是長者本人",
+            }
+            btn1_label = btn1_map.get(current_lang, btn1_map["繁體中文"])
+            btn_type1 = "primary" if st.session_state.user_role_type == "self" else "secondary"
+            if st.button(btn1_label, use_container_width=True, type=btn_type1):
+                st.session_state.user_role_type = "self"
+                st.rerun()
 
-    with col_start2:
-      btn2_label = "👨‍👩‍👧 " + (
-          "Helping Family / Parents"
-          if current_lang == "English"
-          else (
-              "我是帮家人/父母"
-              if current_lang == "簡體中文"
-              else (
-                  "我是幫家人/父母"
-                  if current_lang == "繁體中文"
-                  else (
-                      "Ayudando a mi familia"
-                      if current_lang == "Español"
-                      else "가족 도와드리기"
-                  )
-              )
-          )
-     )
-        btn_type2 = (
-            "primary"
-            if st.session_state.user_role_type == "family"
-            else "secondary"
-        )
-        if st.button(btn2_label, use_container_width=True, type=btn_type2):
-            st.session_state.user_role_type = "family"
-            st.rerun()
+        with col_start2:
+            btn2_map = {
+                "English": "👨‍👩‍👧 Helping Family/Parents",
+                "Español": "👨‍👩‍👧 Ayudando a mi familia/padres",
+                "한국어": "👨‍👩‍👧 가족 도와드리기",
+                "簡體中文": "👨‍👩‍👧 我是子女/家属",
+                "繁體中文": "👨‍👩‍👧 我是子女/家屬",
+            }
+            btn2_label = btn2_map.get(current_lang, btn2_map["繁體中文"])
+            btn_type2 = "primary" if st.session_state.user_role_type == "family" else "secondary"
+            if st.button(btn2_label, use_container_width=True, type=btn_type2):
+                st.session_state.user_role_type = "family"
+                st.rerun()
 
     prompt = None
 
