@@ -478,29 +478,29 @@ if app_mode == "MAIN_AI":
                 st.markdown(message["content"])
 
     if len(st.session_state.messages) == 0:
-    q_caption_map = {
-        "English": (
-            "💡 **Quick Start**: Select identity, then enter **Birth Month/Year"
-            " & State** below:"
-        ),
-        "Español": (
-            "💡 **Inicio rápido**: Elija su rol e ingrese **Mes/Año de"
-            " nacimiento y Estado**:"
-        ),
-        "한국어": (
-            "💡 **빠른 시작**: 신분을 선택하고 아래에 **생년월 및 거주 주**를"
-            " 입력하세요:"
-        ),
-        "簡體中文": (
-            "💡 **快速开始**：请先选择身份，并在下方输入**出生年月与居住州**："
-        ),
-        "繁體中文": (
-            "💡 **快速開始**：請先選擇身分，並在下方輸入**出生年月與居住州**："
-        ),
-    }
-    st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
+        q_caption_map = {
+            "English": (
+                "💡 **Quick Start**: Select identity, then enter **Birth Month/Year**"
+                " & State** below:"
+            ),
+            "Español": (
+                "💡 **Inicio rápido**: Elija su rol e ingrese **Mes/Año de"
+                " nacimiento y Estado**:"
+            ),
+            "한국어": (
+                "💡 **빠른 시작**: 신분을 선택하고 아래에 **생년월일 및 거주 주**를"
+                " 입력하세요:"
+            ),
+            "簡體中文": (
+                "💡 **快速开始**: 请选择身份，并在下方输入**出生年月与居住州**："
+            ),
+            "繁體中文": (
+                "💡 **快速開始**: 請選擇身份，並在下方輸入**出生年月與居住州**："
+            ),
+        }
+        st.caption(q_caption_map.get(current_lang, "💡 Quick Start:"))
 
-    col_start1, col_start2 = st.columns(2)
+        col_start1, col_start2 = st.columns(2)
     with col_start1:
       btn1_label = "👴 " + (
           "Applying for Myself"
