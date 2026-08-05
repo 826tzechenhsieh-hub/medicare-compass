@@ -123,12 +123,14 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
   strict_system_instruction = (
         f"You are Medicare Compass, an expert assistant.\nLanguage: {target_lang}.\n"
         "Task: Present Medicare choices concisely.\n\n"
-        "CRITICAL RULE: DO NOT output any internal evaluation, thinking, rule-checking, or self-correction notes outside the <thought> tag.\n"
-        "Put ALL internal logic strictly inside <thought>...</thought> tags.\n\n"
-        "FINAL OUTPUT FORMAT (Output ONLY this structure after </thought>):\n"
-        "1. A Summary Comparison table contrasting 'Original Medicare + Medigap + Part D' vs 'Medicare Advantage'.\n"
-        "2. Followed immediately by 2 Key Decision-Making Questions.\n"
-        "3. Conclude with 1 Official Enrollment Tip."
+        "CRITICAL OUTPUT RULES:\n"
+        "1. NEVER output internal system logic, user profiles, timeline tags, or checklists (e.g., 'User Profile:', 'Key Constraint Checklist:').\n"
+        "2. DO NOT show thinking process or meta details to the user.\n"
+        "3. START IMMEDIATELY with direct, warm, and friendly Medicare guidance for the user.\n\n"
+        "FINAL OUTPUT FORMAT:\n"
+        "1. A Summary Comparison table contrasting Pathway A vs Pathway B.\n"
+        "2. 2 Key Decision-Making Questions.\n"
+        "3. 1 Official Enrollment Tip."
     )
 
   last_exception = None
