@@ -282,21 +282,21 @@ with st.sidebar:
         "繁體中文": "🧩 功能導航模組",
     }
 
-  nav_label_map = {
-      "English": "Select Service / Module:",
-      "Español": "Seleccionar módulo:",
-      "한국어": "모듈 선택:",
-      "簡體中文": "请选择服务功能：",
-      "繁體中文": "請選擇服務功能：",
-  }
+    nav_label_map = {
+        "English": "Select Service / Module:",
+        "Español": "Seleccionar módulo:",
+        "한국어": "모듈 선택:",
+        "簡體中文": "请选择服务功能：",
+        "繁體中文": "請選擇服務功能：",
+    }
 
-  m1_text = {
-      "English": "💬 Main AI Navigator",
-      "Español": "💬 Navegador AI Principal",
-      "한국어": "💬 메인 AI 내비게이터",
-      "簡體中文": "💬 智慧医保咨询 (Main AI)",
-      "繁體中文": "💬 智慧醫保諮詢 (Main AI)",
-  }[current_lang]
+    m1_text = {
+        "English": "💬 Main AI Navigator",
+        "Español": "💬 Navegador AI Principal",
+        "한국어": "💬 메인 AI 내비게이터",
+        "簡體中文": "💬 智慧医保咨询 (Main AI)",
+        "繁體中文": "💬 智慧醫保諮詢 (Main AI)",
+    }[current_lang]
 
   m2_text = {
       "English": "🔄 Plan Switching Assistant (Why-When-How)",
