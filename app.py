@@ -264,26 +264,15 @@ if primary_key:
 # 3. Sidebar Setup & 功能模組選單 (支援多語言同步)
 # --------------------------------------------------
 with st.sidebar:
-    # 语言选单直接置顶（已移除多余的重复 Logo）
+    st.markdown("### 🌐 Language / 語言設定")
     current_lang = st.radio(
-        "🌐 Language / 選擇語言:",
+        "Select Language / 選擇語言:",
         ["English", "Español", "繁體中文", "簡體中文", "한국어"],
         index=0,
         key="selected_language",
     )
 
     st.markdown("---")
-
-  st.markdown("### 🌐 Language / 語言設定")
-  current_lang = st.radio(
-      "Select Language / 選擇語言:",
-      ["English", "Español", "繁體中文", "簡體中文", "한국어"],
-      index=0,
-      key="selected_language",
-  )
-
-  st.markdown("---")
-
   nav_title_map = {
       "English": "🧩 Navigation Modules",
       "Español": "🧩 Módulos de Navegación",
