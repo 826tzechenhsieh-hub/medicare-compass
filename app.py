@@ -461,23 +461,23 @@ if app_mode == "MAIN_AI":
 
         st.markdown("---")
 
-  if "user_role_type" not in st.session_state:
-    st.session_state.user_role_type = "self"
-  if "messages" not in st.session_state:
-    st.session_state.messages = []
-  if "show_summary" not in st.session_state:
-    st.session_state.show_summary = False
-  if "saved_user_input" not in st.session_state:
-    st.session_state.saved_user_input = ""
+    if "user_role_type" not in st.session_state:
+        st.session_state.user_role_type = "self"
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "show_summary" not in st.session_state:
+        st.session_state.show_summary = False
+    if "saved_user_input" not in st.session_state:
+        st.session_state.saved_user_input = ""
 
-  for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        if message["role"] in ["assistant", "model"]:
-            st.markdown(clean_response(message["content"]))
-        else:
-            st.markdown(message["content"])
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            if message["role"] in ["assistant", "model"]:
+                st.markdown(clean_response(message["content"]))
+            else:
+                st.markdown(message["content"])
 
-  if len(st.session_state.messages) == 0:
+    if len(st.session_state.messages) == 0:
     q_caption_map = {
         "English": (
             "💡 **Quick Start**: Select identity, then enter **Birth Month/Year"
