@@ -273,13 +273,14 @@ with st.sidebar:
     )
 
     st.markdown("---")
-  nav_title_map = {
-      "English": "🧩 Navigation Modules",
-      "Español": "🧩 Módulos de Navegación",
-      "한국어": "🧩 탐색 모듈",
-      "簡體中文": "🧩 功能导航模块",
-      "繁體中文": "🧩 功能導航模組",
-  }
+
+    nav_title_map = {
+        "English": "🧩 Navigation Modules",
+        "Español": "🧩 Módulos de Navegación",
+        "한국어": "🧩 탐색 모듈",
+        "簡體中文": "🧩 功能导航模块",
+        "繁體中文": "🧩 功能導航模組",
+    }
 
   nav_label_map = {
       "English": "Select Service / Module:",
