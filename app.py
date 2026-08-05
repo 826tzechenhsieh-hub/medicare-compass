@@ -13,70 +13,33 @@ import streamlit.components.v1 as components
 # 1. AI 回應清洗與衛生處理函式 (強效防草稿與思考過程洩漏)
 # --------------------------------------------------
 def clean_response(text: str) -> str:
-  if not text:
-    return ""
-
-  # 移除 <think>...</think> 或 <thought>... 標籤
-  text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
-
-  # 強效清理 AI 自我檢查與草稿痕跡
-  cleanup_patterns = [
+    """过滤 AI 内部的思考过程、草稿标签与 Prompt 残留"""
+    if not text:
+        return ""
+    
+    text = re.sub(r"<(think|thought)>.*?</\1>", "", text, flags=re.DOTALL)
+    
+    patterns = [
+        r"User Profile:.*?\n",
+        r"Key Constraint Checklist:.*?\n",
+        r"Personal Medicare Timeline:.*?\n",
+        r"Persona/Role:.*?\n",
+        r"\(Self-Correction\):.*?\n",
+        r"Final Content Plan:.*?\n",
+        r"Comparison Table:.*?\n",
+        r"Key decision making question:.*?\n",
+        r"```json.*?```",
         r"^\s*[\*\-]?\s*Directly print.*$",
         r"^\s*[\*\-]?\s*Markdown bullets\?.*$",
-        r"^\s*[\*\-]?\s*No reflection/restatement\?.*$",
-        r"^\s*[\*\-]?\s*No 'Yes/No'\?.*$",
         r"^\s*[\*\-]?\s*Final Polish\..*$",
-        r"^\s*[\*\-]?\s*User Status:.*$",
-        r"^\s*[\*\-]?\s*Age/DOB:.*$",
-        r"^\s*[\*\-]?\s*Employment:.*$",
-        r"^\s*[\*\-]?\s*Request:.*$",
-        r"^\s*[\*\-]?\s*Constraints:.*$",
-        r"^\s*[\*\-]?\s*Wait,.*$",
-        r"^\s*[\*\-]?\s*Refining the output.*$",
         r"^\s*[\*\-]?\s*Self-Correction:.*$",
-        r"^\s*[\*\-]?\s*Table Construction:.*$",
-        r"^\s*[\*\-]?\s*Refined Questions:.*$",
-        r"^\s*[\*\-]?\s*Selection:.*$",
-        r"^\s*[\*\-]?\s*Goal:.*$",
-        r"^\s*[\*\-]?\s*Columns:.*$",
-        r"^\s*[\*\-]?\s*Rows:.*$",
-        r"User Status:.*?\n",
-        r"Constraints:.*?\n",
-        r"Wait,.*?\n",
-        r"Self-Correction:.*?\n",
     ]
-  for pattern in cleanup_patterns:
-    text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
-
-  metadata_patterns = [
-      (
-          r"^\s*[\*•\-]\s*(User|Constraint|Role|Salutation|NJ"
-          r" Context|Closing|Greeting|Persona|Context|Check|Did"
-          r" I|Follow-up):.*$\n?"
-      ),
-      (
-          r"^\s*[\*•\-]\s*(Concise bullet points|No wall of text|Expert"
-          r" knowledge|Current date|Ensure tone|Wait, did I).*$\n?"
-      ),
-      (
-          r"^\s*(User Goal|Context|Persona|Check against rules|\(Self-Correction\)|Final"
-          r" Content Plan|User wants to know|Constraint \d+:|Ensure tone"
-          r" is).*$\n?"
-      ),
-  ]
-
-  for pattern in metadata_patterns:
-    text = re.sub(pattern, "", text, flags=re.MULTILINE | re.IGNORECASE)
-
-  if "### 🗓️ Your Medicare Timeline" in text:
-    idx = text.find("### 🗓️ Your Medicare Timeline")
-    text = text[idx:]
-  elif "🗓️ Your Medicare Timeline" in text:
-    idx = text.find("🗓️ Your Medicare Timeline")
-    text = text[idx:]
-
-  return text.strip()
-
+    
+    cleaned = text
+    for pattern in patterns:
+        cleaned = re.sub(pattern, "", cleaned, flags=re.IGNORECASE | re.MULTILINE)
+        
+    return cleaned.strip()
 
 def sanitize_ai_output(raw_text, target_lang="English"):
   if not raw_text:
