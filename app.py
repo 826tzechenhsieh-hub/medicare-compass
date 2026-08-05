@@ -462,11 +462,10 @@ We DO NOT store or track any of your inputs on our servers. Any remembered input
 # 🅰️ 模組 1: 💬 智慧醫保諮詢 (Main AI Navigator)
 # --------------------------------------------------
 if app_mode == "MAIN_AI":
-  top_container = st.container()
+    top_container = st.container()
 
-  with top_container:
-    # 整合後的單一精簡卡片 (去除頂部 Step 1-2-3 重複區塊)
-    # 1. 顶部大标题 (Logo)
+    with top_container:
+        # 1. 顶部大标题 (大 Logo 居中)
         st.markdown("""
             <style>
             .header-box { text-align: center; padding: 10px 0; }
@@ -481,17 +480,19 @@ if app_mode == "MAIN_AI":
 
         st.divider()
 
-        # 2. 可折叠的 1 分钟指南
-        btn_text = "📖 点击查看：1分钟 Medicare 快速指南"
+        # 2. 纯英文且无冗余的大字号折叠指南
+        btn_text = "📖 Click to view: 1-Minute Medicare Guide"
         with st.expander(btn_text, expanded=False):
-            st.markdown("### 🧭 Medicare 主要途径指南")
+            st.markdown("### 🗺️ Major Pathways Guide")
             col1, col2 = st.columns(2)
             with col1:
-                st.info("🟦 **Part A & B (Original Medicare)**\n\n住院与门诊基础保障，联邦政府提供。")
-                st.warning("🟨 **Part C (Medicare Advantage)**\n\n私人保险公司包裹方案，多包含牙科/眼科。")
+                st.info("🟦 **Part A & B (Original Medicare)**\n\nBasic hospital & medical coverage provided by the federal government.")
+                st.warning("🟨 **Part C (Medicare Advantage)**\n\nAll-in-one bundled plans provided by private insurers, often including Dental/Vision.")
             with col2:
-                st.success("🟩 **Part D (Prescription Drug)**\n\n处方药物专用保险。")
-                st.error("🟥 **Medigap (Medicare Supplement)**\n\n补充包，帮忙支付 Part A/B 的自费费用。")
+                st.success("🟩 **Part D (Prescription Drug)**\n\nStandalone coverage specifically for prescription medications.")
+                st.error("🟥 **Medigap (Medicare Supplement)**\n\nSupplemental plans that help pay Part A/B out-of-pocket costs.")
+
+        st.markdown("---")
 
   if "user_role_type" not in st.session_state:
     st.session_state.user_role_type = "self"
