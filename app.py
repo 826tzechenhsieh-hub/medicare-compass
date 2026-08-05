@@ -298,29 +298,29 @@ with st.sidebar:
         "繁體中文": "💬 智慧醫保諮詢 (Main AI)",
     }[current_lang]
 
-  m2_text = {
-      "English": "🔄 Plan Switching Assistant (Why-When-How)",
-      "Español": "🔄 Asistente de Cambio de Plan",
-      "한국어": "🔄 플랜 변경 의사결정 도우미",
-      "簡體中文": "🔄 Plan 转换决策助理 (Why-When-How)",
-      "繁體中文": "🔄 Plan 轉換決策助理 (Why-When-How)",
-  }[current_lang]
+    m2_text = {
+        "English": "🔄 Plan Switching Assistant (Why-When-How)",
+        "Español": "🔄 Asistente de Cambio de Plan",
+        "한국어": "🔄 플랜 변경 의사결정 도우미",
+        "簡體中文": "🔄 Plan 转换决策助理 (Why-When-How)",
+        "繁體中文": "🔄 Plan 轉換決策助理 (Why-When-How)",
+    }[current_lang]
 
-  m3_text = {
-      "English": "📋 1-Page SHIP Prep Summary",
-      "Español": "📋 Resumen de Preparación SHIP",
-      "한국어": "📋 1페이지 SHIP 상담 준비표",
-      "簡體中文": "📋 1-Page SHIP 咨询准备单",
-      "繁體中文": "📋 1-Page SHIP 諮詢準備單",
-  }[current_lang]
+    m3_text = {
+        "English": "📋 1-Page SHIP Prep Summary",
+        "Español": "📋 Resumen de Preparación SHIP",
+        "한국어": "📋 1페이지 SHIP 상담 준비표",
+        "簡體中文": "📋 1-Page SHIP 咨询准备单",
+        "繁體中文": "📋 1-Page SHIP 諮詢準備單",
+    }[current_lang]
 
-  m4_text = {
-      "English": "📅 SHIP Appointment Reminder",
-      "Español": "📅 Recordatorio de Cita SHIP",
-      "한국어": "📅 SHIP 예약 일정 알림",
-      "簡體中文": "📅 SHIP 预约行事历提醒",
-      "繁體中文": "📅 SHIP 預約行事曆提醒",
-  }[current_lang]
+    m4_text = {
+        "English": "📅 SHIP Appointment Reminder",
+        "Español": "📅 Recordatorio de Cita SHIP",
+        "한국어": "📅 SHIP 예약 일정 알림",
+        "簡體中文": "📅 SHIP 预约行事历提醒",
+        "繁體中文": "📅 SHIP 預約行事曆提醒",
+    }[current_lang]
 
   st.markdown(f"### {nav_title_map[current_lang]}")
   selected_module_label = st.radio(
