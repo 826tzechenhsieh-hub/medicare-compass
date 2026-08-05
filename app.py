@@ -460,107 +460,32 @@ if app_mode == "MAIN_AI":
 
   with top_container:
     # 整合後的單一精簡卡片 (去除頂部 Step 1-2-3 重複區塊)
-    expander_title_map = {
-        "English": (
-            "🗺️ **1-Minute Medicare Guide: Two Major Pathways Explained**"
-        ),
-        "Español": (
-            "🗺️ **Guía de 1 Minuto: Explicación de las Dos Vías Principales**"
-        ),
-        "한국어": "🗺️ **1분 메디케어 가이드: 두 가지 핵심 선택 경로**",
-        "簡體中文": "🗺️ **1分钟医保指南：两大核心路径白话解析**",
-        "繁體中文": "🗺️ **1分鐘醫保指南：兩大核心路徑白話解析**",
-    }
-
-    with st.expander(
-        expander_title_map.get(
-            current_lang, "🗺️ **1-Minute Medicare Guide**"
-        ),
-        expanded=True,
-    ):
-      if current_lang == "English":
+    # 1. 顶部大标题 (Logo)
         st.markdown("""
-<div class="pathway-a-box">
-  <h4 style="margin-top:0; color:#1e40af;">💙 Pathway 🅰️ Original Medicare + Medigap + Part D</h4>
-  <ul>
-    <li><b>Best for</b>: People who want total freedom to see <b>ANY doctor/hospital in the U.S.</b> that accepts Medicare. Ideal for frequent travelers or snowbirds.</li>
-    <li><b>Doctor Access</b>: No network limits, no referrals needed to see specialists.</li>
-    <li><b>Drugs</b>: Requires a separate standalone Part D prescription plan.</li>
-  </ul>
-</div>
+            <style>
+            .header-box { text-align: center; padding: 10px 0; }
+            .main-title { font-size: 2.3rem !important; font-weight: bold; color: #1E3A8A; }
+            .sub-title { font-size: 1.0rem; color: #6B7280; margin-top: -5px; }
+            </style>
+            <div class="header-box">
+                <span class="main-title">🧭 Medicare Compass</span>
+                <div class="sub-title">Powered by CareCompass™</div>
+            </div>
+        """, unsafe_allow_html=True)
 
-<div class="pathway-b-box">
-  <h4 style="margin-top:0; color:#166534;">💚 Pathway 🅱️ Medicare Advantage (Part C Bundled Plan)</h4>
-  <ul>
-    <li><b>Best for</b>: People who prefer an <b>all-in-one bundled package</b> managed by private insurers with lower monthly premiums.</li>
-    <li><b>Doctor Access</b>: Restricted to local doctor networks (HMO/PPO). May require referrals for specialists.</li>
-    <li><b>Drugs & Extras</b>: Usually includes drug coverage (Part D) and extra perks (Dental/Vision).</li>
-  </ul>
-</div>
+        st.divider()
 
-* **🏠 Discharge Medical Devices**: *Do NOT buy privately!* Must get a doctor's prescription before hospital discharge for Medicare reimbursement.
-* **🚨 Emergency Ambulance**: Part B covers 80% for medically necessary emergencies only; private rides/taxis are NOT covered.
-            """, unsafe_allow_html=True)
-      elif current_lang == "Español":
-        st.markdown("""
-<div class="pathway-a-box">
-  <h4 style="margin-top:0; color:#1e40af;">💙 Vía 🅰️ Original Medicare + Medigap + Parte D</h4>
-  <p>Libre elección de cualquier médico u hospital en EE. UU. sin restricciones de red ni referencias. Ideal para quienes viajan con frecuencia.</p>
-</div>
-<div class="pathway-b-box">
-  <h4 style="margin-top:0; color:#166534;">💚 Vía 🅱️ Medicare Advantage (Parte C)</h4>
-  <p>Paquete todo en uno gestionado por aseguradoras privadas con primas mensuales más bajas. Usa redes locales (HMO/PPO).</p>
-</div>
-            """, unsafe_allow_html=True)
-      elif current_lang == "한국어":
-        st.markdown("""
-<div class="pathway-a-box">
-  <h4 style="margin-top:0; color:#1e40af;">💙 경로 🅰️ Original Medicare + Medigap + Part D</h4>
-  <p>네트워크 제한 및 진료 의뢰서 없이 미국 내 모든 의사/병원 자유 이용. 타주 이동이 잦은 분에게 최적.</p>
-</div>
-<div class="pathway-b-box">
-  <h4 style="margin-top:0; color:#166534;">💚 경로 🅱️ Medicare Advantage (Part C 패키지)</h4>
-  <p>낮은 월 보험료로 민간 보험사가 제공하는 통합 패키지. 지정된 지역 네트워크(HMO/PPO) 이용.</p>
-</div>
-            """, unsafe_allow_html=True)
-      elif current_lang == "簡體中文":
-        st.markdown("""
-<div class="pathway-a-box">
-  <h4 style="margin-top:0; color:#1e40af;">💙 路径 🅰️ 传统红蓝卡组合 (Original Medicare + Medigap + Part D 药保)</h4>
-  <ul>
-    <li><b>适合人群</b>：追求<b>全美看诊自由</b>、經常跨州居住或旅行者。</li>
-    <li><b>看病网络</b>：全美只要收 Medicare 的医生/医院皆可直接看，无需转诊单 (No Referral)。</li>
-  </ul>
-</div>
-
-<div class="pathway-b-box">
-  <h4 style="margin-top:0; color:#166534;">💚 路径 🅱️ 优惠套餐 (Medicare Advantage / Part C)</h4>
-  <ul>
-    <li><b>适合人群</b>：喜欢<b>低月保费、私人保险公司一包到底</b>者。</li>
-    <li><b>看病网络</b>：限制在当地指定网络看诊 (HMO/PPO)，含药保与牙科福利，但看专科需預先審查。</li>
-  </ul>
-</div>
-            """, unsafe_allow_html=True)
-      else:
-        st.markdown("""
-<div class="pathway-a-box">
-  <h4 style="margin-top:0; color:#1e40af;">💙 路徑 🅰️ 傳統紅藍卡組合 (Original Medicare + Medigap + Part D 藥保)</h4>
-  <ul>
-    <li><b>適合人群</b>：追求<b>全美看診自由</b>、經常跨州居住或旅行者。</li>
-    <li><b>看病網絡</b>：全美只要收 Medicare 的醫生/醫院皆可直接看，無需轉診單 (No Referral)。</li>
-  </ul>
-</div>
-
-<div class="pathway-b-box">
-  <h4 style="margin-top:0; color:#166534;">💚 路徑 🅱️ 優惠套餐 (Medicare Advantage / Part C)</h4>
-  <ul>
-    <li><b>適合人群</b>：喜歡<b>低月保費、私人保險公司一包到底</b>者。</li>
-    <li><b>看病網絡</b>：限制在當地指定網絡看診 (HMO/PPO)，含藥保與牙科福利，但看專科需預先審查。</li>
-  </ul>
-</div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("---")
+        # 2. 可折叠的 1 分钟指南
+        btn_text = "📖 点击查看：1分钟 Medicare 快速指南"
+        with st.expander(btn_text, expanded=False):
+            st.markdown("### 🧭 Medicare 主要途径指南")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.info("🟦 **Part A & B (Original Medicare)**\n\n住院与门诊基础保障，联邦政府提供。")
+                st.warning("🟨 **Part C (Medicare Advantage)**\n\n私人保险公司包裹方案，多包含牙科/眼科。")
+            with col2:
+                st.success("🟩 **Part D (Prescription Drug)**\n\n处方药物专用保险。")
+                st.error("🟥 **Medigap (Medicare Supplement)**\n\n补充包，帮忙支付 Part A/B 的自费费用。")
 
   if "user_role_type" not in st.session_state:
     st.session_state.user_role_type = "self"
