@@ -610,40 +610,39 @@ if app_mode == "MAIN_AI":
   input_prompt = st.chat_input(input_placeholder)
 
   if input_prompt:
-    role_prefix = (
-        "[Applying for Myself] "
-        if st.session_state.get("user_role_type") == "self"
-        else "[Helping Family/Parents] "
-    )
-    prompt = role_prefix + input_prompt
-    st.session_state.saved_user_input = prompt
+        role_prefix = (
+            "[Applying for Myself] "
+            if st.session_state.get("user_role_type") == "self"
+            else "[Helping Family/Parents] "
+        )
+        prompt = role_prefix + input_prompt
+        st.session_state.saved_user_input = prompt
 
-  if prompt or uploaded_file:
-    user_text = prompt if prompt else "Please review this uploaded document."
+    if prompt or uploaded_file:
+        user_text = prompt if prompt else "Please review this uploaded document."
 
-    if (
-        not st.session_state.messages
-        or st.session_state.messages[-1]["content"] != user_text
-    ):
-      st.session_state.messages.append({"role": "user", "content": user_text})
+        if (
+            not st.session_state.messages
+            or st.session_state.messages[-1]["content"] != user_text
+        ):
+            st.session_state.messages.append({"role": "user", "content": user_text})
 
-    with st.chat_message("user"):
-      st.markdown(user_text)
+        with st.chat_message("user"):
+            st.markdown(user_text)
 
-    with st.chat_message("assistant", avatar="🧭"):
-      with st.spinner("Analyzing..."):
-        date_match = re.search(r"(\d{1,2})/(?:(\d{1,2})/)?(\d{4})", user_text)
-        is_first_input = len(st.session_state.messages) <= 2
+        with st.chat_message("assistant", avatar="🧭"):
+            with st.spinner("Analyzing..."):
+                date_match = re.search(r"(\d{1,2})/(?:\d{1,2}/)?(\d{4})", user_text)
+                is_first_input = len(st.session_state.messages) <= 2
 
-        if date_match and is_first_input:
-          try:
-            month = int(date_match.group(1))
-            year = int(date_match.group(3))
-            turn_65_year = year + 65
+                if date_match and is_first_input:
+                    try:
+                        month = int(date_match.group(1))
+                        year = int(date_match.group(2))
+                        turn_65_year = year + 65
 
-            start_m = month - 3 if month > 3 else month - 3 + 12
-            start_y = turn_65_year if month > 3 else turn_65_year - 1
-
+                        start_m = month - 3 if month > 3 else month - 3 + 12
+                        start_y = turn_65_year if month > 3 else turn_65_year - 1
             end_m = month + 3 if month <= 9 else month + 3 - 12
             end_y = turn_65_year if month <= 9 else turn_65_year + 1
 
