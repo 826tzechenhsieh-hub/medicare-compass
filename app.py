@@ -496,7 +496,9 @@ if app_mode == "MAIN_AI":
   if "saved_user_input" not in st.session_state:
     st.session_state.saved_user_input = ""
 
-  if message["role"] in ["assistant", "model"]:
+  for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        if message["role"] in ["assistant", "model"]:
             st.markdown(clean_response(message["content"]))
         else:
             st.markdown(message["content"])
