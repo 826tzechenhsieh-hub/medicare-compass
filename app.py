@@ -365,7 +365,7 @@ with st.sidebar:
             st.success("File attached!")
         except Exception:
             pass
-      st.warning("File uploaded.")
+        st.warning("File uploaded.")
 
   if not primary_key:
     user_api_key = st.text_input("Gemini API Key:", type="password")
