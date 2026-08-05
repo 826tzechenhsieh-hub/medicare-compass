@@ -496,9 +496,10 @@ if app_mode == "MAIN_AI":
   if "saved_user_input" not in st.session_state:
     st.session_state.saved_user_input = ""
 
-  for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-      st.markdown(message["content"])
+  if message["role"] in ["assistant", "model"]:
+            st.markdown(clean_response(message["content"]))
+        else:
+            st.markdown(message["content"])
 
   if len(st.session_state.messages) == 0:
     q_caption_map = {
