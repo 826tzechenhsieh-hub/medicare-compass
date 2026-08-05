@@ -367,35 +367,35 @@ with st.sidebar:
             pass
         st.warning("File uploaded.")
 
-  if not primary_key:
-    user_api_key = st.text_input("Gemini API Key:", type="password")
-    if user_api_key:
-      genai.configure(api_key=user_api_key)
+    if not primary_key:
+        user_api_key = st.text_input("Gemini API Key:", type="password")
+        if user_api_key:
+            genai.configure(api_key=user_api_key)
 
-  st.markdown("---")
+    st.markdown("---")
 
-  legal_title_map = {
-      "English": "⚖️ Legal, Privacy & Notices",
-      "Español": "⚖️ Avisos Legales y Privacidad",
-      "한국어": "⚖️ 법적 고지 및 개인정보 보호",
-      "簡體中文": "⚖️ 法律声明、隐私与非官方提示",
-      "繁體中文": "⚖️ 法律聲明、隱私與非官方提示",
-  }
-  with st.expander(
-      legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False
-  ):
-    st.caption("""
+    legal_title_map = {
+        "English": "⚖️ Legal, Privacy & Notices",
+        "Español": "⚖️ Avisos Legales y Privacidad",
+        "한국어": "⚖️ 법적 고지 및 개인정보 보호",
+        "簡體中文": "⚖️ 法律声明、隐私与非官方提示",
+        "繁體中文": "⚖️ 法律聲明、隱私與非官方提示",
+    }
+    with st.expander(
+        legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False
+    ):
+        st.caption("""
 🔒 **Zero-Server-Data Privacy**:
 We DO NOT store or track any of your inputs on our servers. Any remembered input is stored ONLY on your local browser device.
 
 ⚠️ **Anti-Fraud Notice**: Medicare will NEVER call/text asking for SSN or banking details.
 ℹ️ **Disclaimer**: Educational guidance only; verify final choices with [Medicare.gov](https://www.medicare.gov).
 🏛️ **Independent Tool**: Not affiliated with the US Government, CMS, or SSA.
-        """)
+---""")
 
-  st.markdown("---")
+    st.markdown("---")
 
- if app_mode == "MAIN_AI":
+    if app_mode == "MAIN_AI":
         summary_btn_map = {
             "English": "📝 Generate / Update Summary",
             "Español": "📝 Generar Resumen",
