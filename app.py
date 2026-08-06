@@ -602,9 +602,9 @@ if app_mode == "MAIN_AI":
         with st.chat_message("user"):
             st.markdown(user_text)
 
-        with st.chat_message("assistant", avatar="🧭"):
+        with st.chat_message("assistant", avatar="👵"):
             with st.spinner("Analyzing..."):
-                date_match = re.search(r"(\d{1,2})/(?:\d{1,2}/)?(\d{4})", user_text)
+                date_match = re.search(r"(\d{1,2})/(?:(?:\d{1,2})/)?(\d{4})", user_text)
                 is_first_input = len(st.session_state.messages) <= 2
 
                 if date_match and is_first_input:
@@ -615,58 +615,55 @@ if app_mode == "MAIN_AI":
 
                         start_m = month - 3 if month > 3 else month - 3 + 12
                         start_y = turn_65_year if month > 3 else turn_65_year - 1
-            end_m = month + 3 if month <= 9 else month + 3 - 12
-            end_y = turn_65_year if month <= 9 else turn_65_year + 1
+                        end_m = month + 3 if month <= 9 else month + 3 - 12
+                        end_y = turn_65_year if month <= 9 else turn_65_year + 1
 
-            start_m_name = calendar.month_name[start_m]
-            end_m_name = calendar.month_name[end_m]
-            birth_m_name = calendar.month_name[month]
-            end_day = calendar.monthrange(end_y, end_m)[1]
+                        start_m_name = calendar.month_name[start_m]
+                        end_m_name = calendar.month_name[end_m]
+                        birth_m_name = calendar.month_name[month]
+                        end_day = calendar.monthrange(end_y, end_m)[1]
 
-            # 🔧 修正 2: Step 2 導引文字白話化 (移除抽象的 Lifestyle)
-            final_output = (
-                f"### 🗓️ Your Personalized Medicare Timeline\n\n"
-                f"**Key Milestones:**\n"
-                f"* **Turning 65**: {birth_m_name} {turn_65_year}\n"
-                f"* **Initial Enrollment Period (IEP)**: **{start_m_name} 1,"
-                f" {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month"
-                " Window)\n\n"
-                f"**Recommended Next Steps:**\n"
-                f"* **Step 1**: Check active employer coverage (if still"
-                " working) to see if you can delay Part B.\n"
-                f"* **Step 2**: Compare **Pathway 🅰️ Total Freedom to See Any"
-                " Doctor (Original Medicare + Medigap)** vs. **Pathway 🅱️"
-                " All-in-One Bundled Package (Medicare Advantage)** based on"
-                " your need for cross-state doctor choices or prescription"
-                " drugs."
+                        # Step 2 引导文字白话化
+                        final_output = (
+                            f"### 🗓️ Your Personalized Medicare Timeline\n\n"
+                            f"**Key Milestones:**\n"
+                            f"* **Turning 65:** {birth_m_name} {turn_65_year}\n"
+                            f"* **Initial Enrollment Period (IEP):** **{start_m_name} 1, {start_y} – {end_m_name} {end_day}, {end_y}** (7-Month Window)\n\n"
+                            f"**Recommended Next Steps:**\n"
+                            f"* **Step 1:** Check active employer coverage (if still working) to see if you can delay Part B.\n"
+                            f"* **Step 2:** Compare **Pathway A: Total Freedom to See Any Doctor** (Original Medicare + Medigap) vs. **Pathway B: All-in-One Medicare Advantage**."
+                        )
+                    except Exception:
+                        # 解析出现意外时降级调用大模型生成回复
+                        final_output = generate_clean_response(
+                            user_text, 
+                            target_lang=current_lang, 
+                            img_data=uploaded_file
+                        )
+                else:
+                    raw_response = generate_clean_response(
+                        user_text, 
+                        target_lang=current_lang, 
+                        img_data=uploaded_file
+                    )
+                    tip_suffix = (
+                        "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit "
+                        "your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
+                    )
+                    final_output = raw_response.strip() + tip_suffix
+
+                st.markdown(final_output)
+                st.session_state.messages.append(
+                    {"role": "model", "content": final_output}
+                )
+                st.rerun()
+
+        if st.session_state.show_summary and len(st.session_state.messages) >= 2:
+            st.markdown("---")
+            st.markdown(
+                '<h2 style="text-align: center; color: #1E3A8A;">📋 您的 Medicare 快速总结</h2>', 
+                unsafe_allow_html=True
             )
-          except Exception:
-            final_output = generate_clean_response(
-                user_text, target_lang=current_lang, img_data=uploaded_file
-            )
-        else:
-          raw_response = generate_clean_response(
-              user_text, target_lang=current_lang, img_data=uploaded_file
-          )
-          tip_suffix = (
-              "\n\n💡 *Tip: Once you've chosen your preferred pathway, submit"
-              " your official enrollment online at [SSA.gov](https://www.ssa.gov).*"
-          )
-          final_output = raw_response.strip() + tip_suffix
-
-        st.markdown(final_output)
-        st.session_state.messages.append(
-            {"role": "model", "content": final_output}
-        )
-        st.rerun()
-
-  if st.session_state.show_summary and len(st.session_state.messages) >= 2:
-    st.markdown("---")
-    st.markdown(
-        "<h2 style='text-align: center; color: #1E3A8A;'>📋 您的 Medicare"
-        " 評估總結與官方通道</h2>",
-        unsafe_allow_html=True,
-    )
     st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown(
