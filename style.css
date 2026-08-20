@@ -1,0 +1,111 @@
+.chat-anchor {
+    scroll-margin-top: 5rem;
+}
+
+.block-container {
+    padding-top: 4.5rem !important;
+    padding-bottom: 0rem !important;
+}
+
+[data-testid="stChatMessageContainer"] {
+    scroll-margin-top: 0px !important;
+}
+.stChatMessage {
+    line-height: 1.7 !important;
+}
+.stButton>button {
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+}
+
+/* 雙色路徑卡片視覺樣式 */
+.pathway-a-box {
+    background-color: #f0f7ff;
+    border-left: 6px solid #2563eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    color: #111827 !important;
+}
+
+.pathway-b-box {
+    background-color: #f0fdf4;
+    border-left: 6px solid #16a34a;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    color: #111827 !important;
+}
+
+.warning-card {
+    background-color: #fffbe2;
+    border-left: 5px solid #f59e0b;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #111827 !important;
+}
+
+.card-box {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    color: #111827 !important;
+}
+
+/* 所有自訂淺色卡片：不受 Streamlit 深色模式影響 */
+.pathway-a-box, .pathway-a-box *,
+.pathway-b-box, .pathway-b-box *,
+.warning-card, .warning-card *,
+.card-box, .card-box *,
+.official-links-box, .official-links-box *,
+.summary-box, .summary-box * {
+    color: #111827 !important;
+}
+
+/* Medicare Top Header */
+.header-box {
+    text-align: center;
+    padding: 10px 0;
+}
+#medicare-top {
+    scroll-margin-top: 70px;
+}
+.main-title {
+    font-size: 2.3rem !important;
+    font-weight: bold;
+    color: #1E3A8A;
+}
+.sub-title {
+    font-size: 1.0rem;
+    color: #6B7280;
+    margin-top: -5px;
+}
+
+/* --- Welcome Banner Card Custom Style --- */
+.welcome-banner-card {
+    background-color: #EFF6FF !important;
+    color: #1E3A8A !important;
+    padding: 30px !important;
+    border-radius: 12px !important;
+    border: 1px solid #BFDBFE !important;
+    margin-bottom: 10px !important;
+}
+
+.welcome-banner-card h4 {
+    margin-top: 0 !important;
+    color: #1E3A8A !important;
+    margin-bottom: 15px !important;
+}
+
+.welcome-banner-card p {
+    color: #1E3A8A !important;
+    margin: 15px 0 !important;
+}
+
+.welcome-banner-card em {
+    color: #475569 !important;
+}
