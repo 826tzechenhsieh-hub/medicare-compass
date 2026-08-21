@@ -560,3 +560,92 @@ official_links_map = {
         </div>
     """
 }
+
+welcome_guide_map = {
+    "English": {
+        "greeting": "Welcome! Let's get your Medicare sorted in 3 easy steps:",
+        "step1": "1. Find Your Timing",
+        "step2": "2. Choose a Plan",
+        "step3": "3. Get Your Checklist",
+        "hint": "💡 Hint: You can switch languages or enlarge the text in the left menu."
+    },
+    "繁體中文": {
+        "greeting": "您好！讓我們用 3 個簡單步驟搞定 Medicare：",
+        "step1": "1. 算準申請時間",
+        "step2": "2. 選擇適合方案",
+        "step3": "3. 取得待辦清單",
+        "hint": "💡 提示：您可以在左側選單切換語言或調大字體。"
+    },
+    "簡體中文": {
+        "greeting": "您好！让我们用 3 个简单步骤搞定 Medicare：",
+        "step1": "1. 算准申请时间",
+        "step2": "2. 选择适合方案",
+        "step3": "3. 获取待办清单",
+        "hint": "💡 提示：您可以在左侧菜单切换语言或调大字体。"
+    },
+    "Español": {
+        "greeting": "¡Bienvenido! Resolvamos su Medicare en 3 sencillos pasos:",
+        "step1": "1. Calcule su tiempo",
+        "step2": "2. Elija un plan",
+        "step3": "3. Obtenga su lista",
+        "hint": "💡 Consejo: Puede cambiar el idioma o ampliar el texto en el menú de la izquierda."
+    },
+    "한국어": {
+        "greeting": "환영합니다! 3가지 간단한 단계로 메디케어를 해결하세요:",
+        "step1": "1. 신청 시기 확인",
+        "step2": "2. 플랜 선택",
+        "step3": "3. 체크리스트 받기",
+        "hint": "💡 힌트: 왼쪽 메뉴에서 언어를 변경하거나 글씨를 크게 할 수 있습니다."
+    }
+}
+
+location_tracker_map = {
+    "English": "📍 The system is currently analyzing based on **{location}** regulations. Please let me know if you need to change this.",
+    "繁體中文": "📍 系統目前將依據 **{location}** 的法規為您分析。若需更改，請直接告訴我。",
+    "簡體中文": "📍 系统目前将依据 **{location}** 的法规为您分析。若需更改，请直接告诉我。",
+    "Español": "📍 El sistema está analizando actualmente según las regulaciones de **{location}**. Por favor, avíseme si necesita cambiar esto.",
+    "한국어": "📍 시스템은 현재 **{location}** 규정을 바탕으로 분석 중입니다. 변경이 필요하시면 말씀해 주세요."
+}
+
+journey_buttons_map = {
+    "English": {
+        "btn1": "📅 Step 1\nWhen to Apply?",
+        "prompt1": "When can I start applying for Medicare? Please explain the IEP (Initial Enrollment Period) window and eligibility.",
+        "btn2": "⚖️ Step 2\nWhich Path?",
+        "prompt2": "Please compare the pros and cons of Original Medicare vs. Medicare Advantage.",
+        "btn3": "🏢 Step 3\nWhere to Apply?",
+        "prompt3": "I have decided on my plan. Where is the official website to apply, and how do I pay?"
+    },
+    "繁體中文": {
+        "btn1": "📅 Step 1\n什麼時候申請？",
+        "prompt1": "請問我什麼時候可以開始申請 Medicare？請告訴我 IEP 黃金窗口的規定與資格。",
+        "btn2": "⚖️ Step 2\n決定哪種方式？",
+        "prompt2": "請幫我比較 Original Medicare (傳統聯邦醫療保險) 和 Medicare Advantage (優勢計畫) 的優缺點。",
+        "btn3": "🏢 Step 3\n去哪裡申請？",
+        "prompt3": "我決定好方案了，請問具體應該去哪個官方網站申請？需要怎麼付費？"
+    },
+    "簡體中文": {
+        "btn1": "📅 Step 1\n什么时候申请？",
+        "prompt1": "请问我什么时候可以开始申请 Medicare？请告诉我 IEP 黄金窗口的规定与资格。",
+        "btn2": "⚖️ Step 2\n决定哪种方式？",
+        "prompt2": "请帮我比较 Original Medicare (传统联邦医疗保险) 和 Medicare Advantage (优势计划) 的优缺点。",
+        "btn3": "🏢 Step 3\n去哪里申请？",
+        "prompt3": "我决定好方案了，请问具体应该去哪个官方网站申请？需要怎么付费？"
+    },
+    "Español": {
+        "btn1": "📅 Paso 1\n¿Cuándo aplicar?",
+        "prompt1": "¿Cuándo puedo comenzar a solicitar Medicare? Explique la ventana del IEP (Período de Inscripción Inicial) y la elegibilidad.",
+        "btn2": "⚖️ Paso 2\n¿Qué plan elegir?",
+        "prompt2": "Por favor, compare los pros y los contras de Original Medicare frente a Medicare Advantage.",
+        "btn3": "🏢 Paso 3\n¿Dónde aplicar?",
+        "prompt3": "He decidido mi plan. ¿Cuál es el sitio web oficial para presentar la solicitud y cómo pago?"
+    },
+    "한국어": {
+        "btn1": "📅 1단계\n언제 신청하나요?",
+        "prompt1": "메디케어 신청은 언제부터 할 수 있나요? IEP(최초 가입 기간)와 자격 요건에 대해 설명해 주세요.",
+        "btn2": "⚖️ 2단계\n어떤 플랜을 선택?",
+        "prompt2": "오리지널 메디케어와 메디케어 어드밴티지의 장단점을 비교해 주세요.",
+        "btn3": "🏢 3단계\n어디서 신청하나요?",
+        "prompt3": "플랜을 결정했습니다. 신청할 수 있는 공식 웹사이트는 어디이며, 결제는 어떻게 하나요?"
+    }
+}
