@@ -4,8 +4,10 @@ from PIL import Image
 
 # 載入核心模組
 from core.translations import (
-    sidebar_labels, nav_title_map, nav_label_map, m1_text, m2_text, m3_text, m4_text,
-    upload_label_map, legal_title_map, legal_caption_map, summary_btn_map, reset_btn_map
+    sidebar_labels, nav_title_map, nav_label_map,
+    m1_text, m2_text, m3_text, m4_text,
+    upload_label_map, legal_title_map, legal_caption_map,
+    reset_btn_map, quick_btn_map, font_size_map
 )
 from core.ai_engine import configure_gemini
 
@@ -84,12 +86,47 @@ with st.sidebar:
             st.session_state["_initial_top_done"] = False
 
     st.markdown("---")
-    st.markdown("#### 🔠 Font Size")
-    font_size = st.slider("Adjust font size", min_value=16, max_value=26, value=19, step=1, key="font_size")
+
+    font_ui = font_size_map.get(current_lang, font_size_map["English"])
+
+    st.markdown(font_ui["title"])
+
+    font_size = st.slider(
+        font_ui["label"],
+        min_value=16,
+        max_value=26,
+        value=19,
+        step=1,
+        key="font_size"
+    )
 
     st.markdown("---")
-    if "saved_user_input" in st.session_state and st.session_state.saved_user_input:
-        st.info("Saved user input found.")
+    if (
+        app_mode == "MAIN_AI"
+        and not st.session_state.get("conversation_finished", False)
+        and "saved_user_input" in st.session_state
+        and st.session_state.saved_user_input
+    ):
+        with st.container(border=True):
+
+            st.markdown("#### 💾 Saved Input")
+
+            saved_text = st.session_state.saved_user_input
+
+            st.caption(saved_text)
+
+            quick_btn_label = quick_btn_map.get(
+                current_lang,
+                quick_btn_map["English"]
+            ).format(input="")
+
+            if st.button(
+                quick_btn_label,
+                use_container_width=True,
+                key="sidebar_resubmit_saved"
+            ):
+                st.session_state["resubmit_saved_input"] = True
+                st.rerun()
         
     st.markdown("---")
     uploaded_file = st.file_uploader(upload_label_map.get(current_lang, "📷 上傳照片"), type=["png", "jpg", "jpeg", "pdf"])
@@ -103,24 +140,35 @@ with st.sidebar:
             pass
         st.warning("File uploaded.")
 
-    # (API Key 輸入框已經被移除了 🗑️)
-
     st.markdown("---")
     with st.expander(legal_title_map.get(current_lang, "⚖️ Legal & Privacy"), expanded=False):
         st.caption(legal_caption_map.get(current_lang, legal_caption_map["English"]))
 
     st.markdown("---")
     if app_mode == "MAIN_AI":
-        summary_btn_label = summary_btn_map.get(current_lang, summary_btn_map["繁體中文"])
         reset_label = reset_btn_map.get(current_lang, reset_btn_map["繁體中文"])
 
-        if st.button(summary_btn_label, use_container_width=True, type="primary"):
-            st.session_state.show_summary = True
-
         if st.button(reset_label, use_container_width=True):
-            # 徹底清除所有 session_state 鍵值
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
+
+            # 只重設目前 Medicare 對話，不刪除 Saved Input
+            conversation_keys = [
+                "messages",
+                "user_state",
+                "user_zip",
+                "user_role_type",
+                "conversation_finished",
+                "auto_submit",
+                "resubmit_saved_input",
+                "ship_auto_zip",
+                "ship_auto_state",
+                "ship_auto_notes",
+                "_scroll_to_message",
+                "_initial_top_done",
+            ]
+
+            for key in conversation_keys:
+                st.session_state.pop(key, None)
+
             st.rerun()
 
 # --------------------------------------------------

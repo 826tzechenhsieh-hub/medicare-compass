@@ -4,7 +4,7 @@
 
 .block-container {
     padding-top: 4.5rem !important;
-    padding-bottom: 0rem !important;
+    padding-bottom: 2rem !important;
 }
 
 [data-testid="stChatMessageContainer"] {
@@ -108,4 +108,46 @@
 
 .welcome-banner-card em {
     color: #475569 !important;
+}
+
+/* ==================================================
+   Task 4.2: 高對比一頁式 PDF 列印樣式 (Print/PDF Styles)
+   ================================================== */
+@media print {
+    /* 1. 隱藏所有不必要的 UI (包含對話紀錄、輸入框、所有按鈕、分頁標籤) */
+    [data-testid="stSidebar"],
+    header,
+    .stChatInput,
+    .stButton,
+    button,
+    [data-testid="stExpander"],
+    [data-testid="stChatMessage"], 
+    [data-baseweb="tab-list"],
+    iframe {
+        display: none !important;
+    }
+
+    /* 2. 隱藏 Tab 2 (對話紀錄) 裡的程式碼區塊，防止印出 Markdown 原始碼 */
+    pre, code {
+        display: none !important;
+    }
+
+    /* 3. 強制洗白背景，確保印表機不浪費墨水 */
+    body, [data-testid="stAppViewContainer"], .main {
+        background-color: white !important;
+        background: none !important;
+    }
+
+    /* 4. 強制所有字體變成黑色，解決表格內文字反白/看不見的問題 */
+    * {
+        color: black !important;
+        text-shadow: none !important;
+    }
+
+    /* 5. 確保卡片與表格的黑色邊框清晰，且不會被跨頁切斷 */
+    .card-box, .pathway-a-box, .pathway-b-box {
+        border: 2px solid #000000 !important;
+        box-shadow: none !important;
+        break-inside: avoid !important;
+    }
 }
