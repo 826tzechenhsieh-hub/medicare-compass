@@ -346,6 +346,29 @@ m4_text = {
     "繁體中文": "📅 SHIP 預約行事曆提醒",
 }
 
+font_size_map = {
+    "English": {
+        "title": "#### 🔠 Font Size",
+        "label": "Adjust font size"
+    },
+    "Español": {
+        "title": "#### 🔠 Tamaño de fuente",
+        "label": "Ajustar tamaño de fuente"
+    },
+    "繁體中文": {
+        "title": "#### 🔠 字體大小",
+        "label": "調整字體大小"
+    },
+    "簡體中文": {
+        "title": "#### 🔠 字体大小",
+        "label": "调整字体大小"
+    },
+    "한국어": {
+        "title": "#### 🔠 글자 크기",
+        "label": "글자 크기 조정"
+    }
+}
+
 upload_label_map = {
     "English": "📷 Take Photo or Upload Notice/Plan (Optional):",
     "Español": "📷 Tomar foto o cargar documento (Opcional):",
@@ -368,14 +391,6 @@ legal_caption_map = {
     "簡體中文": "🔒 **零服务器数据隐私**:\n我们不会在服务器上存储或追踪您的任何输入。任何记忆的输入仅存储于您的本地浏览器设备中。\n\n⚠️ **防诈骗提示**: Medicare 绝对不会打电话/发短信要求提供社会安全码 (SSN) 或银行信息。\nℹ️ **免责声明**: 仅供教育指引；最终选择请至 [Medicare.gov](https://www.medicare.gov) 官方网站确认。\n🏛️ **独立工具**: 本工具与美国政府、CMS 或 SSA 无关。",
     "Español": "🔒 **Privacidad de datos cero en el servidor**:\nNO almacenamos ni rastreamos ninguna de sus entradas en nuestros servidores. Cualquier entrada recordada se almacena SOLO en su dispositivo de navegador local.\n\n⚠️ **Aviso contra el fraude**: Medicare NUNCA llamará/enviará mensajes de texto pidiendo el SSN o detalles bancarios.\nℹ️ **Descargo de responsabilidad**: Solo orientación educativa; verifique opciones finales en [Medicare.gov](https://www.medicare.gov).\n🏛️ **Herramienta independiente**: No afiliada al Gobierno de EE. UU., CMS o SSA.",
     "한국어": "🔒 **서버 데이터 제로 개인정보 보호**:\n당사는 귀하의 어떠한 입력 내용도 서버에 저장하거나 추적하지 않습니다. 기억된 입력 내용은 로컬 브라우저 기기에만 저장됩니다.\n\n⚠️ **사기 방지 안내**: Medicare는 결코 SSN이나 은행 정보를 묻는 전화/문자를 하지 않습니다.\nℹ️ **면책 조항**: 교육적 목적의 안내일 뿐이며, 최종 선택은 [Medicare.gov](https://www.medicare.gov)에서 확인하십시오.\n🏛️ **독립적인 도구**: 미국 정부, CMS 또는 SSA와 제휴하지 않았습니다."
-}
-
-summary_btn_map = {
-    "English": "📝 Generate / Update Summary",
-    "Español": "📝 Generar Resumen",
-    "한국어": "📝 요약 생성",
-    "簡體中文": "📝 生成/更新咨询总结",
-    "繁體中文": "📝 生成/更新諮詢總結",
 }
 
 reset_btn_map = {
@@ -413,19 +428,19 @@ btn2_map = {
 }
 
 quick_btn_map = {
-    "English": "⚡ Click to submit saved input: {input}",
-    "Español": "⚡ Clic para enviar la entrada guardada: {input}",
-    "한국어": "⚡ 저장된 입력 제출 클릭: {input}",
-    "簡體中文": "⚡ 点击直接使用上次记忆提交: {input}",
-    "繁體中文": "⚡ 點擊直接使用上次記憶提交: {input}"
+    "English": "⚡ Submit saved input",
+    "Español": "⚡ Enviar entrada guardada",
+    "한국어": "⚡ 저장된 입력 제출 클릭",
+    "簡體中文": "⚡ 直接使用上次记忆提交",
+    "繁體中文": "⚡ 重新提交已儲存內容"
 }
 
 input_placeholder_first_map = {
     "English": "✍️ Please enter Birth Month/Year & State (e.g. 08/1961, NJ) ...",
     "Español": "✍️ Ingrese su mes/año de nacimiento y estado (p. ej. 08/1961, NJ) ...",
     "한국어": "✍️ 생년월과 주를 입력하세요 (예: 08/1961, NJ) ...",
-    "簡體中文": "✍️ 请输入出生年月与居住州 (例如: 08/1961, NJ) ...",
-    "繁體中文": "✍️ 請輸入出生年月與居住州 (例如: 08/1961, NJ) ...",
+    "簡體中文": "✍️ 请输入出生年月与居住州 (例如: 1961年08月, 新泽西州) ...",
+    "繁體中文": "✍️ 請輸入出生年月與居住州 (例如: 1961年8月, 新澤西州) ...",
 }
 
 input_placeholder_followup_map = {
@@ -434,6 +449,14 @@ input_placeholder_followup_map = {
     "한국어": "💬 Medicare에 대해 질문을 입력하세요...",
     "簡體中文": "💬 请输入您想咨询的 Medicare 问题...",
     "繁體中文": "💬 請輸入您想諮詢的 Medicare 問題...",
+}
+
+end_chat_btn_map = {
+    "English": "✅ I got the information I need — End Conversation",
+    "Español": "✅ Ya obtuve la información que necesitaba — Finalizar conversación",
+    "한국어": "✅ 필요한 정보를 얻었습니다 — 상담 종료",
+    "簡體中文": "✅ 已得到想要的信息，结束对话",
+    "繁體中文": "✅ 已得到想要資訊，結束對話",
 }
 
 default_upload_msg_map = {
@@ -481,30 +504,35 @@ ui_bottom_map = {
         "tab1": "⚡ 1-Page Summary", "tab2": "📄 Full Conversation Log",
         "bg_title": "📌 Core Background & Needs:", "adv_title": "💡 Advisor Guidance & Plan Summary:",
         "dl_txt": "📥 Download 1-Page Summary (TXT)", "email_btn": "✉️ Send to My Email",
+        "btn_pdf": "🖨️ Print / Save as PDF",
         "log_label": "Full Conversation Log:", "dl_log": "📥 Download Full Log (TXT)"
     },
     "繁體中文": {
         "tab1": "⚡ 1-Page Summary (精簡卡片)", "tab2": "📄 Full Conversation Log (完整記錄)",
         "bg_title": "📌 您的核心背景與需求：", "adv_title": "💡 Advisor 避坑建議與方案總結：",
         "dl_txt": "📥 下載 1頁精簡總結 (TXT)", "email_btn": "✉️ 發送到我的信箱",
+        "btn_pdf": "🖨️ 列印 / 存為 PDF",
         "log_label": "完整對話記錄 (Full Log):", "dl_log": "📥 下載完整對話記錄 (TXT)"
     },
     "簡體中文": {
         "tab1": "⚡ 1-Page Summary (精简卡片)", "tab2": "📄 Full Conversation Log (完整记录)",
         "bg_title": "📌 您的核心背景与需求：", "adv_title": "💡 Advisor 避坑建议与方案总结：",
         "dl_txt": "📥 下载 1页精简总结 (TXT)", "email_btn": "✉️ 发送到我的邮箱",
+        "btn_pdf": "🖨️ 打印 / 存为 PDF",
         "log_label": "完整对话记录 (Full Log):", "dl_log": "📥 下载完整对话记录 (TXT)"
     },
     "Español": {
         "tab1": "⚡ Resumen de 1 página", "tab2": "📄 Registro completo",
         "bg_title": "📌 Fondo principal y necesidades:", "adv_title": "💡 Orientación del asesor y resumen:",
         "dl_txt": "📥 Descargar resumen (TXT)", "email_btn": "✉️ Enviar a mi correo",
+        "btn_pdf": "🖨️ Imprimir / Guardar PDF",
         "log_label": "Registro de conversación completo:", "dl_log": "📥 Descargar registro (TXT)"
     },
     "한국어": {
         "tab1": "⚡ 1페이지 요약", "tab2": "📄 전체 대화 기록",
         "bg_title": "📌 핵심 배경 및 요구 사항:", "adv_title": "💡 조언자 가이드 및 플랜 요약:",
         "dl_txt": "📥 1페이지 요약 다운로드 (TXT)", "email_btn": "✉️ 내 이메일로 보내기",
+        "btn_pdf": "🖨️ 인쇄 / PDF로 저장",
         "log_label": "전체 대화 기록:", "dl_log": "📥 전체 기록 다운로드 (TXT)"
     }
 }
@@ -647,5 +675,28 @@ journey_buttons_map = {
         "prompt2": "오리지널 메디케어와 메디케어 어드밴티지의 장단점을 비교해 주세요.",
         "btn3": "🏢 3단계\n어디서 신청하나요?",
         "prompt3": "플랜을 결정했습니다. 신청할 수 있는 공식 웹사이트는 어디이며, 결제는 어떻게 하나요?"
+    }
+}
+
+ship_import_map = {
+    "English": {
+        "btn": "📥 1-Click Import to SHIP Prep",
+        "success": "✅ Data synced! Please click the 'SHIP Prep' module in the left menu."
+    },
+    "繁體中文": {
+        "btn": "📥 一鍵匯入至 SHIP 諮詢準備單",
+        "success": "✅ 資料已為您打包！請點擊左側選單前往「SHIP 準備單」查看。"
+    },
+    "簡體中文": {
+        "btn": "📥 一键导入至 SHIP 咨询准备单",
+        "success": "✅ 资料已为您打包！请点击左侧菜单前往「SHIP 准备单」查看。"
+    },
+    "Español": {
+        "btn": "📥 Importar a SHIP Prep con 1 clic",
+        "success": "✅ ¡Datos sincronizados! Vaya al módulo 'SHIP Prep' en el menú de la izquierda."
+    },
+    "한국어": {
+        "btn": "📥 SHIP 준비 양식으로 1번 클릭 가져오기",
+        "success": "✅ 데이터가 동기화되었습니다! 왼쪽 메뉴에서 'SHIP Prep' 모듈로 이동하세요."
     }
 }

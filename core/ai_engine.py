@@ -22,8 +22,8 @@ def configure_gemini(user_api_key=None):
 def generate_clean_response(user_input, target_lang="English", img_data=None):
     """呼叫 Gemini 模型並強制以目標語言輸出乾淨的結果"""
     preferred_models = [
-        "gemini-3.6-flash", "gemini-3.5-flash", 
-        "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.5-flash"
+        "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", 
+        "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"
     ]
     valid_models = []
 
