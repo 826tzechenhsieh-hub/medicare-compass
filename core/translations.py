@@ -167,73 +167,93 @@ m2_labels = {
 m3_labels = {
     "English": {
         "title": "## 📋 1-Page SHIP Counseling Prep Form",
-        "caption": "Fill out this form while waiting for your SHIP appointment to generate a 1-Page Summary for 3x faster counseling!",
+        "caption": "Review the information already mentioned in your Medicare Compass conversation, complete any missing fields, and prepare it for a local SHIP counselor.",
+        "auto_fill_note": "✅ Information found in your conversation has been prefilled below. Please review it and complete anything that is missing.",
+        "state_detected_note": "📍 State detected: {state}. Please enter your ZIP Code so SHIP resources can be matched locally.",
         "zip_label": "ZIP Code",
+        "zip_placeholder": "e.g. 07030",
         "plan_label": "Current Plan Name",
-        "plan_placeholder": "e.g. UnitedHealthcare Medicare Advantage",
+        "plan_placeholder": "e.g. Aetna Medicare Advantage",
         "cost_label": "Monthly Premium ($)",
+        "cost_placeholder": "e.g. 120",
         "concern_label": "Primary Concern / Question",
-        "concern_default": "Premium increased and drug copays are too high",
+        "concern_placeholder": "Describe the main question or concern you want to discuss with a SHIP counselor.",
         "meds_label": "Current Medications (Name / Dosage / Frequency)",
-        "meds_default": "1. Lipitor 20mg (Daily)\n2. Metformin 500mg (Twice daily)",
+        "meds_placeholder": "e.g. Eliquis 5mg — twice daily",
         "btn_label": "Generate 1-Page Summary",
-        "footer_note": "Zero-ad, privacy-first algorithm output. Print or screenshot this page for your SHIP appointment."
+        "footer_note": "Privacy-first output. Review the information for accuracy, then print or screenshot this page for your SHIP appointment."
     },
     "繁體中文": {
         "title": "## 📋 1-Page SHIP 諮詢準備單",
-        "caption": "在等待 SHIP 1對1 免費輔導預約時填寫此表單，產出 1 頁精簡總結，讓現場諮詢效率提升 3 倍！",
+        "caption": "檢查 Medicare Compass 對話中已經提過的資訊，補齊缺少欄位後，整理成可帶給當地 SHIP 顧問的一頁準備單。",
+        "auto_fill_note": "✅ 已將對話中能辨識的資訊自動帶入下方欄位，請確認內容並補上尚未提供的資料。",
+        "state_detected_note": "📍 已辨識州別：{state}。請再輸入 ZIP Code，才能對應當地 SHIP 資源。",
         "zip_label": "居住地郵遞區號 (ZIP Code)",
+        "zip_placeholder": "例如：07030",
         "plan_label": "目前投保的計畫名稱",
-        "plan_placeholder": "例如: UnitedHealthcare Medicare Advantage",
+        "plan_placeholder": "例如：Aetna Medicare Advantage",
         "cost_label": "每月保費 ($)",
+        "cost_placeholder": "例如：120",
         "concern_label": "您最想諮詢的核心問題 / 痛點",
-        "concern_default": "保費調漲，且處方藥物的 Copay 實在太高",
-        "meds_label": "目前正在平時顏服用的處方藥物 (名稱 / 劑量 / 頻率)",
-        "meds_default": "1. Lipitor 20mg (每日一次)\n2. Metformin 500mg (每日兩次)",
+        "concern_placeholder": "請描述您最希望與 SHIP 顧問確認的問題或疑慮。",
+        "meds_label": "目前平時服用的處方藥物 (名稱 / 劑量 / 頻率)",
+        "meds_placeholder": "例如：Eliquis 5mg — 每日兩次",
         "btn_label": "生成 1 頁精簡諮詢單",
-        "footer_note": "零廣告、隱私優先演算法產出。您可以直接列印或截圖此頁面，於 SHIP 預約時提供給輔導員。"
+        "footer_note": "隱私優先。請先確認資料正確，再列印或截圖此頁面，於 SHIP 預約時提供給顧問。"
     },
     "簡體中文": {
         "title": "## 📋 1-Page SHIP 咨询准备单",
-        "caption": "在等待 SHIP 1对1 免费辅导预约时填写此表单，生成 1 页精简总结，让现场咨询效率提升 3 倍！",
+        "caption": "检查 Medicare Compass 对话中已经提过的信息，补齐缺少字段后，整理成可提供给当地 SHIP 顾问的一页准备单。",
+        "auto_fill_note": "✅ 已将对话中能够识别的信息自动带入下方字段，请确认内容并补充尚未提供的资料。",
+        "state_detected_note": "📍 已识别州别：{state}。请再输入 ZIP Code，以便对应当地 SHIP 资源。",
         "zip_label": "居住地邮政编码 (ZIP Code)",
+        "zip_placeholder": "例如：07030",
         "plan_label": "目前投保的计划名称",
-        "plan_placeholder": "例如: UnitedHealthcare Medicare Advantage",
+        "plan_placeholder": "例如：Aetna Medicare Advantage",
         "cost_label": "每月保费 ($)",
+        "cost_placeholder": "例如：120",
         "concern_label": "您最想咨询的核心问题 / 痛点",
-        "concern_default": "保费调涨，且处方药物的 Copay 实在太高",
-        "meds_label": "目前正在平日常规服用的处方药物 (名称 / 剂量 / 频率)",
-        "meds_default": "1. Lipitor 20mg (每日一次)\n2. Metformin 500mg (每日两次)",
+        "concern_placeholder": "请描述您最希望与 SHIP 顾问确认的问题或疑虑。",
+        "meds_label": "目前常规服用的处方药物 (名称 / 剂量 / 频率)",
+        "meds_placeholder": "例如：Eliquis 5mg — 每日两次",
         "btn_label": "生成 1 页精简咨询单",
-        "footer_note": "无广告、隐私优先算法产出。您可以直接打印或截图此页面，于 SHIP 预约时提供给辅导员。"
+        "footer_note": "隐私优先。请先确认资料正确，再打印或截图此页面，于 SHIP 预约时提供给顾问。"
     },
     "Español": {
         "title": "## 📋 Resumen de Preparación para Asesoría SHIP",
-        "caption": "Complete este formulario antes de su cita de SHIP para generar un resumen de 1 página.",
+        "caption": "Revise la información ya mencionada en su conversación de Medicare Compass, complete los campos faltantes y prepárela para un asesor local de SHIP.",
+        "auto_fill_note": "✅ La información encontrada en su conversación se ha completado automáticamente. Revísela y complete cualquier dato faltante.",
+        "state_detected_note": "📍 Estado detectado: {state}. Ingrese su código ZIP para identificar los recursos locales de SHIP.",
         "zip_label": "Código Postal (ZIP)",
+        "zip_placeholder": "p. ej. 07030",
         "plan_label": "Nombre del Plan Actual",
-        "plan_placeholder": "ej. UnitedHealthcare Medicare Advantage",
+        "plan_placeholder": "p. ej. Aetna Medicare Advantage",
         "cost_label": "Prima Mensual ($)",
-        "concern_label": "Preocupación/Pregunta Principal",
-        "concern_default": "La prima aumentó y los copagos de medicamentos son muy altos",
+        "cost_placeholder": "p. ej. 120",
+        "concern_label": "Preocupación / Pregunta Principal",
+        "concern_placeholder": "Describa la pregunta o preocupación principal que desea consultar con SHIP.",
         "meds_label": "Medicamentos Actuales (Nombre / Dosis / Frecuencia)",
-        "meds_default": "1. Lipitor 20mg (Diario)\n2. Metformin 500mg (Dos veces al día)",
+        "meds_placeholder": "p. ej. Eliquis 5mg — dos veces al día",
         "btn_label": "Generar Resumen de 1 Página",
-        "footer_note": "Sin anuncios, privado. Imprima o tome una captura de pantalla para su cita con SHIP."
+        "footer_note": "Privacidad primero. Revise la información antes de imprimir o guardar una captura para su cita con SHIP."
     },
     "한국어": {
         "title": "## 📋 1페이지 SHIP 상담 준비표",
-        "caption": "SHIP 상담 예약을 기다리는 동안 이 서식을 작성하여 3배 빠른 상담을 위한 1페이지 요약본을 생성하세요!",
+        "caption": "Medicare Compass 대화에서 이미 언급한 정보를 확인하고, 빠진 항목을 보완해 지역 SHIP 상담사에게 보여줄 준비표를 만드세요.",
+        "auto_fill_note": "✅ 대화에서 확인된 정보를 아래 항목에 자동으로 채웠습니다. 내용을 확인하고 빠진 정보를 추가해 주세요.",
+        "state_detected_note": "📍 확인된 주: {state}. 지역 SHIP 자원을 찾으려면 ZIP Code를 입력해 주세요.",
         "zip_label": "우편번호 (ZIP Code)",
+        "zip_placeholder": "예: 07030",
         "plan_label": "현재 가입된 플랜명",
-        "plan_placeholder": "예: UnitedHealthcare Medicare Advantage",
+        "plan_placeholder": "예: Aetna Medicare Advantage",
         "cost_label": "월 보험료 ($)",
+        "cost_placeholder": "예: 120",
         "concern_label": "주요 문의 사항 / 우려점",
-        "concern_default": "보험료가 인상되었고 약 약제 코페이가 너무 높습니다.",
-        "meds_label": "현재 복용 중인 약물 (약품명 / 용량 / 복용 빈도)",
-        "meds_default": "1. Lipitor 20mg (매일 1회)\n2. Metformin 500mg (매일 2회)",
+        "concern_placeholder": "SHIP 상담사에게 가장 확인하고 싶은 질문이나 우려점을 적어 주세요.",
+        "meds_label": "현재 복용 중인 처방약 (약품명 / 용량 / 복용 빈도)",
+        "meds_placeholder": "예: Eliquis 5mg — 하루 2회",
         "btn_label": "1페이지 요약표 생성",
-        "footer_note": "광고 없음, 개인정보 보호. SHIP 상담 시 프린트하거나 스크린샷을 찍어 지참하세요."
+        "footer_note": "개인정보 보호를 우선합니다. 내용을 확인한 후 SHIP 상담을 위해 인쇄하거나 화면을 저장하세요."
     }
 }
 
@@ -492,50 +512,116 @@ tip_suffix_map = {
 }
 
 summary_title_map = {
-    "English": "📋 Your Medicare Quick Summary",
-    "Español": "📋 Su Resumen Rápido de Medicare",
-    "한국어": "📋 귀하의 Medicare 빠른 요약",
-    "簡體中文": "📋 您的 Medicare 快速总结",
-    "繁體中文": "📋 您的 Medicare 快速總結"
+    "English": "📋 Your Medicare 1-Page Summary",
+    "Español": "📋 Su Resumen de Medicare de 1 Página",
+    "한국어": "📋 Medicare 1페이지 요약",
+    "簡體中文": "📋 您的 Medicare 1页总结",
+    "繁體中文": "📋 您的 Medicare 1頁總結"
 }
 
 ui_bottom_map = {
     "English": {
-        "tab1": "⚡ 1-Page Summary", "tab2": "📄 Full Conversation Log",
-        "bg_title": "📌 Core Background & Needs:", "adv_title": "💡 Advisor Guidance & Plan Summary:",
-        "dl_txt": "📥 Download 1-Page Summary (TXT)", "email_btn": "✉️ Send to My Email",
+        "tab1": "⚡ 1-Page Summary",
+        "tab2": "📄 Full Conversation Log",
+        "applicant_label": "Applicant",
+        "applicant_self": "Self",
+        "applicant_family": "Family / Parent",
+        "birth_label": "Birth",
+        "state_label": "State",
+        "timeline_title": "🗓️ Personal Timeline",
+        "timeline_turn65": "Turns 65",
+        "timeline_iep_start": "IEP starts",
+        "timeline_iep_end": "IEP ends",
+        "decisions_title": "💡 Key Decisions & Plan Summary",
+        "dl_txt": "📥 Download 1-Page Summary (TXT)",
         "btn_pdf": "🖨️ Print / Save as PDF",
-        "log_label": "Full Conversation Log:", "dl_log": "📥 Download Full Log (TXT)"
+        "dl_log": "📥 Download Full Log (TXT)",
+        "full_log_title": "Medicare Compass - Full Conversation Log",
+        "user_role_label": "User",
+        "advisor_role_label": "Compass Advisor"
     },
     "繁體中文": {
-        "tab1": "⚡ 1-Page Summary (精簡卡片)", "tab2": "📄 Full Conversation Log (完整記錄)",
-        "bg_title": "📌 您的核心背景與需求：", "adv_title": "💡 Advisor 避坑建議與方案總結：",
-        "dl_txt": "📥 下載 1頁精簡總結 (TXT)", "email_btn": "✉️ 發送到我的信箱",
+        "tab1": "⚡ 1-Page Summary (精簡卡片)",
+        "tab2": "📄 Full Conversation Log (完整記錄)",
+        "applicant_label": "申請對象",
+        "applicant_self": "本人",
+        "applicant_family": "家人 / 父母",
+        "birth_label": "出生年月",
+        "state_label": "州別",
+        "timeline_title": "🗓️ 個人 Medicare 時間軸",
+        "timeline_turn65": "年滿 65 歲",
+        "timeline_iep_start": "IEP 開始",
+        "timeline_iep_end": "IEP 結束",
+        "decisions_title": "💡 關鍵決策與方案總結",
+        "dl_txt": "📥 下載 1頁精簡總結 (TXT)",
         "btn_pdf": "🖨️ 列印 / 存為 PDF",
-        "log_label": "完整對話記錄 (Full Log):", "dl_log": "📥 下載完整對話記錄 (TXT)"
+        "dl_log": "📥 下載完整對話記錄 (TXT)",
+        "full_log_title": "Medicare Compass - 完整對話記錄",
+        "user_role_label": "使用者",
+        "advisor_role_label": "Compass 顧問"
     },
     "簡體中文": {
-        "tab1": "⚡ 1-Page Summary (精简卡片)", "tab2": "📄 Full Conversation Log (完整记录)",
-        "bg_title": "📌 您的核心背景与需求：", "adv_title": "💡 Advisor 避坑建议与方案总结：",
-        "dl_txt": "📥 下载 1页精简总结 (TXT)", "email_btn": "✉️ 发送到我的邮箱",
+        "tab1": "⚡ 1-Page Summary (精简卡片)",
+        "tab2": "📄 Full Conversation Log (完整记录)",
+        "applicant_label": "申请对象",
+        "applicant_self": "本人",
+        "applicant_family": "家人 / 父母",
+        "birth_label": "出生年月",
+        "state_label": "州别",
+        "timeline_title": "🗓️ 个人 Medicare 时间轴",
+        "timeline_turn65": "年满 65 岁",
+        "timeline_iep_start": "IEP 开始",
+        "timeline_iep_end": "IEP 结束",
+        "decisions_title": "💡 关键决策与方案总结",
+        "dl_txt": "📥 下载 1页精简总结 (TXT)",
         "btn_pdf": "🖨️ 打印 / 存为 PDF",
-        "log_label": "完整对话记录 (Full Log):", "dl_log": "📥 下载完整对话记录 (TXT)"
+        "dl_log": "📥 下载完整对话记录 (TXT)",
+        "full_log_title": "Medicare Compass - 完整对话记录",
+        "user_role_label": "用户",
+        "advisor_role_label": "Compass 顾问"
     },
     "Español": {
-        "tab1": "⚡ Resumen de 1 página", "tab2": "📄 Registro completo",
-        "bg_title": "📌 Fondo principal y necesidades:", "adv_title": "💡 Orientación del asesor y resumen:",
-        "dl_txt": "📥 Descargar resumen (TXT)", "email_btn": "✉️ Enviar a mi correo",
+        "tab1": "⚡ Resumen de 1 página",
+        "tab2": "📄 Registro completo",
+        "applicant_label": "Solicitante",
+        "applicant_self": "Yo",
+        "applicant_family": "Familiar / Padre o Madre",
+        "birth_label": "Nacimiento",
+        "state_label": "Estado",
+        "timeline_title": "🗓️ Cronología Personal",
+        "timeline_turn65": "Cumple 65 años",
+        "timeline_iep_start": "Inicio del IEP",
+        "timeline_iep_end": "Fin del IEP",
+        "decisions_title": "💡 Decisiones Clave y Resumen del Plan",
+        "dl_txt": "📥 Descargar resumen (TXT)",
         "btn_pdf": "🖨️ Imprimir / Guardar PDF",
-        "log_label": "Registro de conversación completo:", "dl_log": "📥 Descargar registro (TXT)"
+        "dl_log": "📥 Descargar registro (TXT)",
+        "full_log_title": "Medicare Compass - Registro Completo de Conversación",
+        "user_role_label": "Usuario",
+        "advisor_role_label": "Asesor Compass"
     },
     "한국어": {
-        "tab1": "⚡ 1페이지 요약", "tab2": "📄 전체 대화 기록",
-        "bg_title": "📌 핵심 배경 및 요구 사항:", "adv_title": "💡 조언자 가이드 및 플랜 요약:",
-        "dl_txt": "📥 1페이지 요약 다운로드 (TXT)", "email_btn": "✉️ 내 이메일로 보내기",
+        "tab1": "⚡ 1페이지 요약",
+        "tab2": "📄 전체 대화 기록",
+        "applicant_label": "신청 대상",
+        "applicant_self": "본인",
+        "applicant_family": "가족 / 부모",
+        "birth_label": "출생 월/연도",
+        "state_label": "주",
+        "timeline_title": "🗓️ 개인 Medicare 일정",
+        "timeline_turn65": "65세 도달",
+        "timeline_iep_start": "IEP 시작",
+        "timeline_iep_end": "IEP 종료",
+        "decisions_title": "💡 주요 결정 및 플랜 요약",
+        "dl_txt": "📥 1페이지 요약 다운로드 (TXT)",
         "btn_pdf": "🖨️ 인쇄 / PDF로 저장",
-        "log_label": "전체 대화 기록:", "dl_log": "📥 전체 기록 다운로드 (TXT)"
+        "dl_log": "📥 전체 기록 다운로드 (TXT)",
+        "full_log_title": "Medicare Compass - 전체 대화 기록",
+        "user_role_label": "사용자",
+        "advisor_role_label": "Compass 상담자"
     }
 }
+
 official_links_map = {
     "English": """
         <div class='official-links-box' style='background-color: #EFF6FF; border-left: 5px solid #2563EB; padding: 22px; border-radius: 10px; margin-bottom: 25px;'>
@@ -680,23 +766,34 @@ journey_buttons_map = {
 
 ship_import_map = {
     "English": {
-        "btn": "📥 1-Click Import to SHIP Prep",
-        "success": "✅ Data synced! Please click the 'SHIP Prep' module in the left menu."
+        "help": "Need free local help? Auto-fill the SHIP Prep form with details already mentioned in this conversation. Missing information will stay blank for you to review.",
+        "btn": "📋 Auto-fill SHIP Prep",
+        "extracting": "Preparing your SHIP fields from this conversation...",
+        "success": "✅ SHIP Prep is ready. Open the 'SHIP Prep' module in the left menu to review or complete the fields."
     },
     "繁體中文": {
-        "btn": "📥 一鍵匯入至 SHIP 諮詢準備單",
-        "success": "✅ 資料已為您打包！請點擊左側選單前往「SHIP 準備單」查看。"
+        "help": "需要免費在地協助嗎？系統會把這次對話中已經提過的資訊自動帶入 SHIP 準備單；沒有提到的欄位會保留空白，讓您自行確認補充。",
+        "btn": "📋 自動帶入 SHIP 準備單",
+        "extracting": "正在從本次對話整理 SHIP 所需欄位...",
+        "success": "✅ SHIP 準備單已整理完成。請點擊左側「SHIP 準備單」模組確認或補齊欄位。"
     },
     "簡體中文": {
-        "btn": "📥 一键导入至 SHIP 咨询准备单",
-        "success": "✅ 资料已为您打包！请点击左侧菜单前往「SHIP 准备单」查看。"
+        "help": "需要免费的当地协助吗？系统会把本次对话中已经提过的信息自动带入 SHIP 准备单；未提及的字段会保留空白，供您确认补充。",
+        "btn": "📋 自动带入 SHIP 准备单",
+        "extracting": "正在从本次对话整理 SHIP 所需字段...",
+        "success": "✅ SHIP 准备单已整理完成。请点击左侧“SHIP 准备单”模块确认或补充字段。"
     },
     "Español": {
-        "btn": "📥 Importar a SHIP Prep con 1 clic",
-        "success": "✅ ¡Datos sincronizados! Vaya al módulo 'SHIP Prep' en el menú de la izquierda."
+        "help": "¿Necesita ayuda local gratuita? Complete automáticamente el formulario SHIP Prep con la información ya mencionada en esta conversación. Los datos faltantes quedarán en blanco para que los revise.",
+        "btn": "📋 Autocompletar SHIP Prep",
+        "extracting": "Preparando los campos de SHIP a partir de esta conversación...",
+        "success": "✅ SHIP Prep está listo. Abra el módulo 'SHIP Prep' en el menú de la izquierda para revisar o completar los campos."
     },
     "한국어": {
-        "btn": "📥 SHIP 준비 양식으로 1번 클릭 가져오기",
-        "success": "✅ 데이터가 동기화되었습니다! 왼쪽 메뉴에서 'SHIP Prep' 모듈로 이동하세요."
+        "help": "무료 지역 상담이 필요하신가요? 이번 대화에서 이미 언급한 정보를 SHIP 준비표에 자동으로 채웁니다. 확인되지 않은 항목은 비워 두므로 직접 확인해 주세요.",
+        "btn": "📋 SHIP 준비표 자동 채우기",
+        "extracting": "이번 대화에서 SHIP 항목을 정리하고 있습니다...",
+        "success": "✅ SHIP 준비표가 준비되었습니다. 왼쪽 메뉴의 'SHIP Prep' 모듈에서 내용을 확인하거나 빠진 항목을 입력해 주세요."
     }
 }
+
