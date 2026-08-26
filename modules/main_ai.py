@@ -3,7 +3,7 @@ import calendar
 import datetime
 import re
 import json
-import urllib.parse
+import html
 from core.translations import (
     guide_labels, q_caption_map, btn1_map, btn2_map, welcome_guide_map,
     input_placeholder_first_map, input_placeholder_followup_map,
@@ -12,7 +12,7 @@ from core.translations import (
     location_tracker_map, journey_buttons_map, ship_import_map,
     end_chat_btn_map
 )
-from core.ai_engine import generate_clean_response
+from core.ai_engine import generate_clean_response, extract_ship_fields
 from core.response_cleaner import clean_response
 
 # --- 新增的日期動態解析函數 (Task 4.3) ---
@@ -45,6 +45,245 @@ def extract_birth_month_year(text):
 
     return None, None
 # ----------------------------------------
+
+# Summary 專用：從整段對話中取得「最新」已知資料，不依賴使用者第幾輪才提供。
+US_STATE_NAME_TO_CODE = {
+    "alabama": "AL", "alaska": "AK", "arizona": "AZ", "arkansas": "AR",
+    "california": "CA", "colorado": "CO", "connecticut": "CT", "delaware": "DE",
+    "florida": "FL", "georgia": "GA", "hawaii": "HI", "idaho": "ID",
+    "illinois": "IL", "indiana": "IN", "iowa": "IA", "kansas": "KS",
+    "kentucky": "KY", "louisiana": "LA", "maine": "ME", "maryland": "MD",
+    "massachusetts": "MA", "michigan": "MI", "minnesota": "MN", "mississippi": "MS",
+    "missouri": "MO", "montana": "MT", "nebraska": "NE", "nevada": "NV",
+    "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM", "new york": "NY",
+    "north carolina": "NC", "north dakota": "ND", "ohio": "OH", "oklahoma": "OK",
+    "oregon": "OR", "pennsylvania": "PA", "rhode island": "RI",
+    "south carolina": "SC", "south dakota": "SD", "tennessee": "TN", "texas": "TX",
+    "utah": "UT", "vermont": "VT", "virginia": "VA", "washington": "WA",
+    "west virginia": "WV", "wisconsin": "WI", "wyoming": "WY",
+    "district of columbia": "DC",
+}
+US_STATE_CODES = set(US_STATE_NAME_TO_CODE.values())
+
+
+def extract_state_from_text(text):
+    """從文字中找州名或兩碼州縮寫；找不到就回傳空字串。"""
+    if not text:
+        return ""
+
+    lowered = text.lower()
+
+    # 先找完整州名，避免只靠兩碼縮寫造成誤判。
+    for state_name in sorted(US_STATE_NAME_TO_CODE, key=len, reverse=True):
+        if re.search(rf"\b{re.escape(state_name)}\b", lowered):
+            return US_STATE_NAME_TO_CODE[state_name]
+
+    # 再找兩碼州縮寫。
+    for token in re.findall(r"\b[A-Z]{2}\b", text):
+        code = token.upper()
+        if code in US_STATE_CODES:
+            return code
+
+    return ""
+
+
+def find_latest_birth_from_messages(messages):
+    """從所有 User 訊息由後往前找最新的生日資訊。"""
+    for message in reversed(messages):
+        if message.get("role") != "user":
+            continue
+
+        month, year = extract_birth_month_year(str(message.get("content", "")))
+        if month and year:
+            return month, year
+
+    return None, None
+
+
+def find_latest_state_from_messages(messages):
+    """優先使用 Session State；沒有時再從所有 User 訊息中尋找。"""
+    saved_state = str(st.session_state.get("user_state", "")).strip()
+    if saved_state:
+        return saved_state
+
+    for message in reversed(messages):
+        if message.get("role") != "user":
+            continue
+
+        state = extract_state_from_text(str(message.get("content", "")))
+        if state:
+            return state
+
+    return ""
+
+
+def calculate_summary_timeline(month, year):
+    """使用目前既有的 IEP 月份算法，產出 Summary 需要的結構化日期。"""
+    turn_65_year = year + 65
+
+    start_m = month - 3 if month > 3 else month - 3 + 12
+    start_y = turn_65_year if month > 3 else turn_65_year - 1
+
+    end_m = month + 3 if month <= 9 else month + 3 - 12
+    end_y = turn_65_year if month <= 9 else turn_65_year + 1
+    end_day = calendar.monthrange(end_y, end_m)[1]
+
+    return {
+        "birth": f"{month:02d}/{year}",
+        "turn_65": f"{month:02d}/{turn_65_year}",
+        "iep_start": f"{start_m:02d}/01/{start_y}",
+        "iep_end": f"{end_m:02d}/{end_day:02d}/{end_y}",
+    }
+
+
+def build_key_decision_points(text, max_points=6):
+    """
+    將最後一則 AI 回覆整理成較精簡的條列。
+    只做顯示層整理，不重新呼叫 AI，也不改變原本諮詢流程。
+    """
+    cleaned = clean_response(text or "")
+    if not cleaned:
+        return []
+
+    points = []
+
+    for raw_line in cleaned.splitlines():
+        line = raw_line.strip()
+
+        if not line:
+            continue
+
+        # 移除 Markdown 分隔線與標題符號，避免 Summary 出現 ### / ***。
+        if re.fullmatch(r"[-*_]{3,}", line):
+            continue
+        if line.startswith("#"):
+            continue
+
+        # Summary 不直接搬表格，避免一頁摘要太擁擠。
+        if line.startswith("|"):
+            continue
+
+        # 去掉 blockquote / bullet / numbered-list 前綴，但保留粗體等 Markdown。
+        line = re.sub(r"^>\s*", "", line)
+        line = re.sub(r"^(?:[-*•]|\d+[.)])\s+", "", line).strip()
+        line = re.sub(r"<[^>]+>", "", line).strip()
+
+        if not line:
+            continue
+
+        # 純小標題（例如 "Recommended Next Steps:"）不單獨當成一個 bullet。
+        if line.endswith(":") and len(line) < 80:
+            continue
+
+        if line not in points:
+            points.append(line)
+
+        if len(points) >= max_points:
+            break
+
+    # 如果原文完全沒有適合的逐行內容，至少保留一段清理後文字。
+    if not points:
+        fallback = re.sub(r"\s+", " ", cleaned).strip()
+        if fallback:
+            points.append(fallback)
+
+    return points
+
+
+
+def render_print_button(markdown_text, button_label, document_title):
+    """用瀏覽器原生列印視窗列印指定 Markdown，可另存為 PDF。"""
+    safe_md = json.dumps(markdown_text, ensure_ascii=False)
+    safe_label = html.escape(str(button_label))
+    safe_title = html.escape(str(document_title))
+
+    html_snippet = f"""
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <body style="margin:0; padding:0;">
+        <button
+            onclick="printClean()"
+            style="
+                width:100%;
+                height:46px;
+                border-radius:8px;
+                background-color:#16A34A;
+                color:white;
+                border:none;
+                cursor:pointer;
+                font-size:17px;
+                font-weight:bold;
+                font-family:sans-serif;
+            "
+        >
+            {safe_label}
+        </button>
+    </body>
+
+    <script>
+    function printClean() {{
+        const markdownText = {safe_md};
+        const htmlContent = marked.parse(markdownText);
+        const printWindow = window.open('', '', 'width=850,height=700');
+
+        if (!printWindow) {{
+            alert('Please allow pop-ups to print or save as PDF.');
+            return;
+        }}
+
+        printWindow.document.write(
+            '<html><head><title>{safe_title}</title>' +
+            '<style>' +
+            '@page {{ size: auto; margin: 16mm; }} ' +
+            'body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 0; color: #111827; max-width: 800px; margin: auto; }} ' +
+            'h1 {{ color: #1e3a8a; text-align: center; font-size: 26px; margin-bottom: 24px; }} ' +
+            'h2, h3 {{ color: #1e3a8a; margin-top: 24px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }} ' +
+            'p {{ margin: 10px 0 18px; }} ' +
+            'ul {{ padding-left: 24px; }} ' +
+            'li {{ margin-bottom: 8px; }} ' +
+            'table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }} ' +
+            'th, td {{ border: 1px solid #111827; padding: 8px; text-align: left; vertical-align: top; }} ' +
+            'th {{ background-color: #f8fafc; }} ' +
+            'hr {{ border: 0; border-top: 1px solid #cbd5e1; margin: 20px 0; }} ' +
+            '</style>' +
+            '</head><body>' +
+            htmlContent +
+            '</body></html>'
+        );
+
+        printWindow.document.close();
+
+        setTimeout(function() {{
+            printWindow.focus();
+            printWindow.print();
+        }}, 500);
+    }}
+    </script>
+    """
+
+    st.components.v1.html(html_snippet, height=55)
+
+
+def transfer_conversation_to_ship(current_lang):
+    """
+    從本次完整 User 對話擷取 SHIP 原生五欄。
+    找不到的資料保留空白，不從州別/城市猜 ZIP。
+    """
+    fields = extract_ship_fields(
+        st.session_state.get("messages", []),
+        target_lang=current_lang,
+        existing_zip=st.session_state.get("user_zip", ""),
+    )
+
+    # 保留既有 reset key：ship_auto_notes 現在只是內部傳輸容器，
+    # 不再顯示成 SHIP 頁面的第六格 AI Notes。
+    st.session_state["ship_auto_notes"] = fields
+    st.session_state["ship_auto_zip"] = fields.get("zip_code", "")
+    st.session_state["ship_auto_state"] = find_latest_state_from_messages(
+        st.session_state.get("messages", [])
+    )
+
+    return fields
 
 def scroll_to_medicare_top():
     st.html(
@@ -409,10 +648,15 @@ def render(current_lang, uploaded_file):
     st.markdown("<br>", unsafe_allow_html=True)
 
 
-    # Summary 標題
+    # Summary 標題與多語系 UI
     s_title = summary_title_map.get(
         current_lang,
-        "📋 Your Medicare Quick Summary"
+        "📋 Your Medicare 1-Page Summary"
+    )
+
+    uib = ui_bottom_map.get(
+        current_lang,
+        ui_bottom_map["English"]
     )
 
     st.markdown(
@@ -422,142 +666,291 @@ def render(current_lang, uploaded_file):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-
+    # --------------------------------------------------
     # 整理聊天內容
-    user_msgs = [
-        m["content"]
-        for m in st.session_state.messages
-        if m.get("role") == "user"
-    ]
-
+    # --------------------------------------------------
     ai_msgs = [
         m["content"]
         for m in st.session_state.messages
         if m.get("role") in ["assistant", "model"]
     ]
 
-
-    uib = ui_bottom_map.get(
-        current_lang,
-        ui_bottom_map["English"]
+    # --------------------------------------------------
+    # 1-Page Summary：從整段對話中抓已知資料
+    # 不再假設生日一定出現在第一輪。
+    # --------------------------------------------------
+    birth_month, birth_year = find_latest_birth_from_messages(
+        st.session_state.messages
     )
-    pretty_summary_html = "<div class='summary-box' style='background-color: #F8FAFC; border: 1px solid #CBD5E1; padding: 25px; border-radius: 12px; font-size: 19px; line-height: 1.8;'>"
 
-    if user_msgs:
-        pretty_summary_html += f"<h4 style='color: #0F172A; margin-top:0; font-size: 20px;'>{uib['bg_title']}</h4><ul>"
-        for u in user_msgs: pretty_summary_html += f"<li style='margin-bottom: 8px;'>{u}</li>"
-        pretty_summary_html += "</ul><hr style='border: none; border-top: 1px solid #CBD5E1; margin: 20px 0;'>"
+    timeline_data = None
+    if birth_month and birth_year:
+        try:
+            timeline_data = calculate_summary_timeline(
+                birth_month,
+                birth_year
+            )
+        except Exception:
+            timeline_data = None
 
-    if ai_msgs:
-        pretty_summary_html += f"<h4 style='color: #0F172A; font-size: 20px;'>{uib['adv_title']}</h4>"
-        formatted_last_ai = ai_msgs[-1].replace("\n", "<br>")
-        pretty_summary_html += f"<div style='background-color: #FFFFFF; color: #111827 !important; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0;'>{formatted_last_ai}</div>"
+    applicant_value = (
+        uib["applicant_self"]
+        if st.session_state.get("user_role_type", "self") == "self"
+        else uib["applicant_family"]
+    )
 
-    pretty_summary_html += "</div>"
+    state_value = find_latest_state_from_messages(
+        st.session_state.messages
+    )
 
-    short_summary_text = "【Medicare Compass - Summary】\n\n"
-    if user_msgs:
-        short_summary_text += "📌 KEY USER INPUTS:\n"
-        for u in user_msgs: short_summary_text += f"- {u}\n"
-        short_summary_text += "\n"
-    if ai_msgs:
-        short_summary_text += f"💡 LATEST ADVICE:\n{ai_msgs[-1]}\n"
+    # Badge / Key-Value 頂部資料
+    badge_items = [
+        (uib["applicant_label"], applicant_value)
+    ]
 
-    full_log_text = "【Medicare Compass - Complete Consultation Log】\n\n"
-    for m in st.session_state.messages:
-        role_title = "Compass Advisor" if m["role"] in ["assistant", "model"] else "User"
-        full_log_text += f"[{role_title}]:\n{m['content']}\n\n" + "-" * 40 + "\n\n"
+    if timeline_data:
+        badge_items.append(
+            (uib["birth_label"], timeline_data["birth"])
+        )
 
-    email_subject = urllib.parse.quote("My Medicare Compass Summary")
-    email_body = urllib.parse.quote(short_summary_text)
-    mailto_url = f"mailto:?subject={email_subject}&body={email_body}"
+    if state_value:
+        badge_items.append(
+            (uib["state_label"], state_value)
+        )
 
-    tab1, tab2 = st.tabs([uib["tab1"], uib["tab2"]])
+    badge_html = "<div class='summary-badges'>"
+    for key, value in badge_items:
+        badge_html += (
+            "<div class='summary-badge'>"
+            f"<span class='summary-badge-key'>{html.escape(str(key))}:</span>"
+            f"<span class='summary-badge-value'>{html.escape(str(value))}</span>"
+            "</div>"
+        )
+    badge_html += "</div>"
 
+    # Key Decisions：取最後一則 AI 回覆，但只在顯示層整理成精簡 bullets。
+    decision_points = (
+        build_key_decision_points(ai_msgs[-1])
+        if ai_msgs
+        else []
+    )
+
+    # --------------------------------------------------
+    # 建立 TXT / Print 共用的 Markdown Summary
+    # 畫面與列印使用同一份資料，避免內容不同步。
+    # --------------------------------------------------
+    summary_lines = [
+        f"# {s_title}",
+        "",
+        " | ".join(
+            f"**{key}:** {value}"
+            for key, value in badge_items
+        ),
+        ""
+    ]
+
+    if timeline_data:
+        summary_lines.extend([
+            f"## {uib['timeline_title']}",
+            f"- **{uib['timeline_turn65']}:** {timeline_data['turn_65']}",
+            f"- **{uib['timeline_iep_start']}:** {timeline_data['iep_start']}",
+            f"- **{uib['timeline_iep_end']}:** {timeline_data['iep_end']}",
+            ""
+        ])
+
+    if decision_points:
+        summary_lines.append(
+            f"## {uib['decisions_title']}"
+        )
+        summary_lines.extend(
+            f"- {point}"
+            for point in decision_points
+        )
+        summary_lines.append("")
+
+    short_summary_text = "\n".join(summary_lines).strip() + "\n"
+
+    # --------------------------------------------------
+    # 完整對話：TXT 與 PDF 各自使用適合的格式
+    # --------------------------------------------------
+    full_log_text = f"【{uib['full_log_title']}】\n\n"
+    full_log_markdown_lines = [
+        f"# {uib['full_log_title']}",
+        ""
+    ]
+
+    for message in st.session_state.messages:
+        is_advisor = message.get("role") in ["assistant", "model"]
+        role_title = (
+            uib["advisor_role_label"]
+            if is_advisor
+            else uib["user_role_label"]
+        )
+
+        content = str(message.get("content", ""))
+        printable_content = clean_response(content) if is_advisor else content
+
+        full_log_text += (
+            f"[{role_title}]:\n{printable_content}\n\n"
+            + "-" * 40
+            + "\n\n"
+        )
+
+        full_log_markdown_lines.extend([
+            f"## {role_title}",
+            "",
+            printable_content,
+            "",
+            "---",
+            ""
+        ])
+
+    full_log_markdown = "\n".join(full_log_markdown_lines).strip() + "\n"
+
+    tab1, tab2 = st.tabs(
+        [uib["tab1"], uib["tab2"]]
+    )
+
+    ship_map = ship_import_map.get(
+        current_lang,
+        ship_import_map["English"]
+    )
+
+    # ==================================================
+    # Tab 1：1-Page Summary
+    # ==================================================
     with tab1:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown(pretty_summary_html, unsafe_allow_html=True)
+
+        # 用 Streamlit 原生 container 放 Summary，
+        # Markdown 內容交給 st.markdown 正常解析，不再用 replace("\\n", "<br>")。
+        with st.container(border=True):
+            st.markdown(
+                badge_html,
+                unsafe_allow_html=True
+            )
+
+            if timeline_data:
+                st.markdown(
+                    f"#### {uib['timeline_title']}"
+                )
+                st.markdown(
+                    "\n".join([
+                        f"- **{uib['timeline_turn65']}:** {timeline_data['turn_65']}",
+                        f"- **{uib['timeline_iep_start']}:** {timeline_data['iep_start']}",
+                        f"- **{uib['timeline_iep_end']}:** {timeline_data['iep_end']}",
+                    ])
+                )
+
+            if decision_points:
+                st.markdown(
+                    f"#### {uib['decisions_title']}"
+                )
+                st.markdown(
+                    "\n".join(
+                        f"- {point}"
+                        for point in decision_points
+                    )
+                )
+
         st.markdown("<br>", unsafe_allow_html=True)
-        # Task 4.2: 將按鈕改為 3 欄，加入 Print/PDF 按鈕
-        col1, col2, col3 = st.columns(3)
+
+        # 第一排：TXT 與 PDF 各佔一半
+        col1, col2 = st.columns(2)
+
         with col1:
-            st.download_button(uib["dl_txt"], data=short_summary_text, file_name="medicare_summary.txt", use_container_width=True)
-        with col3:
-            st.markdown(f'<a href="{mailto_url}" target="_blank"><button style="width:100%; height:46px; border-radius:8px; background-color:#2563EB; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold;">{uib["email_btn"]}</button></a>', unsafe_allow_html=True)
+            st.download_button(
+                uib["dl_txt"],
+                data=short_summary_text,
+                file_name="medicare_summary.txt",
+                use_container_width=True,
+                key="summary_download_txt",
+            )
+
         with col2:
-            # 終極完美方案：直接拿 txt 的乾淨內容，轉成 Word 般的排版列印
-            # 將 Python 裡的純文字總結安全地轉成 JavaScript 可以讀取的格式
-            safe_md = json.dumps(short_summary_text)
-            pdf_label = uib.get("btn_pdf", "🖨️ Print / Save PDF")
-            
-            # 注入帶有 markdown 解析器的安全區塊
-            html_snippet = f"""
-            <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-            <body style="margin: 0; padding: 0;">
-                <button onclick="printClean()" style="width:100%; height:46px; border-radius:8px; background-color:#16A34A; color:white; border:none; cursor:pointer; font-size:17px; font-weight:bold; font-family: sans-serif;">
-                    {pdf_label}
-                </button>
-            </body>
-            <script>
-            function printClean() {{
-                // 1. 抓取最乾淨的純文字內容
-                const markdownText = {safe_md};
-                
-                // 2. 轉換為標準 HTML
-                const htmlContent = marked.parse(markdownText);
-                
-                // 3. 開啟一個全新的隱形乾淨視窗
-                const printWindow = window.open('', '', 'width=800,height=600');
-                
-                // 4. 寫入類似 Word 的乾淨排版與表格樣式
-                printWindow.document.write(
-                    '<html><head><title>Medicare Summary</title>' +
-                    '<style>' +
-                    'body {{ font-family: Arial, sans-serif; line-height: 1.6; padding: 40px; color: black; max-width: 800px; margin: auto; }} ' +
-                    'h1, h2, h3 {{ color: #1e3a8a; margin-top: 20px; }} ' +
-                    'table {{ border-collapse: collapse; width: 100%; margin-bottom: 20px; }} ' +
-                    'th, td {{ border: 1px solid #000; padding: 10px; text-align: left; }} ' +
-                    'th {{ background-color: #f0f7ff; font-weight: bold; }} ' +
-                    'hr {{ border: 1px solid #1e3a8a; margin-bottom: 20px; }} ' +
-                    'li {{ margin-bottom: 8px; }} ' +
-                    '</style>' +
-                    '</head><body>' +
-                    '<h2 style="text-align:center;">🩺 Medicare Compass - Personal Summary</h2>' +
-                    '<hr>' +
-                    htmlContent +
-                    '</body></html>'
-                );
-                printWindow.document.close();
-                
-                // 5. 等待瞬間排版完成後，直接呼叫列印
-                setTimeout(function() {{
-                    printWindow.focus();
-                    printWindow.print();
-                }}, 500);
-            }}
-            </script>
-            """
-            st.components.v1.html(html_snippet, height=55)
-                    
-        # Task 4.1: 一鍵匯入至 SHIP 準備單 
+            render_print_button(
+                short_summary_text,
+                uib.get("btn_pdf", "🖨️ Print / Save as PDF"),
+                s_title,
+            )
+
+        # 第二排：SHIP 說明文字
         st.markdown("<br>", unsafe_allow_html=True)
-        ship_map = ship_import_map.get(current_lang, ship_import_map["English"])
-        
-        if st.button(ship_map["btn"], type="primary", use_container_width=True):
-            # 1. 儲存地理資訊給模組 3
-            st.session_state["ship_auto_zip"] = st.session_state.get("user_zip", "")
-            st.session_state["ship_auto_state"] = st.session_state.get("user_state", "")
-            
-            # 2. 將使用者的對話與 AI 的精華總結，打包為備註傳給模組 3
-            st.session_state["ship_auto_notes"] = short_summary_text
-            
-            # 3. 顯示成功訊息引導長輩
+        st.caption(ship_map["help"])
+
+        # 第三排：SHIP 按鈕獨佔整行
+        summary_ship_clicked = st.button(
+            ship_map["btn"],
+            type="primary",
+            use_container_width=True,
+            key="summary_ship_import",
+        )
+
+        if summary_ship_clicked:
+            with st.spinner(ship_map["extracting"]):
+                transfer_conversation_to_ship(current_lang)
             st.success(ship_map["success"])
 
+    # ==================================================
+    # Tab 2：Full Conversation Log
+    # ==================================================
     with tab2:
         st.markdown("<br>", unsafe_allow_html=True)
-        st.text_area(uib["log_label"], value=full_log_text, height=300, key="full_log_area")
-        st.download_button(uib["dl_log"], data=full_log_text, file_name="medicare_full_log.txt", use_container_width=True)
+
+        # 改用 Streamlit 原生聊天氣泡呈現，不再使用灰色 Text Area。
+        for message in st.session_state.messages:
+            role = message.get("role", "user")
+            content = str(message.get("content", ""))
+
+            if role in ["assistant", "model"]:
+                with st.chat_message(
+                    "assistant",
+                    avatar="👵"
+                ):
+                    st.markdown(
+                        clean_response(content)
+                    )
+            else:
+                with st.chat_message("user"):
+                    st.markdown(content)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # 第一排：TXT 與 PDF 各佔一半
+        log_col1, log_col2 = st.columns(2)
+
+        with log_col1:
+            st.download_button(
+                uib["dl_log"],
+                data=full_log_text,
+                file_name="medicare_full_log.txt",
+                use_container_width=True,
+                key="full_log_download_txt",
+            )
+
+        with log_col2:
+            render_print_button(
+                full_log_markdown,
+                uib.get("btn_pdf", "🖨️ Print / Save as PDF"),
+                uib["full_log_title"],
+            )
+
+        # 第二排：SHIP 說明文字
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.caption(ship_map["help"])
+
+        # 第三排：SHIP 按鈕獨佔整行
+        full_ship_clicked = st.button(
+            ship_map["btn"],
+            type="primary",
+            use_container_width=True,
+            key="full_log_ship_import",
+        )
+
+        if full_ship_clicked:
+            with st.spinner(ship_map["extracting"]):
+                transfer_conversation_to_ship(current_lang)
+            st.success(ship_map["success"])
 
     # 頁面定位控制
     anchor_id = st.session_state.pop("_scroll_to_message", None)
