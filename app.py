@@ -8,7 +8,7 @@ from core.translations import (
     m1_text, m2_text, m3_text, m4_text,
     upload_label_map, legal_title_map, legal_caption_map,
     reset_btn_map, quick_btn_map, font_size_map,
-    header_labels
+    router_labels, header_labels
 )
 
 from core.ai_engine import configure_gemini
