@@ -8,6 +8,58 @@ sidebar_labels = {
     "한국어": {"header": "### 🌐 언어 설정", "select": "언어 선택:"}
 }
 
+header_labels = {
+    "English": {
+        "info_base": "🟢 Information Base: {year} Medicare Guidance",
+        "last_reviewed": "Last reviewed: August 2026",
+        "disclaimer": (
+            "Medicare Compass is an independent educational tool, not affiliated with "
+            "or endorsed by CMS, SSA, or Medicare.gov. Please verify important enrollment "
+            "and coverage decisions with official sources."
+        ),
+    },
+
+    "繁體中文": {
+        "info_base": "🟢 資訊基準：{year} 年 Medicare 指引",
+        "last_reviewed": "最後檢視：2026 年 8 月",
+        "disclaimer": (
+            "Medicare Compass 是獨立的教育與資訊工具，與 CMS、SSA 或 Medicare.gov "
+            "無隸屬關係，亦未獲其官方背書。涉及重要的投保、登記與保障決策時，"
+            "請務必再向官方來源確認。"
+        ),
+    },
+
+    "簡體中文": {
+        "info_base": "🟢 信息基准：{year} 年 Medicare 指引",
+        "last_reviewed": "最后审查：2026 年 8 月",
+        "disclaimer": (
+            "Medicare Compass 是独立的教育与信息工具，与 CMS、SSA 或 Medicare.gov "
+            "无隶属关系，也未获得其官方背书。涉及重要的投保、注册与保障决策时，"
+            "请务必再次向官方来源确认。"
+        ),
+    },
+
+    "Español": {
+        "info_base": "🟢 Base de información: Guía de Medicare {year}",
+        "last_reviewed": "Última revisión: agosto de 2026",
+        "disclaimer": (
+            "Medicare Compass es una herramienta educativa independiente y no está afiliada "
+            "ni respaldada por CMS, SSA ni Medicare.gov. Verifique las decisiones importantes "
+            "de inscripción y cobertura con fuentes oficiales."
+        ),
+    },
+
+    "한국어": {
+        "info_base": "🟢 정보 기준: {year} Medicare 안내",
+        "last_reviewed": "최종 검토: 2026년 8월",
+        "disclaimer": (
+            "Medicare Compass는 독립적인 교육 및 정보 제공 도구이며 CMS, SSA 또는 "
+            "Medicare.gov와 제휴 관계가 없고 이들 기관의 공식 승인을 받은 서비스도 아닙니다. "
+            "중요한 가입 및 보장 관련 결정은 반드시 공식 출처에서 다시 확인해 주세요."
+        ),
+    },
+}
+
 guide_labels = {
     "English": {
         "btn_text": "📖 Click to view: 1-Minute Medicare Guide",
@@ -406,11 +458,53 @@ legal_title_map = {
 }
 
 legal_caption_map = {
-    "English": "🔒 **Zero-Server-Data Privacy**:\nWe DO NOT store or track any of your inputs on our servers. Any remembered input is stored ONLY on your local browser device.\n\n⚠️ **Anti-Fraud Notice**: Medicare will NEVER call/text asking for SSN or banking details.\nℹ️ **Disclaimer**: Educational guidance only; verify final choices with [Medicare.gov](https://www.medicare.gov).\n🏛️ **Independent Tool**: Not affiliated with the US Government, CMS, or SSA.",
-    "繁體中文": "🔒 **零伺服器資料隱私**:\n我們不會在伺服器上儲存或追蹤您的任何輸入。任何記憶的輸入僅儲存於您的本機瀏覽器裝置中。\n\n⚠️ **防詐騙提示**: Medicare 絕對不會打電話/傳簡訊要求提供社會安全碼 (SSN) 或銀行資料。\nℹ️ **免責聲明**: 僅供教育指引；最終選擇請至 [Medicare.gov](https://www.medicare.gov) 官方網站確認。\n🏛️ **獨立工具**: 本工具與美國政府、CMS 或 SSA 無關。",
-    "簡體中文": "🔒 **零服务器数据隐私**:\n我们不会在服务器上存储或追踪您的任何输入。任何记忆的输入仅存储于您的本地浏览器设备中。\n\n⚠️ **防诈骗提示**: Medicare 绝对不会打电话/发短信要求提供社会安全码 (SSN) 或银行信息。\nℹ️ **免责声明**: 仅供教育指引；最终选择请至 [Medicare.gov](https://www.medicare.gov) 官方网站确认。\n🏛️ **独立工具**: 本工具与美国政府、CMS 或 SSA 无关。",
-    "Español": "🔒 **Privacidad de datos cero en el servidor**:\nNO almacenamos ni rastreamos ninguna de sus entradas en nuestros servidores. Cualquier entrada recordada se almacena SOLO en su dispositivo de navegador local.\n\n⚠️ **Aviso contra el fraude**: Medicare NUNCA llamará/enviará mensajes de texto pidiendo el SSN o detalles bancarios.\nℹ️ **Descargo de responsabilidad**: Solo orientación educativa; verifique opciones finales en [Medicare.gov](https://www.medicare.gov).\n🏛️ **Herramienta independiente**: No afiliada al Gobierno de EE. UU., CMS o SSA.",
-    "한국어": "🔒 **서버 데이터 제로 개인정보 보호**:\n당사는 귀하의 어떠한 입력 내용도 서버에 저장하거나 추적하지 않습니다. 기억된 입력 내용은 로컬 브라우저 기기에만 저장됩니다.\n\n⚠️ **사기 방지 안내**: Medicare는 결코 SSN이나 은행 정보를 묻는 전화/문자를 하지 않습니다.\nℹ️ **면책 조항**: 교육적 목적의 안내일 뿐이며, 최종 선택은 [Medicare.gov](https://www.medicare.gov)에서 확인하십시오.\n🏛️ **독립적인 도구**: 미국 정부, CMS 또는 SSA와 제휴하지 않았습니다."
+    "English": (
+        "🔒 **Session-Only Privacy**:\n"
+        "Medicare Compass does not permanently store your questionnaire or conversation data in a database, "
+        "and this app does not use behavioral tracking. Information is kept only for the current app session. "
+        "When you use AI features, the content needed to answer your request is sent to the configured AI provider for processing.\n\n"
+        "⚠️ **Anti-Fraud Notice**: Medicare will NEVER call or text asking for your SSN or banking details.\n"
+        "ℹ️ **Disclaimer**: Educational guidance only; verify final choices with [Medicare.gov](https://www.medicare.gov).\n"
+        "🏛️ **Independent Tool**: Not affiliated with or endorsed by the U.S. Government, CMS, SSA, or Medicare."
+    ),
+
+    "繁體中文": (
+        "🔒 **僅限本次 Session 的隱私設計**:\n"
+        "Medicare Compass 不會將詢問單或對話內容永久儲存至資料庫，也不會透過本 App 進行使用行為追蹤。"
+        "資料僅於目前的 App Session 中暫時保留。使用 AI 功能時，回答所需內容會傳送至目前設定的 AI 服務提供者進行處理。\n\n"
+        "⚠️ **防詐騙提示**: Medicare 絕對不會透過電話或簡訊要求您提供社會安全碼 (SSN) 或銀行資料。\n"
+        "ℹ️ **免責聲明**: 本工具僅提供教育與資訊性指引；最終選擇請至 [Medicare.gov](https://www.medicare.gov) 官方網站確認。\n"
+        "🏛️ **獨立工具**: 本工具未隸屬於美國政府、CMS、SSA 或 Medicare，亦未獲其背書。"
+    ),
+
+    "簡體中文": (
+        "🔒 **仅限本次 Session 的隐私设计**:\n"
+        "Medicare Compass 不会将询问单或对话内容永久存储至数据库，也不会通过本 App 进行使用行为跟踪。"
+        "资料仅在当前 App Session 中临时保留。使用 AI 功能时，回答所需内容会发送至当前配置的 AI 服务提供商进行处理。\n\n"
+        "⚠️ **防诈骗提示**: Medicare 绝不会通过电话或短信要求您提供社会安全码 (SSN) 或银行资料。\n"
+        "ℹ️ **免责声明**: 本工具仅提供教育与信息性指引；最终选择请至 [Medicare.gov](https://www.medicare.gov) 官方网站确认。\n"
+        "🏛️ **独立工具**: 本工具不隶属于美国政府、CMS、SSA 或 Medicare，也未获得其背书。"
+    ),
+
+    "Español": (
+        "🔒 **Privacidad limitada a la sesión**:\n"
+        "Medicare Compass no almacena permanentemente los datos del cuestionario ni de la conversación en una base de datos, "
+        "y esta aplicación no utiliza seguimiento de comportamiento. La información se conserva únicamente durante la sesión actual. "
+        "Al utilizar funciones de IA, el contenido necesario para responder se envía al proveedor de IA configurado para su procesamiento.\n\n"
+        "⚠️ **Aviso contra el fraude**: Medicare NUNCA le llamará ni enviará mensajes de texto para solicitar su SSN o información bancaria.\n"
+        "ℹ️ **Descargo de responsabilidad**: Esta herramienta ofrece únicamente orientación educativa e informativa; "
+        "verifique sus decisiones finales en [Medicare.gov](https://www.medicare.gov).\n"
+        "🏛️ **Herramienta independiente**: No está afiliada ni respaldada por el Gobierno de EE. UU., CMS, SSA ni Medicare."
+    ),
+
+    "한국어": (
+        "🔒 **세션 한정 개인정보 보호**:\n"
+        "Medicare Compass는 설문지 또는 대화 내용을 데이터베이스에 영구 저장하지 않으며 행동 추적을 사용하지 않습니다. "
+        "정보는 현재 앱 세션 동안에만 임시로 유지됩니다. AI 기능을 사용할 경우 답변에 필요한 내용은 처리를 위해 현재 설정된 AI 제공업체로 전송됩니다.\n\n"
+        "⚠️ **사기 방지 안내**: Medicare는 전화나 문자로 SSN 또는 은행 정보를 요구하지 않습니다.\n"
+        "ℹ️ **면책 조항**: 본 도구는 교육 및 정보 제공 목적의 안내만 제공하며, 최종 결정은 [Medicare.gov](https://www.medicare.gov)에서 확인하십시오.\n"
+        "🏛️ **독립적인 도구**: 미국 정부, CMS, SSA 또는 Medicare와 제휴되어 있지 않으며 이들의 보증을 받지 않습니다."
+    ),
 }
 
 reset_btn_map = {
@@ -424,11 +518,11 @@ reset_btn_map = {
 # 模組 1 (MAIN_AI) 語言字典
 # --------------------------------------------------
 q_caption_map = {
-    "English": "💡 **Quick Start**: Select identity, then enter **Birth Month/Year & State** below:",
-    "Español": "💡 **Inicio rápido**: Elija su rol e ingrese **Mes/Año de nacimiento y Estado**:",
-    "한국어": "💡 **빠른 시작**: 신분을 선택하고 아래에 **생년월일 및 거주 주**를 입력하세요:",
-    "簡體中文": "💡 **快速开始**: 请选择身份，并在下方输入**出生年月与居住州**：",
-    "繁體中文": "💡 **快速開始**: 請選擇身份，並在下方輸入**出生年月與居住州**：",
+    "English": "💡 **Quick Start**: Enter **Birth Month/Year & State** below. The consultation target is selected above.",
+    "Español": "💡 **Inicio rápido**: Ingrese **Mes/Año de nacimiento y Estado**. La persona consultada se selecciona arriba.",
+    "한국어": "💡 **빠른 시작**: 아래에 **생년월 및 거주 주**를 입력하세요. 상담 대상은 위에서 선택합니다.",
+    "簡體中文": "💡 **快速开始**: 请在下方输入**出生年月与居住州**；咨询对象可在上方切换。",
+    "繁體中文": "💡 **快速開始**: 請在下方輸入**出生年月與居住州**；諮詢對象可在上方切換。",
 }
 
 btn1_map = {
@@ -488,11 +582,11 @@ default_upload_msg_map = {
 }
 
 spinner_msg_map = {
-    "English": "Analyzing...",
-    "Español": "Analizando...",
-    "한국어": "분석 중...",
-    "簡體中文": "分析中...",
-    "繁體中文": "分析中..."
+    "English": "Analyzing your inputs... Estimated wait time: 5–10s",
+    "Español": "Analizando sus datos... Tiempo estimado: 5–10 s",
+    "한국어": "입력 내용을 분석 중입니다... 예상 대기 시간: 5–10초",
+    "簡體中文": "正在分析您提供的信息... 预计等待时间：5–10 秒",
+    "繁體中文": "正在分析您提供的資訊... 預估等待時間：5–10 秒"
 }
 
 timeline_template_map = {
@@ -525,7 +619,7 @@ ui_bottom_map = {
         "tab2": "📄 Full Conversation Log",
         "applicant_label": "Applicant",
         "applicant_self": "Self",
-        "applicant_family": "Family / Parent",
+        "applicant_family": "Person I am helping",
         "birth_label": "Birth",
         "state_label": "State",
         "timeline_title": "🗓️ Personal Timeline",
@@ -545,7 +639,7 @@ ui_bottom_map = {
         "tab2": "📄 Full Conversation Log (完整記錄)",
         "applicant_label": "申請對象",
         "applicant_self": "本人",
-        "applicant_family": "家人 / 父母",
+        "applicant_family": "協助對象",
         "birth_label": "出生年月",
         "state_label": "州別",
         "timeline_title": "🗓️ 個人 Medicare 時間軸",
@@ -565,7 +659,7 @@ ui_bottom_map = {
         "tab2": "📄 Full Conversation Log (完整记录)",
         "applicant_label": "申请对象",
         "applicant_self": "本人",
-        "applicant_family": "家人 / 父母",
+        "applicant_family": "協助對象",
         "birth_label": "出生年月",
         "state_label": "州别",
         "timeline_title": "🗓️ 个人 Medicare 时间轴",
@@ -585,7 +679,7 @@ ui_bottom_map = {
         "tab2": "📄 Registro completo",
         "applicant_label": "Solicitante",
         "applicant_self": "Yo",
-        "applicant_family": "Familiar / Padre o Madre",
+        "applicant_family": "Persona a quien ayudo",
         "birth_label": "Nacimiento",
         "state_label": "Estado",
         "timeline_title": "🗓️ Cronología Personal",
@@ -605,7 +699,7 @@ ui_bottom_map = {
         "tab2": "📄 전체 대화 기록",
         "applicant_label": "신청 대상",
         "applicant_self": "본인",
-        "applicant_family": "가족 / 부모",
+        "applicant_family": "도움을 주는 대상",
         "birth_label": "출생 월/연도",
         "state_label": "주",
         "timeline_title": "🗓️ 개인 Medicare 일정",
@@ -797,3 +891,529 @@ ship_import_map = {
     }
 }
 
+# ==================================================
+# Medicare Profile
+# ==================================================
+
+profile_labels = {
+    "English": {
+        "title": "## 📝 Questionnaire Information",
+        "caption": "Optional. Add coverage, goals, medications, and ZIP Code to help the system quickly understand the key points. You can use other features without completing this questionnaire.",
+
+        "step_names": [
+            "Current Coverage",
+            "Goals & Notes",
+            "Medications & Location",
+            "Review Questionnaire",
+        ],
+
+        "progress": "Step {current} of {total} — {name}",
+
+        "autosave": "🔒 Session only. Your answers are temporarily kept for this session and are not permanently saved.",
+
+        "target_self": "you",
+        "target_other": "the person you are helping",
+
+        # Step 1
+        "step1_title": "### Step 1 — Current Medicare / Insurance Coverage",
+        "step1_caption": "Please enter the current insurance information for {target}.",
+        "coverage_label": "Current primary coverage",
+        "premium_label": "Estimated monthly premium (USD $)",
+        "coverage_check_title": "Select anything that currently applies:",
+        "has_part_ab": "Medicare Part A and/or Part B is active",
+        "has_commercial": "Currently covered by employer / union group insurance",
+        "has_low_income": "Medicaid / Extra Help / low-income assistance applies",
+
+        # Step 2
+        "step2_title": "### Step 2 — Main Goal & Health Notes",
+        "priority_label": "Primary goal",
+        "notes_label": "Health conditions or special considerations",
+        "notes_placeholder": "Example: Cataract surgery is planned soon and I want to confirm whether the specialist is in-network.",
+
+        # Step 3
+        "step3_title": "### Step 3 — Medications & Healthcare Location",
+        "zip_label": "Residential ZIP Code",
+        "zip_placeholder": "e.g. 07430",
+        "meds_label": "Current prescription medications",
+        "meds_placeholder": "e.g. Atorvastatin 20mg (once daily)",
+        "pharmacy_label": "Preferred pharmacy / hospital system",
+        "pharmacy_placeholder": "e.g. CVS Pharmacy / Hackensack Meridian Health",
+
+        # Step 4
+        "step4_title": "### Step 4 — Review Questionnaire Information",
+        "persona_label": "Questionnaire for",
+        "persona_self": "Myself",
+        "persona_other": "Someone I am helping",
+        "coverage_summary": "Current coverage",
+        "premium_summary": "Monthly premium",
+        "priority_summary": "Primary goal",
+        "notes_summary": "Health notes",
+        "meds_summary": "Medications",
+        "pharmacy_summary": "Preferred pharmacy / hospital",
+        "zip_summary": "ZIP Code",
+        "additional_summary": "Additional coverage information",
+
+        "part_ab_yes": "Medicare Part A/B active",
+        "commercial_yes": "Employer / group insurance",
+        "low_income_yes": "Medicaid / Extra Help",
+        "none_selected": "None selected",
+
+        "save_btn": "✅ Complete Questionnaire",
+        "saved": "Questionnaire completed. The information is available only during this session.",
+        "edit_btn": "⬅️ Back to edit questionnaire",
+
+        "back": "⬅️ Back",
+        "next": "Next ➡️",
+    },
+
+    "繁體中文": {
+        "title": "## 📝 詢問單資料",
+        "caption": "選填。整理目前保險狀態、主要需求、用藥與 ZIP Code，幫助系統快速掌握重點；即使未填寫，也可以直接使用其他功能。",
+
+        "step_names": [
+            "目前保險狀態",
+            "主要目標與備註",
+            "用藥與所在地",
+            "確認詢問單資料",
+        ],
+
+        "progress": "步驟 {current} / {total} — {name}",
+
+        "autosave": "🔒 僅限本次 Session。資料只會在本次使用期間暫時保留，不會永久儲存。",
+
+        "target_self": "您",
+        "target_other": "申請人",
+
+        # Step 1
+        "step1_title": "### Step 1 — 目前 Medicare / 醫療保險狀態",
+        "step1_caption": "請填寫【{target}】目前的保險狀態。",
+        "coverage_label": "目前主要保險類型",
+        "premium_label": "估計每月支付的保費 (USD $)",
+        "coverage_check_title": "請勾選目前符合的狀況：",
+        "has_part_ab": "已持有 Medicare Part A 和／或 Part B",
+        "has_commercial": "目前有雇主／工會團體醫療保險",
+        "has_low_income": "符合 Medicaid / Extra Help / 低收入補助資格",
+
+        # Step 2
+        "step2_title": "### Step 2 — 主要目標與健康備註",
+        "priority_label": "這次最主要的考量",
+        "notes_label": "健康狀況或其他特殊考量",
+        "notes_placeholder": "例如：近期有安排白內障手術，希望確認專科醫師是否在保險網路內。",
+
+        # Step 3
+        "step3_title": "### Step 3 — 處方藥與所在地",
+        "zip_label": "申請人居住地 ZIP Code",
+        "zip_placeholder": "例如：07430",
+        "meds_label": "目前常規服用的處方藥物",
+        "meds_placeholder": "例如：Atorvastatin 20mg（每日一次）",
+        "pharmacy_label": "習慣使用的藥局／醫療院所體系",
+        "pharmacy_placeholder": "例如：CVS Pharmacy / Hackensack Meridian Health",
+
+        # Step 4
+        "step4_title": "### Step 4 — 確認詢問單資料",
+        "persona_label": "資料對象",
+        "persona_self": "本人",
+        "persona_other": "協助代辦／他人",
+        "coverage_summary": "目前保險",
+        "premium_summary": "每月保費",
+        "priority_summary": "主要目標",
+        "notes_summary": "健康備註",
+        "meds_summary": "目前用藥",
+        "pharmacy_summary": "偏好藥局／醫療體系",
+        "zip_summary": "ZIP Code",
+        "additional_summary": "其他保險資訊",
+
+        "part_ab_yes": "已持有 Medicare Part A/B",
+        "commercial_yes": "有雇主／團體保險",
+        "low_income_yes": "Medicaid / Extra Help",
+        "none_selected": "未勾選",
+
+        "save_btn": "✅ 完成詢問單",
+        "saved": "詢問單資料已完成，僅於本次 Session 中暫時使用。",
+        "edit_btn": "⬅️ 返回修改詢問單",
+
+        "back": "⬅️ 上一步",
+        "next": "下一步 ➡️",
+    },
+
+    "簡體中文": {
+        "title": "## 📝 询问单资料",
+        "caption": "选填。整理当前保险状态、主要需求、用药与 ZIP Code，帮助系统快速掌握重点；即使未填写，也可以直接使用其他功能。",
+
+        "step_names": [
+            "目前保险状态",
+            "主要目标与备注",
+            "用药与所在地",
+            "确认询问单资料",
+        ],
+
+        "progress": "步骤 {current} / {total} — {name}",
+
+        "autosave": "🔒 仅限本次 Session。资料只会在本次使用期间临时保留，不会永久存储。",
+
+        "target_self": "您",
+        "target_other": "申请人",
+
+        # Step 1
+        "step1_title": "### Step 1 — 当前 Medicare / 医疗保险状态",
+        "step1_caption": "请填写【{target}】当前的保险状态。",
+        "coverage_label": "当前主要保险类型",
+        "premium_label": "预计每月支付的保费 (USD $)",
+        "coverage_check_title": "请选择当前符合的状况：",
+        "has_part_ab": "已持有 Medicare Part A 和／或 Part B",
+        "has_commercial": "目前有雇主／工会团体医疗保险",
+        "has_low_income": "符合 Medicaid / Extra Help / 低收入补助资格",
+
+        # Step 2
+        "step2_title": "### Step 2 — 主要目标与健康备注",
+        "priority_label": "本次最主要的考虑",
+        "notes_label": "健康状况或其他特殊考虑",
+        "notes_placeholder": "例如：近期计划进行白内障手术，希望确认专科医生是否在保险网络内。",
+
+        # Step 3
+        "step3_title": "### Step 3 — 处方药与所在地",
+        "zip_label": "申请人居住地 ZIP Code",
+        "zip_placeholder": "例如：07430",
+        "meds_label": "目前常规服用的处方药物",
+        "meds_placeholder": "例如：Atorvastatin 20mg（每日一次）",
+        "pharmacy_label": "常用药房／医疗机构系统",
+        "pharmacy_placeholder": "例如：CVS Pharmacy / Hackensack Meridian Health",
+
+        # Step 4
+        "step4_title": "### Step 4 — 确认询问单资料",
+        "persona_label": "资料对象",
+        "persona_self": "本人",
+        "persona_other": "协助办理／他人",
+        "coverage_summary": "当前保险",
+        "premium_summary": "每月保费",
+        "priority_summary": "主要目标",
+        "notes_summary": "健康备注",
+        "meds_summary": "目前用药",
+        "pharmacy_summary": "偏好药房／医疗体系",
+        "zip_summary": "ZIP Code",
+        "additional_summary": "其他保险信息",
+
+        "part_ab_yes": "已持有 Medicare Part A/B",
+        "commercial_yes": "有雇主／团体保险",
+        "low_income_yes": "Medicaid / Extra Help",
+        "none_selected": "未选择",
+
+        "save_btn": "✅ 完成询问单",
+        "saved": "询问单资料已完成，仅在本次 Session 中临时使用。",
+        "edit_btn": "⬅️ 返回修改询问单",
+
+        "back": "⬅️ 上一步",
+        "next": "下一步 ➡️",
+    },
+
+    "Español": {
+        "title": "## 📝 Datos del cuestionario",
+        "caption": "Opcional. Añada cobertura, objetivos, medicamentos y código ZIP para ayudar al sistema a identificar rápidamente los puntos clave. Puede usar las demás funciones sin completar este cuestionario.",
+
+        "step_names": [
+            "Cobertura actual",
+            "Objetivos y notas",
+            "Medicamentos y ubicación",
+            "Revisar cuestionario",
+        ],
+
+        "progress": "Paso {current} de {total} — {name}",
+
+        "autosave": "🔒 Solo durante esta sesión. Sus respuestas se conservan temporalmente y no se guardan de forma permanente.",
+
+        "target_self": "usted",
+        "target_other": "la persona a quien está ayudando",
+
+        # Step 1
+        "step1_title": "### Paso 1 — Cobertura actual de Medicare / Seguro médico",
+        "step1_caption": "Ingrese la información actual del seguro de {target}.",
+        "coverage_label": "Cobertura principal actual",
+        "premium_label": "Prima mensual estimada (USD $)",
+        "coverage_check_title": "Seleccione todo lo que corresponda actualmente:",
+        "has_part_ab": "Medicare Parte A y/o Parte B está activo",
+        "has_commercial": "Actualmente tiene seguro grupal del empleador o sindicato",
+        "has_low_income": "Aplica Medicaid / Extra Help / asistencia para bajos ingresos",
+
+        # Step 2
+        "step2_title": "### Paso 2 — Objetivo principal y notas de salud",
+        "priority_label": "Objetivo principal",
+        "notes_label": "Condiciones de salud o consideraciones especiales",
+        "notes_placeholder": "Ejemplo: Tengo una cirugía de cataratas programada y deseo confirmar si el especialista está dentro de la red.",
+
+        # Step 3
+        "step3_title": "### Paso 3 — Medicamentos y ubicación médica",
+        "zip_label": "Código postal (ZIP Code) de residencia",
+        "zip_placeholder": "ej. 07430",
+        "meds_label": "Medicamentos recetados actuales",
+        "meds_placeholder": "ej. Atorvastatin 20mg (una vez al día)",
+        "pharmacy_label": "Farmacia / sistema hospitalario preferido",
+        "pharmacy_placeholder": "ej. CVS Pharmacy / Hackensack Meridian Health",
+
+        # Step 4
+        "step4_title": "### Paso 4 — Revisar datos del cuestionario",
+        "persona_label": "Cuestionario para",
+        "persona_self": "Mí mismo/a",
+        "persona_other": "Persona a quien estoy ayudando",
+        "coverage_summary": "Cobertura actual",
+        "premium_summary": "Prima mensual",
+        "priority_summary": "Objetivo principal",
+        "notes_summary": "Notas de salud",
+        "meds_summary": "Medicamentos",
+        "pharmacy_summary": "Farmacia / hospital preferido",
+        "zip_summary": "Código postal",
+        "additional_summary": "Información adicional de cobertura",
+
+        "part_ab_yes": "Medicare Parte A/B activo",
+        "commercial_yes": "Seguro del empleador / grupal",
+        "low_income_yes": "Medicaid / Extra Help",
+        "none_selected": "Ninguno seleccionado",
+
+        "save_btn": "✅ Completar cuestionario",
+        "saved": "Cuestionario completado. La información está disponible solo durante esta sesión.",
+        "edit_btn": "⬅️ Volver a editar el cuestionario",
+
+        "back": "⬅️ Atrás",
+        "next": "Siguiente ➡️",
+    },
+
+    "한국어": {
+        "title": "## 📝 설문 정보",
+        "caption": "선택 사항입니다. 현재 보험, 주요 목표, 복용약 및 ZIP Code를 정리하면 시스템이 핵심 내용을 빠르게 파악하는 데 도움이 됩니다. 설문을 작성하지 않아도 다른 기능을 바로 사용할 수 있습니다.",
+
+        "step_names": [
+            "현재 보험 상태",
+            "주요 목표 및 메모",
+            "복용약 및 거주지",
+            "설문 정보 확인",
+        ],
+
+        "progress": "{total}단계 중 {current}단계 — {name}",
+
+        "autosave": "🔒 현재 세션 한정. 입력 정보는 이번 세션 동안만 임시로 유지되며 영구 저장되지 않습니다.",
+
+        "target_self": "본인",
+        "target_other": "도움을 받고 있는 신청자",
+
+        # Step 1
+        "step1_title": "### Step 1 — 현재 Medicare / 의료보험 상태",
+        "step1_caption": "【{target}】의 현재 보험 상태를 입력해 주세요.",
+        "coverage_label": "현재 주요 보험 유형",
+        "premium_label": "예상 월 보험료 (USD $)",
+        "coverage_check_title": "현재 해당되는 항목을 선택하세요:",
+        "has_part_ab": "Medicare Part A 및/또는 Part B 가입 상태",
+        "has_commercial": "현재 직장 / 노조 단체 의료보험 가입",
+        "has_low_income": "Medicaid / Extra Help / 저소득 지원 대상",
+
+        # Step 2
+        "step2_title": "### Step 2 — 주요 목표 및 건강 관련 메모",
+        "priority_label": "가장 중요한 목표",
+        "notes_label": "건강 상태 또는 특별 고려사항",
+        "notes_placeholder": "예: 백내장 수술이 예정되어 있어 전문의가 보험 네트워크에 포함되는지 확인하고 싶습니다.",
+
+        # Step 3
+        "step3_title": "### Step 3 — 처방약 및 거주 지역",
+        "zip_label": "거주지 ZIP Code",
+        "zip_placeholder": "예: 07430",
+        "meds_label": "현재 복용 중인 처방약",
+        "meds_placeholder": "예: Atorvastatin 20mg (하루 1회)",
+        "pharmacy_label": "선호 약국 / 병원 시스템",
+        "pharmacy_placeholder": "예: CVS Pharmacy / Hackensack Meridian Health",
+
+        # Step 4
+        "step4_title": "### Step 4 — 설문 정보 확인",
+        "persona_label": "설문 대상",
+        "persona_self": "본인",
+        "persona_other": "도움을 받고 있는 사람",
+        "coverage_summary": "현재 보험",
+        "premium_summary": "월 보험료",
+        "priority_summary": "주요 목표",
+        "notes_summary": "건강 관련 메모",
+        "meds_summary": "현재 복용약",
+        "pharmacy_summary": "선호 약국 / 의료 시스템",
+        "zip_summary": "ZIP Code",
+        "additional_summary": "추가 보험 정보",
+
+        "part_ab_yes": "Medicare Part A/B 가입",
+        "commercial_yes": "직장 / 단체 보험 가입",
+        "low_income_yes": "Medicaid / Extra Help",
+        "none_selected": "선택 없음",
+
+        "save_btn": "✅ 설문 완료",
+        "saved": "설문이 완료되었습니다. 정보는 현재 세션에서만 임시로 사용됩니다.",
+        "edit_btn": "⬅️ 설문 수정으로 돌아가기",
+
+        "back": "⬅️ 이전",
+        "next": "다음 ➡️",
+    },
+}
+
+
+# ==================================================
+# Profile — Coverage options
+# ==================================================
+
+profile_coverage_labels = {
+    "English": {
+        "original_medicare": "Original Medicare (Part A & B)",
+        "medicare_advantage": "Medicare Advantage (Part C)",
+        "part_d": "Medicare Part D (Prescription Drug Plan)",
+        "employer_coverage": "Employer / Retiree Group Health Coverage",
+        "not_enrolled": "Not yet enrolled in Medicare",
+    },
+
+    "繁體中文": {
+        "original_medicare": "紅藍卡 Part A & B (Original Medicare)",
+        "medicare_advantage": "優勢計畫 Part C (Medicare Advantage)",
+        "part_d": "處方藥計畫 Part D (Prescription Drug Plan)",
+        "employer_coverage": "雇主退休保險／現有團體保險",
+        "not_enrolled": "目前尚未加入 Medicare",
+    },
+
+    "簡體中文": {
+        "original_medicare": "红蓝卡 Part A & B (Original Medicare)",
+        "medicare_advantage": "优势计划 Part C (Medicare Advantage)",
+        "part_d": "处方药计划 Part D (Prescription Drug Plan)",
+        "employer_coverage": "雇主退休保险／现有团体保险",
+        "not_enrolled": "目前尚未加入 Medicare",
+    },
+
+    "Español": {
+        "original_medicare": "Medicare Original (Partes A y B)",
+        "medicare_advantage": "Medicare Advantage (Parte C)",
+        "part_d": "Medicare Parte D (Medicamentos recetados)",
+        "employer_coverage": "Seguro médico grupal del empleador / jubilación",
+        "not_enrolled": "Aún no está inscrito en Medicare",
+    },
+
+    "한국어": {
+        "original_medicare": "Original Medicare (Part A & B)",
+        "medicare_advantage": "Medicare Advantage (Part C)",
+        "part_d": "Medicare Part D (처방약 플랜)",
+        "employer_coverage": "직장 / 퇴직자 단체 의료보험",
+        "not_enrolled": "현재 Medicare 미가입",
+    },
+}
+
+
+# ==================================================
+# Profile — Priority options
+# ==================================================
+
+profile_priority_labels = {
+    "English": {
+        "lower_premium": "Lower monthly fixed premium costs",
+        "lower_risk": "Lower out-of-pocket catastrophic risk",
+        "broad_network": "Keep broad doctor / specialist access",
+        "drug_cost": "Reduce prescription drug costs / Explore Extra Help",
+    },
+
+    "繁體中文": {
+        "lower_premium": "降低每月固定保費支出",
+        "lower_risk": "降低重大疾病的自付費用與風險",
+        "broad_network": "保留跨州看診與專科醫師選擇彈性",
+        "drug_cost": "尋求處方藥補助與降低藥費",
+    },
+
+    "簡體中文": {
+        "lower_premium": "降低每月固定保费支出",
+        "lower_risk": "降低重大疾病的自付费用与风险",
+        "broad_network": "保留跨州就医与专科医生选择弹性",
+        "drug_cost": "寻求处方药补助与降低药费",
+    },
+
+    "Español": {
+        "lower_premium": "Reducir las primas mensuales",
+        "lower_risk": "Reducir el riesgo de gastos médicos de bolsillo elevados",
+        "broad_network": "Mantener amplio acceso a médicos y especialistas",
+        "drug_cost": "Reducir costos de medicamentos / Explorar Extra Help",
+    },
+
+    "한국어": {
+        "lower_premium": "월 고정 보험료 절감",
+        "lower_risk": "고액 본인부담 의료비 위험 감소",
+        "broad_network": "폭넓은 의사 / 전문의 선택권 유지",
+        "drug_cost": "처방약 비용 절감 / Extra Help 지원 확인",
+    },
+}
+
+# ==================================================
+# Home / Router
+# ==================================================
+
+router_labels = {
+    "English": {
+        "nav_profile": "📝 Questionnaire Information",
+        "persona_title": "### Who is this Medicare consultation for?",
+        "persona_label": "Consultation target:",
+        "persona_self": "👤 I am the applicant",
+        "persona_helping": "👥 I am helping someone else / acting on their behalf",
+        "action_title": "### What would you like to do?",
+        "profile_btn": "📝 Fill / Edit Questionnaire",
+        "profile_caption": "Optional. Organize coverage, goals, medications, and ZIP Code so the system can quickly understand the key points.",
+        "ai_btn": "💬 Ask AI Directly",
+        "ai_caption": "You can start asking Medicare questions without completing the questionnaire.",
+        "scope_title": "ℹ️ What Medicare Compass can and cannot do",
+        "scope_can": "**✓ We can help with**\n\n- Explain Medicare concepts and enrollment timing\n- Organize your questions and current situation\n- Prepare information for a SHIP counseling conversation\n- Point you to official Medicare / SSA / SHIP resources",
+        "scope_cannot": "**✗ We do not**\n\n- Replace Medicare, SSA, SHIP, or a licensed professional\n- Make enrollment decisions for you\n- Guarantee eligibility, coverage, or costs\n- Permanently store your questionnaire or conversation history",
+    },
+    "繁體中文": {
+        "nav_profile": "📝 詢問單資料",
+        "persona_title": "### 這次是為誰進行 Medicare 諮詢？",
+        "persona_label": "諮詢對象：",
+        "persona_self": "👤 我是申請人本人",
+        "persona_helping": "👥 我正在協助他人／代辦",
+        "action_title": "### 今天想進行什麼？",
+        "profile_btn": "📝 填寫 / 修改詢問單資料",
+        "profile_caption": "選填。整理保險狀態、主要需求、用藥與 ZIP Code，幫助系統快速掌握重點。",
+        "ai_btn": "💬 直接詢問 AI",
+        "ai_caption": "不填詢問單也可以直接開始詢問 Medicare 問題。",
+        "scope_title": "ℹ️ Medicare Compass 可以與不能協助的範圍",
+        "scope_can": "**✓ 我們可以協助**\n\n- 說明 Medicare 基本概念與申請時程\n- 整理目前狀況與想確認的問題\n- 準備與 SHIP 顧問諮詢前需要的資訊\n- 導向 Medicare / SSA / SHIP 官方資源",
+        "scope_cannot": "**✗ 我們不會**\n\n- 取代 Medicare、SSA、SHIP 或專業顧問\n- 代替您做投保或方案決定\n- 保證資格、保障範圍或費用\n- 永久保存詢問單或對話紀錄",
+    },
+    "簡體中文": {
+        "nav_profile": "📝 询问单资料",
+        "persona_title": "### 这次是为谁进行 Medicare 咨询？",
+        "persona_label": "咨询对象：",
+        "persona_self": "👤 我是申请人本人",
+        "persona_helping": "👥 我正在协助他人／代办",
+        "action_title": "### 今天想进行什么？",
+        "profile_btn": "📝 填写 / 修改询问单资料",
+        "profile_caption": "选填。整理保险状态、主要需求、用药与 ZIP Code，帮助系统快速掌握重点。",
+        "ai_btn": "💬 直接询问 AI",
+        "ai_caption": "不填写询问单也可以直接开始咨询 Medicare 问题。",
+        "scope_title": "ℹ️ Medicare Compass 可以与不能协助的范围",
+        "scope_can": "**✓ 我们可以协助**\n\n- 说明 Medicare 基本概念与申请时间\n- 整理当前状况与想确认的问题\n- 准备与 SHIP 顾问咨询前需要的信息\n- 导向 Medicare / SSA / SHIP 官方资源",
+        "scope_cannot": "**✗ 我们不会**\n\n- 取代 Medicare、SSA、SHIP 或专业顾问\n- 代替您做投保或方案决定\n- 保证资格、保障范围或费用\n- 永久保存询问单或对话记录",
+    },
+    "Español": {
+        "nav_profile": "📝 Datos del cuestionario",
+        "persona_title": "### ¿Para quién es esta consulta de Medicare?",
+        "persona_label": "Persona consultada:",
+        "persona_self": "👤 Soy la persona solicitante",
+        "persona_helping": "👥 Estoy ayudando o actuando en nombre de otra persona",
+        "action_title": "### ¿Qué desea hacer?",
+        "profile_btn": "📝 Completar / editar cuestionario",
+        "profile_caption": "Opcional. Organice cobertura, objetivos, medicamentos y código ZIP para que el sistema identifique rápidamente los puntos clave.",
+        "ai_btn": "💬 Preguntar directamente a la IA",
+        "ai_caption": "Puede hacer preguntas sobre Medicare sin completar el cuestionario.",
+        "scope_title": "ℹ️ Lo que Medicare Compass puede y no puede hacer",
+        "scope_can": "**✓ Podemos ayudarle a**\n\n- Explicar conceptos de Medicare y plazos de inscripción\n- Organizar su situación y preguntas\n- Preparar información para una consulta con SHIP\n- Dirigirle a recursos oficiales de Medicare / SSA / SHIP",
+        "scope_cannot": "**✗ No hacemos lo siguiente**\n\n- Sustituir a Medicare, SSA, SHIP o a un profesional autorizado\n- Tomar decisiones de inscripción por usted\n- Garantizar elegibilidad, cobertura o costos\n- Guardar permanentemente el cuestionario o el historial de conversación",
+    },
+    "한국어": {
+        "nav_profile": "📝 설문 정보",
+        "persona_title": "### 누구를 위한 Medicare 상담인가요?",
+        "persona_label": "상담 대상:",
+        "persona_self": "👤 신청자 본인입니다",
+        "persona_helping": "👥 다른 사람을 돕거나 대리하고 있습니다",
+        "action_title": "### 무엇을 하시겠습니까?",
+        "profile_btn": "📝 설문 작성 / 수정",
+        "profile_caption": "선택 사항입니다. 보험 상태, 주요 목표, 복용약 및 ZIP Code를 정리하여 시스템이 핵심 내용을 빠르게 파악하도록 도와줍니다.",
+        "ai_btn": "💬 AI에 바로 질문",
+        "ai_caption": "설문을 작성하지 않아도 Medicare 질문을 바로 시작할 수 있습니다.",
+        "scope_title": "ℹ️ Medicare Compass가 할 수 있는 일과 할 수 없는 일",
+        "scope_can": "**✓ 도움을 드릴 수 있는 항목**\n\n- Medicare 기본 개념과 가입 시기 설명\n- 현재 상황과 질문 정리\n- SHIP 상담 준비 정보 정리\n- Medicare / SSA / SHIP 공식 자료 안내",
+        "scope_cannot": "**✗ 제공하지 않는 항목**\n\n- Medicare, SSA, SHIP 또는 전문가를 대체하는 서비스\n- 사용자를 대신한 가입 결정\n- 자격, 보장 범위 또는 비용 보장\n- 설문이나 대화 기록의 영구 저장",
+    },
+}
