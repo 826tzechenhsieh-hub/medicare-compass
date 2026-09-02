@@ -5,7 +5,7 @@ import re
 import json
 import html
 from core.translations import (
-    guide_labels, q_caption_map, btn1_map, btn2_map, welcome_guide_map,
+    guide_labels, q_caption_map, welcome_guide_map,
     input_placeholder_first_map, input_placeholder_followup_map,
     default_upload_msg_map, spinner_msg_map, timeline_template_map,
     tip_suffix_map, summary_title_map, ui_bottom_map, official_links_map,
@@ -343,13 +343,6 @@ def render(current_lang, uploaded_file):
     top_container = st.container()
 
     with top_container:
-        st.markdown("""
-            <div id="medicare-top" class="header-box">
-                <span class="main-title">🧭 Medicare Compass</span>
-                <div class="sub-title">Powered by CareCompass™</div>
-            </div>
-        """, unsafe_allow_html=True)
-        st.divider()
 
         # --- 歡迎卡片 (Welcome Banner) 開始 ---
         expander_title = "👋 Welcome / 歡迎 / Bienvenido / 환영합니다"
@@ -400,8 +393,6 @@ def render(current_lang, uploaded_file):
                 st.error(g_ui["medigap"])
         st.markdown("---")
 
-    if "user_role_type" not in st.session_state:
-        st.session_state.user_role_type = "self"
     if "messages" not in st.session_state:
         st.session_state.messages = []
         # --- 新增這兩行來記憶地理資訊 ---
@@ -425,19 +416,6 @@ def render(current_lang, uploaded_file):
 
     if len(st.session_state.messages) == 0:
         st.caption(q_caption_map.get(current_lang, q_caption_map["English"]))
-        col_start1, col_start2 = st.columns(2)
-        with col_start1:
-            btn1_label = btn1_map.get(current_lang, btn1_map["English"])
-            btn_type1 = "primary" if st.session_state.user_role_type == "self" else "secondary"
-            if st.button(btn1_label, use_container_width=True, type=btn_type1):
-                st.session_state.user_role_type = "self"
-                st.rerun()
-        with col_start2:
-            btn2_label = btn2_map.get(current_lang, btn2_map["English"])
-            btn_type2 = "primary" if st.session_state.user_role_type == "family" else "secondary"
-            if st.button(btn2_label, use_container_width=True, type=btn_type2):
-                st.session_state.user_role_type = "family"
-                st.rerun()
 
     # --------------------------------------------------
     # 對話輸入區
@@ -465,8 +443,8 @@ def render(current_lang, uploaded_file):
 
         role_prefix = (
             "[Applying for Myself] "
-            if st.session_state.get("user_role_type") == "self"
-            else "[Helping Family/Parents] "
+            if st.session_state.get("persona", "self") == "self"
+            else "[Helping Someone Else] "
         )
 
         prompt = role_prefix + raw_prompt
@@ -539,8 +517,8 @@ def render(current_lang, uploaded_file):
         if input_prompt:
             role_prefix = (
                 "[Applying for Myself] "
-                if st.session_state.get("user_role_type") == "self"
-                else "[Helping Family/Parents] "
+                if st.session_state.get("persona", "self") == "self"
+                else "[Helping Someone Else] "
             )
 
             prompt = role_prefix + input_prompt
@@ -695,7 +673,7 @@ def render(current_lang, uploaded_file):
 
     applicant_value = (
         uib["applicant_self"]
-        if st.session_state.get("user_role_type", "self") == "self"
+        if st.session_state.get("persona", "self") == "self"
         else uib["applicant_family"]
     )
 
