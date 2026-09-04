@@ -13,8 +13,9 @@ from core.translations import (
 
 DEFAULT_PROFILE_DATA = {
     "coverage_code": "original_medicare",
-    "monthly_premium": 0,
+    "monthly_premium": None,
     "priority_code": "lower_premium",
+    "priority_other": "",
     "health_notes": "",
     "medications": "",
     "pharmacy": "",
@@ -89,7 +90,7 @@ def render_step_1(lang, ui):
         ui["premium_label"],
         min_value=0,
         max_value=5000,
-        value=int(data.get("monthly_premium", 0)),
+        value=data.get("monthly_premium"),
         step=10,
         key="profile_monthly_premium",
     )
@@ -153,6 +154,19 @@ def render_step_2(lang, ui):
     )
 
     data["priority_code"] = selected_priority
+
+    if selected_priority == "other":
+        priority_other = st.text_area(
+            ui["priority_other_label"],
+            value=data.get("priority_other", ""),
+            placeholder=ui["priority_other_placeholder"],
+            height=120,
+            key="profile_priority_other",
+        )
+
+        data["priority_other"] = priority_other
+    else:
+        data["priority_other"] = ""
 
     notes = st.text_area(
         ui["notes_label"],
@@ -272,10 +286,13 @@ def render_step_4(lang, ui):
         "—",
     )
 
-    priority_display = profile_priority_labels[lang].get(
-        data.get("priority_code"),
-        "—",
-    )
+    if data.get("priority_code") == "other":
+        priority_display = data.get("priority_other") or "—"
+    else:
+        priority_display = profile_priority_labels[lang].get(
+            data.get("priority_code"),
+            "—",
+        )
 
     additional_items = []
 
@@ -297,6 +314,14 @@ def render_step_4(lang, ui):
     if not additional_display:
         additional_display = ui["none_selected"]
 
+    premium_value = data.get("monthly_premium")
+
+    premium_display = (
+        "—"
+        if premium_value is None
+        else f"${premium_value}"
+    )
+
     with st.container(border=True):
         st.markdown(
             f"**{ui['persona_label']}：** {persona_display}"
@@ -305,8 +330,7 @@ def render_step_4(lang, ui):
             f"**{ui['coverage_summary']}：** {coverage_display}"
         )
         st.markdown(
-            f"**{ui['premium_summary']}：** "
-            f"${data.get('monthly_premium', 0)}"
+            f"**{ui['premium_summary']}：** {premium_display}"
         )
         st.markdown(
             f"**{ui['additional_summary']}：** {additional_display}"

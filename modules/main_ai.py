@@ -10,7 +10,7 @@ from core.translations import (
     default_upload_msg_map, spinner_msg_map, timeline_template_map,
     tip_suffix_map, summary_title_map, ui_bottom_map, official_links_map,
     location_tracker_map, journey_buttons_map, ship_import_map,
-    end_chat_btn_map
+    end_chat_btn_map, profile_loaded_map
 )
 from core.ai_engine import generate_clean_response, extract_ship_fields
 from core.response_cleaner import clean_response
@@ -339,7 +339,93 @@ def scroll_to_message(anchor_id):
         unsafe_allow_javascript=True,
     )
 
+def build_questionnaire_context():
+    """
+    將已完成的詢問單整理成 Main AI 可使用的背景資料。
+    不加入聊天紀錄，也不修改 profile_data。
+    """
+
+    if not st.session_state.get("profile_completed", False):
+        return ""
+
+    data = st.session_state.get("profile_data", {})
+
+    if not isinstance(data, dict):
+        return ""
+
+    coverage_map = {
+        "original_medicare": "Original Medicare",
+        "medicare_advantage": "Medicare Advantage",
+        "part_d": "Medicare Part D",
+        "employer_coverage": "Employer / Retiree Group Health Coverage",
+        "not_enrolled": "Not yet enrolled in Medicare",
+    }
+
+    priority_map = {
+        "lower_premium": "Lower monthly fixed premium costs",
+        "lower_risk": "Lower out-of-pocket catastrophic risk",
+        "broad_network": "Keep broad doctor / specialist access",
+        "drug_cost": "Reduce prescription drug costs / Explore Extra Help",
+    }
+
+    premium = data.get("monthly_premium")
+
+    lines = [
+        f"Consultation target: "
+        f"{'self' if st.session_state.get('persona', 'self') == 'self' else 'someone else'}",
+
+        f"Current coverage type: "
+        f"{coverage_map.get(data.get('coverage_code'), 'Not provided')}",
+
+        f"Monthly premium: "
+        f"{'Not provided' if premium is None else f'${premium}'}",
+
+        f"Primary priority: "
+        f"{priority_map.get(data.get('priority_code'), 'Not provided')}",
+    ]
+
+    if data.get("has_part_ab"):
+        lines.append(
+            "Medicare Part A and/or Part B: selected. "
+            "Exact Part A versus Part B enrollment is NOT specified."
+        )
+
+    if data.get("has_commercial"):
+        lines.append(
+            "Employer / union group health coverage: selected."
+        )
+
+    if data.get("has_low_income"):
+        lines.append(
+            "Medicaid / Extra Help / low-income assistance: selected."
+        )
+
+    if data.get("health_notes"):
+        lines.append(
+            f"Health / special considerations: {data['health_notes']}"
+        )
+
+    if data.get("zip_code"):
+        lines.append(
+            f"ZIP Code: {data['zip_code']}"
+        )
+
+    if data.get("medications"):
+        lines.append(
+            f"Current medications: {data['medications']}"
+        )
+
+    if data.get("pharmacy"):
+        lines.append(
+            f"Preferred pharmacy / health system: {data['pharmacy']}"
+        )
+
+    return "\n".join(lines)
+
 def render(current_lang, uploaded_file):
+
+    questionnaire_context = build_questionnaire_context()
+
     top_container = st.container()
 
     with top_container:
@@ -359,6 +445,14 @@ def render(current_lang, uploaded_file):
             </div>
             """, unsafe_allow_html=True)
         # --- 歡迎卡片 (Welcome Banner) 結束 ---
+
+        if questionnaire_context:
+            loaded_text = profile_loaded_map.get(
+                current_lang,
+                profile_loaded_map["English"]
+            )
+
+            st.success(loaded_text)
      
         # Task 3.3: 3 步驟用戶旅程快捷按鈕 (多語言版)
         jb = journey_buttons_map.get(current_lang, journey_buttons_map["English"])
@@ -576,10 +670,20 @@ def render(current_lang, uploaded_file):
                             end_m_name=calendar.month_name[end_m], end_y=end_y, end_day=calendar.monthrange(end_y, end_m)[1]
                         )
                     except Exception:
-                        final_output = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                        final_output = generate_clean_response(
+                            user_text,
+                            target_lang=current_lang,
+                            img_data=uploaded_file,
+                            questionnaire_context=questionnaire_context
+                        )
                 else:
                     # 如果不是問生日，就走原本呼叫 AI 聊天的邏輯
-                    raw_response = generate_clean_response(user_text, target_lang=current_lang, img_data=uploaded_file)
+                    raw_response = generate_clean_response(
+                        user_text,
+                        target_lang=current_lang,
+                        img_data=uploaded_file,
+                        questionnaire_context=questionnaire_context
+                    )
                     tip_suffix = tip_suffix_map.get(current_lang, tip_suffix_map["English"])
                     final_output = raw_response.strip() + tip_suffix
 
