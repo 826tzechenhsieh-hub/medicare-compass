@@ -19,7 +19,12 @@ def configure_gemini(user_api_key=None):
     
     return False
 
-def generate_clean_response(user_input, target_lang="English", img_data=None):
+def generate_clean_response(
+    user_input,
+    target_lang="English",
+    img_data=None,
+    questionnaire_context=""
+):
     """呼叫 Gemini 模型並強制以目標語言輸出乾淨的結果"""
     preferred_models = [
         "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", 
@@ -61,6 +66,24 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
     # 執行攔截 (抓取這次使用者輸入的文字)
     update_location_memory(user_input)
 
+    if "[Helping Someone Else]" in user_input:
+        persona_context = """
+CONSULTATION ROLE:
+The user is helping another Medicare applicant or acting on that person's behalf.
+
+- Address the helper normally, but refer to the Medicare beneficiary in the third person.
+- Use terms such as "the applicant", "the person you are helping", or the equivalent in the selected language.
+- Do NOT refer to the applicant's Medicare coverage, medications, eligibility, premiums, or enrollment decisions as if they belong to the helper.
+- In Chinese responses, prefer terms such as「申請人」、「對方」or「他／她」when referring to the Medicare beneficiary.
+- Do not assume that facts about the helper apply to the applicant unless explicitly stated.
+"""
+    else:
+        persona_context = """
+CONSULTATION ROLE:
+The user is the Medicare applicant.
+Use a direct second-person perspective when referring to their Medicare situation.
+"""
+
     # 🔥 準備動態地理資訊字串 (Context Injection)
     location_context = ""
     if st.session_state.get("user_zip") or st.session_state.get("user_state"):
@@ -69,12 +92,31 @@ def generate_clean_response(user_input, target_lang="English", img_data=None):
         if st.session_state.get("user_zip"): locs.append(f"Zip: {st.session_state.user_zip}")
         location_context = f"\n\nUSER LOCATION CONTEXT: {', '.join(locs)}. You MUST tailor your Medicare advice (like Advantage plans and Medigap rules) to this specific location."
 
+    questionnaire_instruction = ""
+
+    if questionnaire_context:
+        questionnaire_instruction = (
+            "\n\nCONFIRMED QUESTIONNAIRE CONTEXT:\n"
+            f"{questionnaire_context}\n\n"
+            "QUESTIONNAIRE CONTEXT RULES:\n"
+            "- This information was directly provided and confirmed by the user in the questionnaire.\n"
+            "- Use it as background context when it is relevant to the user's question.\n"
+            "- Do not ask the user to repeat information that is already clearly provided here.\n"
+            "- Do not invent missing questionnaire information.\n"
+            "- Do not assume that 'Part A and/or Part B selected' means the user has both Part A and Part B.\n"
+            "- If the user's current message explicitly corrects questionnaire information, use the newer explicit information for the current answer.\n"
+            "- Do NOT modify or claim to modify the saved questionnaire data.\n"
+            "- Do not unnecessarily repeat the full questionnaire in the response.\n"
+        )
+
     # 將 location_context 動態塞入系統提示詞
     strict_system_instruction = (
         f"You are Medicare Compass, an expert assistant.\n"
         f"CRITICAL RULE: You MUST respond ENTIRELY in {target_lang}. "
         f"All headings, table headers, bullet points, advice, and tips MUST be accurately translated into {target_lang}.\n"
-        f"{location_context}\n\n" # <--- 注入在這裡
+        f"{location_context}\n\n" 
+        f"{persona_context}\n\n"
+        f"{questionnaire_instruction}\n\n"
 
         "Task: Present Medicare choices concisely.\n\n"
 
