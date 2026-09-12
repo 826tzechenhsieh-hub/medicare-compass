@@ -1520,3 +1520,71 @@ router_labels = {
         "scope_cannot": "**✗ 제공하지 않는 항목**\n\n- Medicare, SSA, SHIP 또는 전문가를 대체하는 서비스\n- 사용자를 대신한 가입 결정\n- 자격, 보장 범위 또는 비용 보장\n- 설문이나 대화 기록의 영구 저장",
     },
 }
+
+
+feedback_labels = {
+    "English": {
+        "title": "💬 Was this summary helpful?",
+        "caption": "Your feedback helps us improve Medicare Compass.",
+        "rating_label": "How would you rate this summary?",
+        "helpful": "Helpful",
+        "neutral": "Neutral",
+        "unclear": "Unclear",
+        "comment_label": "Anything you'd like us to improve?",
+        "comment_placeholder": "Optional — tell us what was helpful, confusing, or missing.",
+        "submit": "Submit Feedback",
+        "saved": "Thank you! Your feedback has been saved for this session.",
+    },
+
+    "Español": {
+        "title": "💬 ¿Te resultó útil este resumen?",
+        "caption": "Tus comentarios nos ayudan a mejorar Medicare Compass.",
+        "rating_label": "¿Cómo calificarías este resumen?",
+        "helpful": "Útil",
+        "neutral": "Neutral",
+        "unclear": "Poco claro",
+        "comment_label": "¿Hay algo que te gustaría que mejoráramos?",
+        "comment_placeholder": "Opcional — dinos qué fue útil, confuso o qué faltó.",
+        "submit": "Enviar comentarios",
+        "saved": "¡Gracias! Tus comentarios se guardaron durante esta sesión.",
+    },
+
+    "繁體中文": {
+        "title": "💬 這份摘要對您有幫助嗎？",
+        "caption": "您的回饋可以幫助我們改善 Medicare Compass。",
+        "rating_label": "您覺得這份摘要如何？",
+        "helpful": "有幫助",
+        "neutral": "普通",
+        "unclear": "不清楚",
+        "comment_label": "有什麼地方希望我們改善嗎？",
+        "comment_placeholder": "選填－歡迎告訴我們哪些內容有幫助、不清楚，或有所缺漏。",
+        "submit": "送出回饋",
+        "saved": "謝謝！您的回饋已暫存在本次 Session 中。",
+    },
+
+    "簡體中文": {
+        "title": "💬 这份摘要对您有帮助吗？",
+        "caption": "您的反馈可以帮助我们改进 Medicare Compass。",
+        "rating_label": "您觉得这份摘要如何？",
+        "helpful": "有帮助",
+        "neutral": "一般",
+        "unclear": "不清楚",
+        "comment_label": "有什么地方希望我们改进吗？",
+        "comment_placeholder": "选填－欢迎告诉我们哪些内容有帮助、不清楚，或有所遗漏。",
+        "submit": "提交反馈",
+        "saved": "谢谢！您的反馈已暂存在本次 Session 中。",
+    },
+
+    "한국어": {
+        "title": "💬 이 요약이 도움이 되었나요?",
+        "caption": "귀하의 피드백은 Medicare Compass 개선에 도움이 됩니다.",
+        "rating_label": "이 요약을 어떻게 평가하시겠습니까?",
+        "helpful": "도움이 됨",
+        "neutral": "보통",
+        "unclear": "불명확함",
+        "comment_label": "개선했으면 하는 점이 있나요?",
+        "comment_placeholder": "선택 사항 — 도움이 된 점, 혼란스러운 점 또는 빠진 내용을 알려주세요.",
+        "submit": "피드백 제출",
+        "saved": "감사합니다! 피드백이 현재 세션에 저장되었습니다.",
+    },
+}
