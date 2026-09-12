@@ -19,6 +19,30 @@ from core.config import MEDICARE_INFO_YEAR
 # 🚨 這裡的路徑已經從 pages 改成 views，避免 Streamlit 自動生成選單
 from modules import main_ai, switch_assist, ship_prep, calendar_ics, profile
 
+def persistent_radio(label, options, *, key, on_change=None, **kwargs):
+    """Keep navigation state independent of translated widget identities.
+
+    Only a user selection updates the durable value. Recreating or hiding a
+    widget must not erase the current route, language, or consultation target.
+    """
+    widget_key = f"_widget_{key}"
+    st.session_state[widget_key] = st.session_state[key]
+
+    def save_selection():
+        st.session_state[key] = st.session_state[widget_key]
+        if on_change is not None:
+            on_change()
+
+    st.radio(
+        label,
+        options,
+        key=widget_key,
+        on_change=save_selection,
+        **kwargs,
+    )
+    return st.session_state[key]
+
+
 # --------------------------------------------------
 # Page Configuration & Custom CSS
 # --------------------------------------------------
@@ -63,6 +87,7 @@ if "_do_full_reset" in st.session_state:
     st.session_state["persona"] = "self"
     st.session_state["persona_selector"] = "self"
     st.session_state["selected_app_mode"] = None
+    st.session_state["_scroll_to_top"] = True
 
 # --------------------------------------------------
 # Global Route State
@@ -71,12 +96,15 @@ if "_do_full_reset" in st.session_state:
 if "selected_app_mode" not in st.session_state:
     st.session_state["selected_app_mode"] = None
 
-# 主畫面的入口按鈕不能直接修改 radio 的 key，
-# 所以先暫存在 pending，下一次 rerun 再切換。
+# --------------------------------------------------
+# Pending Route
+# --------------------------------------------------
 if "_pending_app_mode" in st.session_state:
-    st.session_state["selected_app_mode"] = st.session_state.pop(
-        "_pending_app_mode"
-    )
+
+    pending_mode = st.session_state.pop("_pending_app_mode")
+
+    # 更新持久路由；選單在渲染時同步，不讓翻譯後的 widget 決定頁面。
+    st.session_state["selected_app_mode"] = pending_mode
 
 # --------------------------------------------------
 # Global Persona State
@@ -187,7 +215,7 @@ with st.sidebar:
     current_ui = sidebar_labels[st.session_state["selected_language"]]
     st.markdown(current_ui["header"])
 
-    current_lang = st.radio(
+    current_lang = persistent_radio(
         current_ui["select"],
         ["English", "Español", "繁體中文", "簡體中文", "한국어"],
         key="selected_language"
@@ -203,14 +231,14 @@ with st.sidebar:
     st.markdown(f"### {nav_title_map[current_lang]}")
 
     nav_display = {
-        "MAIN_AI": m1_text[current_lang],
         "PROFILE": router_ui["nav_profile"],
+        "MAIN_AI": m1_text[current_lang],
         "SWITCH_ASSISTANT": m2_text[current_lang],
         "SHIP_PREP": m3_text[current_lang],
         "CALENDAR_ICS": m4_text[current_lang],
     }
 
-    app_mode = st.radio(
+    app_mode = persistent_radio(
         nav_label_map[current_lang],
         list(nav_display.keys()),
         format_func=lambda mode: nav_display[mode],
@@ -320,6 +348,13 @@ with st.sidebar:
                 "ship_auto_zip",
                 "ship_auto_state",
                 "ship_auto_notes",
+
+                # Feedback
+                "feedback_rating",
+                "feedback_comment",
+                "feedback_submitted",
+                "personalized_feedback",
+
                 "_scroll_to_message",
                 "_initial_top_done",
             ]
@@ -328,6 +363,31 @@ with st.sidebar:
                 st.session_state.pop(key, None)
 
             st.rerun()
+
+    # ==================================================
+    # Information Base
+    # Sidebar 最下方
+    # ==================================================
+    st.markdown("---")
+
+    sidebar_header_ui = header_labels.get(
+        current_lang,
+        header_labels["English"]
+    )
+
+    st.markdown(
+        f"""
+        <div class="info-base-badge">
+            <div>
+                {sidebar_header_ui["info_base"].format(year=MEDICARE_INFO_YEAR)}
+            </div>
+            <div class="info-base-reviewed">
+                {sidebar_header_ui["last_reviewed"]}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 # --------------------------------------------------
 # 動態字體大小注入
@@ -368,31 +428,32 @@ st.markdown(
 <div class="sub-title">Powered by CareCompass™</div>
 </div>
 </div>
-<div class="info-base-badge">
-<div>{header_ui["info_base"].format(year=MEDICARE_INFO_YEAR)}</div>
-<div class="info-base-reviewed">{header_ui["last_reviewed"]}</div>
-</div>
 </div>""",
     unsafe_allow_html=True,
 )
 
-# 全域諮詢對象
-st.markdown(router_ui["persona_title"])
+# --------------------------------------------------
+# Consultation Target
+# 只在首頁與 Main AI 顯示
+# --------------------------------------------------
+if app_mode is None or app_mode == "MAIN_AI":
 
-st.radio(
-    router_ui["persona_label"],
-    ["self", "helping_others"],
-    format_func=lambda value: (
-        router_ui["persona_self"]
-        if value == "self"
-        else router_ui["persona_helping"]
-    ),
-    key="persona_selector",
-    horizontal=True,
-    on_change=handle_persona_change,
-)
+    st.markdown(router_ui["persona_title"])
 
-st.divider()
+    persistent_radio(
+        router_ui["persona_label"],
+        ["self", "helping_others"],
+        format_func=lambda value: (
+            router_ui["persona_self"]
+            if value == "self"
+            else router_ui["persona_helping"]
+        ),
+        key="persona_selector",
+        horizontal=True,
+        on_change=handle_persona_change,
+    )
+
+    st.divider()
 
 # --------------------------------------------------
 # 頁面路由派發
@@ -471,6 +532,9 @@ elif app_mode == "CALENDAR_ICS":
 # --------------------------------------------------
 # Global Footer Disclaimer
 # --------------------------------------------------
+
+if st.session_state.pop("_scroll_to_top", False):
+    main_ai.scroll_to_medicare_top()
 
 st.markdown("---")
 

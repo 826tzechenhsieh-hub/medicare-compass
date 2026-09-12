@@ -116,7 +116,7 @@
     scroll-margin-top: 70px;
 }
 .main-title {
-    font-size: 2.3rem !important;
+    font-size: 52px !important;
     font-weight: bold;
     color: #1E3A8A;
 }
@@ -197,15 +197,18 @@
    v1.4 Global information base + disclaimer
    ================================================== */
 .info-base-badge {
-    display: inline-block;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
     margin-top: 12px;
-    padding: 7px 14px;
+    padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid #CBD5E1;
     background-color: #F8FAFC;
     color: #334155 !important;
     font-size: 0.88rem;
     font-weight: 600;
+    text-align: center;
 }
 
 .info-base-reviewed {
