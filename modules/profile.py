@@ -379,7 +379,12 @@ def render_step_4(lang, ui):
             use_container_width=True,
             key="profile_save",
         ):
+            # 標記 Questionnaire 已完成
             st.session_state.profile_completed = True
+
+            # 下一次 rerun 後直接進入 Main AI
+            st.session_state["_pending_app_mode"] = "MAIN_AI"
+
             st.rerun()
 
 

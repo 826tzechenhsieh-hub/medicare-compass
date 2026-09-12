@@ -4,6 +4,7 @@ import datetime
 import re
 import json
 import html
+from uuid import uuid4
 from core.translations import (
     guide_labels, q_caption_map, welcome_guide_map,
     input_placeholder_first_map, input_placeholder_followup_map,
@@ -14,6 +15,12 @@ from core.translations import (
 )
 from core.ai_engine import generate_clean_response, extract_ship_fields
 from core.response_cleaner import clean_response
+from core.bilingual_output import (
+    supports_bilingual,
+    generate_bilingual_version,
+    get_cached_bilingual,
+)
+from modules import personalized_feedback
 
 # --- 新增的日期動態解析函數 (Task 4.3) ---
 def extract_birth_month_year(text):
@@ -189,7 +196,24 @@ def build_key_decision_points(text, max_points=6):
 
     return points
 
+def _normalize_bilingual_preview(markdown_text):
+    """
+    只調整網頁上的 Bilingual Preview 標題大小。
+    不影響 TXT / Print / PDF 匯出的原始內容。
+    """
+    lines = []
 
+    for line in str(markdown_text or "").splitlines():
+        if line.startswith("# "):
+            line = "### " + line[2:]
+        elif line.startswith("## "):
+            line = "#### " + line[3:]
+        elif line.startswith("### "):
+            line = "##### " + line[4:]
+
+        lines.append(line)
+
+    return "\n".join(lines)
 
 def render_print_button(markdown_text, button_label, document_title):
     """用瀏覽器原生列印視窗列印指定 Markdown，可另存為 PDF。"""
@@ -285,59 +309,58 @@ def transfer_conversation_to_ship(current_lang):
 
     return fields
 
-def scroll_to_medicare_top():
-    st.html(
-        """
-        <script>
-        (() => {
-            if ("scrollRestoration" in history) { history.scrollRestoration = "manual"; }
-            function goTop() {
-                const target = document.getElementById("medicare-top");
-                if (target) {
-                    target.scrollIntoView({ behavior: "auto", block: "start" });
-                }
+def scroll_to_anchor(anchor_id):
+    """Scroll the actual Streamlit container after its content has rendered."""
+    script = """
+(() => {
+    // Cancel any request left over from the preceding render.
+    window.__medicareScrollCancel?.();
+    const anchorId = __ANCHOR_ID__;
+    const timers = [];
+    const events = ["wheel", "touchstart", "pointerdown", "keydown"];
+    let cancelled = false;
+
+    function cancel() {
+        cancelled = true;
+        timers.forEach(clearTimeout);
+        events.forEach(event => document.removeEventListener(event, cancel, true));
+        if (window.__medicareScrollCancel === cancel) {
+            delete window.__medicareScrollCancel;
+        }
+    }
+
+    window.__medicareScrollCancel = cancel;
+    events.forEach(event => document.addEventListener(event, cancel, {capture: true, passive: true}));
+
+    // Retry briefly for Streamlit's asynchronous layout; never fight user scrolling.
+    [0, 100, 300, 700, 1200].forEach(delay => {
+        timers.push(setTimeout(() => {
+            if (cancelled) return;
+            const target = document.getElementById(anchorId);
+            if (target) {
+                // Streamlit scrolls an inner container, not necessarily window.
+                target.scrollIntoView({behavior: "instant", block: "start", inline: "nearest"});
             }
-            setTimeout(goTop, 400);
-        })();
-        </script>
-        """,
+        }, delay));
+    });
+    timers.push(setTimeout(cancel, 1500));
+})();
+"""
+    script = script.replace("__ANCHOR_ID__", json.dumps(anchor_id))
+    # A fresh request must also execute when two assessments use the same anchor.
+    st.html(
+        f"<script>/* {uuid4().hex} */\n{script}</script>",
         unsafe_allow_javascript=True,
     )
 
+
+def scroll_to_medicare_top():
+    scroll_to_anchor("medicare-top")
+
+
 def scroll_to_message(anchor_id):
-    st.html(
-        f"""
-        <script>
-        (() => {{
-            const anchorId = "{anchor_id}";
-            let lastHeight = -1;
-            let stableFrames = 0;
-            let attempts = 0;
-            function waitUntilStable() {{
-                const target = document.getElementById(anchorId);
-                const currentHeight = document.documentElement.scrollHeight;
-                if (currentHeight === lastHeight) {{
-                    stableFrames++;
-                }} else {{
-                    stableFrames = 0;
-                    lastHeight = currentHeight;
-                }}
-                attempts++;
-                if (target && stableFrames >= 45) {{
-                    if (document.activeElement) {{ document.activeElement.blur(); }}
-                    const y = target.getBoundingClientRect().top + window.scrollY - 90;
-                    window.scrollTo({{ top: Math.max(0, y), behavior: "auto" }});
-                    return;
-                }}
-                if (attempts < 300) {{ requestAnimationFrame(waitUntilStable); }}
-            }}
-            if ("scrollRestoration" in history) {{ history.scrollRestoration = "manual"; }}
-            requestAnimationFrame(waitUntilStable);
-        }})();
-        </script>
-        """,
-        unsafe_allow_javascript=True,
-    )
+    scroll_to_anchor(anchor_id)
+
 
 def build_questionnaire_context():
     """
@@ -643,6 +666,12 @@ def render(current_lang, uploaded_file):
             st.session_state.messages.append({"role": "user", "content": user_text})
             user_message_index = len(st.session_state.messages) - 1
             st.session_state["_scroll_to_message"] = f"message-{user_message_index}"
+            st.markdown(f'<div id="message-{user_message_index}" class="chat-anchor"></div>', unsafe_allow_html=True)
+
+        # Render the new anchor immediately, before waiting for the AI reply.
+        anchor_id = st.session_state.get("_scroll_to_message")
+        if anchor_id:
+            scroll_to_message(anchor_id)
 
         with st.chat_message("user"):
             st.markdown(user_text)
@@ -956,22 +985,91 @@ def render(current_lang, uploaded_file):
                 s_title,
             )
 
-        # 第二排：SHIP 說明文字
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.caption(ship_map["help"])
+        # --------------------------------------------------
+        # Bilingual Version
+        # 非英文模式才顯示
+        # --------------------------------------------------
+        if supports_bilingual(current_lang):
 
-        # 第三排：SHIP 按鈕獨佔整行
-        summary_ship_clicked = st.button(
-            ship_map["btn"],
-            type="primary",
-            use_container_width=True,
-            key="summary_ship_import",
-        )
+            # --------------------------------------------------
+            # 先確認這份 Summary 是否已經有雙語 Cache
+            # --------------------------------------------------
+            bilingual_summary = get_cached_bilingual(
+                "summary",
+                short_summary_text,
+                current_lang,
+            )
 
-        if summary_ship_clicked:
-            with st.spinner(ship_map["extracting"]):
-                transfer_conversation_to_ship(current_lang)
-            st.success(ship_map["success"])
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # --------------------------------------------------
+            # 產生雙語版本
+            # 只有使用者真的按下去時才呼叫 Gemini
+            # --------------------------------------------------
+            generate_bilingual_clicked = st.button(
+                "🌐 Generate Bilingual Version",
+                use_container_width=True,
+                key="summary_generate_bilingual",
+            )
+
+            if generate_bilingual_clicked:
+                try:
+                    with st.spinner("Generating bilingual version..."):
+
+                        bilingual_summary = generate_bilingual_version(
+                            source_text=short_summary_text,
+                            current_lang=current_lang,
+                            cache_name="summary",
+                        )
+
+                except Exception as e:
+                    st.error(
+                        f"Unable to generate bilingual version: {e}"
+                    )
+
+            # --------------------------------------------------
+            # 已產生過 → 顯示 Preview + 匯出功能
+            # --------------------------------------------------
+            if bilingual_summary:
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("---")
+
+                st.markdown("### 🌐 Bilingual Version")
+
+                # --------------------------------------------------
+                # Bilingual Preview
+                # --------------------------------------------------
+                with st.container(border=True):
+                    st.markdown(
+                        _normalize_bilingual_preview(
+                            bilingual_summary
+                        )
+                    )
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # --------------------------------------------------
+                # Bilingual TXT / Print PDF
+                # --------------------------------------------------
+                bilingual_col1, bilingual_col2 = st.columns(2)
+
+                with bilingual_col1:
+                    st.download_button(
+                        "📄 Bilingual TXT",
+                        data=bilingual_summary,
+                        file_name="medicare_summary_bilingual.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                        key="summary_bilingual_download_txt",
+                    )
+
+                with bilingual_col2:
+                    render_print_button(
+                        bilingual_summary,
+                        "🖨️ Bilingual Print / PDF",
+                        f"{s_title} - Bilingual",
+                    )
 
     # ==================================================
     # Tab 2：Full Conversation Log
@@ -998,7 +1096,7 @@ def render(current_lang, uploaded_file):
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # 第一排：TXT 與 PDF 各佔一半
+        # Full Conversation Log：TXT 與 PDF
         log_col1, log_col2 = st.columns(2)
 
         with log_col1:
@@ -1017,22 +1115,116 @@ def render(current_lang, uploaded_file):
                 uib["full_log_title"],
             )
 
-        # 第二排：SHIP 說明文字
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.caption(ship_map["help"])
+        # --------------------------------------------------
+        # Full Conversation - Bilingual Version
+        # 非英文模式才顯示
+        # --------------------------------------------------
+        if supports_bilingual(current_lang):
 
-        # 第三排：SHIP 按鈕獨佔整行
-        full_ship_clicked = st.button(
-            ship_map["btn"],
-            type="primary",
-            use_container_width=True,
-            key="full_log_ship_import",
-        )
+            # --------------------------------------------------
+            # 先確認這份 Full Conversation 是否已有雙語 Cache
+            # --------------------------------------------------
+            bilingual_full_log = get_cached_bilingual(
+                "full_log",
+                full_log_markdown,
+                current_lang,
+            )
 
-        if full_ship_clicked:
-            with st.spinner(ship_map["extracting"]):
-                transfer_conversation_to_ship(current_lang)
-            st.success(ship_map["success"])
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # --------------------------------------------------
+            # 只有使用者真的按下去時才呼叫 Gemini
+            # --------------------------------------------------
+            generate_full_log_bilingual = st.button(
+                "🌐 Generate Bilingual Version",
+                use_container_width=True,
+                key="full_log_generate_bilingual",
+            )
+
+            if generate_full_log_bilingual:
+                try:
+                    with st.spinner("Generating bilingual version..."):
+                        bilingual_full_log = generate_bilingual_version(
+                            source_text=full_log_markdown,
+                            current_lang=current_lang,
+                            cache_name="full_log",
+                        )
+
+                except Exception as e:
+                    st.error(
+                        f"Unable to generate bilingual version: {e}"
+                    )
+
+            # --------------------------------------------------
+            # 已產生過 → 顯示 Preview + 匯出功能
+            # --------------------------------------------------
+            if bilingual_full_log:
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("---")
+                st.markdown("### 🌐 Bilingual Version")
+
+                # Bilingual Preview
+                with st.container(border=True):
+                    st.markdown(
+                        _normalize_bilingual_preview(
+                            bilingual_full_log
+                        )
+                    )
+
+                st.markdown("<br>", unsafe_allow_html=True)
+
+                # Bilingual TXT / Print PDF
+                bilingual_log_col1, bilingual_log_col2 = st.columns(2)
+
+                with bilingual_log_col1:
+                    st.download_button(
+                        "📄 Bilingual TXT",
+                        data=bilingual_full_log,
+                        file_name="medicare_full_log_bilingual.txt",
+                        mime="text/plain",
+                        use_container_width=True,
+                        key="full_log_bilingual_download_txt",
+                    )
+
+                with bilingual_log_col2:
+                    render_print_button(
+                        bilingual_full_log,
+                        "🖨️ Bilingual Print / PDF",
+                        f"{uib['full_log_title']} - Bilingual",
+                    )
+
+
+    # ==================================================
+    # Summary / Full Log 共用區塊
+    # 不屬於任何 Tab
+    # ==================================================
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # 使用者滿意度回饋
+    personalized_feedback.render(current_lang)
+
+    # SHIP Prep
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.caption(ship_map["help"])
+
+    ship_clicked = st.button(
+        ship_map["btn"],
+        type="primary",
+        use_container_width=True,
+        key="shared_ship_import",
+    )
+
+    if ship_clicked:
+        with st.spinner(ship_map["extracting"]):
+            transfer_conversation_to_ship(current_lang)
+
+        # Auto-fill 完成後直接切換到 SHIP Prep
+        st.session_state["_pending_app_mode"] = "SHIP_PREP"
+
+        st.rerun()
+        
 
     # 頁面定位控制
     anchor_id = st.session_state.pop("_scroll_to_message", None)
