@@ -20,7 +20,7 @@ from core.bilingual_output import (
     generate_bilingual_version,
     get_cached_bilingual,
 )
-from modules import personalized_feedback
+from modules import product_feedback
 
 # --- 新增的日期動態解析函數 (Task 4.3) ---
 def extract_birth_month_year(text):
@@ -1203,7 +1203,7 @@ def render(current_lang, uploaded_file):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 使用者滿意度回饋
-    personalized_feedback.render(current_lang)
+    product_feedback.render(current_lang)
 
     # SHIP Prep
     st.markdown("<br>", unsafe_allow_html=True)
