@@ -433,6 +433,11 @@ def build_questionnaire_context():
             f"ZIP Code: {data['zip_code']}"
         )
 
+    if st.session_state.get("guide_journey"):
+        lines.append(f"Exploration journey: {st.session_state['guide_journey']}")
+    if data.get("priority_code") == "timing":
+        lines.append("Primary priority: understanding enrollment timing; individual facts require confirmation.")
+
     if data.get("medications"):
         lines.append(
             f"Current medications: {data['medications']}"
@@ -447,68 +452,77 @@ def build_questionnaire_context():
 
 def render(current_lang, uploaded_file):
 
+    from modules import guide
+    from core.guide_text import text as guide_text
+    guide_ui = guide_text(current_lang)
+    question_mode = st.session_state.get("main_presentation") == "question"
+
     questionnaire_context = build_questionnaire_context()
 
     top_container = st.container()
 
-    with top_container:
+    if question_mode:
+        st.subheader(guide_ui["ask"])
+        st.caption(guide_ui["ask_hint"])
+    else:
+        with top_container:
 
-        # --- 歡迎卡片 (Welcome Banner) 開始 ---
-        expander_title = "👋 Welcome / 歡迎 / Bienvenido / 환영합니다"
+            # --- 歡迎卡片 (Welcome Banner) 開始 ---
+            expander_title = "👋 Welcome / 歡迎 / Bienvenido / 환영합니다"
         
-        # 根據側邊欄選定的語言讀取內容，若無則預設英文
-        wd = welcome_guide_map.get(current_lang, welcome_guide_map["English"])
+            # 根據側邊欄選定的語言讀取內容，若無則預設英文
+            wd = welcome_guide_map.get(current_lang, welcome_guide_map["English"])
         
-        with st.expander(expander_title, expanded=True):
-            st.markdown(f"""
-            <div class="welcome-banner-card">
-                <h4>{wd['greeting']}</h4>
-                <p><strong>{wd['step1']} → {wd['step2']} → {wd['step3']}</strong></p>
-                <p style="margin-bottom: 0;"><em>{wd['hint']}</em></p>
-            </div>
-            """, unsafe_allow_html=True)
-        # --- 歡迎卡片 (Welcome Banner) 結束 ---
+            with st.expander(expander_title, expanded=True):
+                st.markdown(f"""
+                <div class="welcome-banner-card">
+                    <h4>{wd['greeting']}</h4>
+                    <p><strong>{wd['step1']} → {wd['step2']} → {wd['step3']}</strong></p>
+                    <p style="margin-bottom: 0;"><em>{wd['hint']}</em></p>
+                </div>
+                """, unsafe_allow_html=True)
+            # --- 歡迎卡片 (Welcome Banner) 結束 ---
 
-        if questionnaire_context:
-            loaded_text = profile_loaded_map.get(
-                current_lang,
-                profile_loaded_map["English"]
-            )
+            if questionnaire_context:
+                loaded_text = profile_loaded_map.get(
+                    current_lang,
+                    profile_loaded_map["English"]
+                )
 
-            st.success(loaded_text)
+                st.success(loaded_text)
      
-        # Task 3.3: 3 步驟用戶旅程快捷按鈕 (多語言版)
-        jb = journey_buttons_map.get(current_lang, journey_buttons_map["English"])
+            # Task 3.3: 3 步驟用戶旅程快捷按鈕 (多語言版)
+            jb = journey_buttons_map.get(current_lang, journey_buttons_map["English"])
         
-        st.markdown("<br>", unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
+            st.markdown("<br>", unsafe_allow_html=True)
+            col1, col2, col3 = st.columns(3)
 
-        with col1:
-            if st.button(jb["btn1"], use_container_width=True):
-                st.session_state.auto_submit = jb["prompt1"] # <--- 改成 auto_submit
-                st.rerun()
-
-        with col2:
-            if st.button(jb["btn2"], use_container_width=True):
-                st.session_state.auto_submit = jb["prompt2"] # <--- 改成 auto_submit
-                st.rerun()
-
-        with col3:
-            if st.button(jb["btn3"], use_container_width=True):
-                st.session_state.auto_submit = jb["prompt3"] # <--- 改成 auto_submit
-                st.rerun()
-
-        g_ui = guide_labels.get(current_lang, guide_labels["English"])
-        with st.expander(g_ui["btn_text"], expanded=False):
-            st.markdown(g_ui["guide_title"])
-            col1, col2 = st.columns(2)
             with col1:
-                st.info(g_ui["p_ab"])
-                st.warning(g_ui["p_c"])
+                if st.button(jb["btn1"], use_container_width=True):
+                    st.session_state.auto_submit = jb["prompt1"] # <--- 改成 auto_submit
+                    st.rerun()
+
             with col2:
-                st.success(g_ui["p_d"])
-                st.error(g_ui["medigap"])
-        st.markdown("---")
+                if st.button(jb["btn2"], use_container_width=True):
+                    st.session_state.auto_submit = jb["prompt2"] # <--- 改成 auto_submit
+                    st.rerun()
+
+            with col3:
+                if st.button(jb["btn3"], use_container_width=True):
+                    st.session_state.auto_submit = jb["prompt3"] # <--- 改成 auto_submit
+                    st.rerun()
+
+            g_ui = guide_labels.get(current_lang, guide_labels["English"])
+            with st.expander(g_ui["btn_text"], expanded=False):
+                st.markdown(g_ui["guide_title"])
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.info(g_ui["p_ab"])
+                    st.warning(g_ui["p_c"])
+                with col2:
+                    st.success(g_ui["p_d"])
+                    st.error(g_ui["medigap"])
+            st.markdown("---")
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -522,7 +536,7 @@ def render(current_lang, uploaded_file):
     if "saved_user_input" not in st.session_state:
         st.session_state.saved_user_input = ""
 
-    for i, message in enumerate(st.session_state.messages):
+    def show_message(i, message):
         if message["role"] == "user":
             st.markdown(f'<div id="message-{i}" class="chat-anchor"></div>', unsafe_allow_html=True)
         with st.chat_message(message["role"]):
@@ -531,7 +545,17 @@ def render(current_lang, uploaded_file):
             else:
                 st.markdown(message["content"])
 
-    if len(st.session_state.messages) == 0:
+    message_start = (min(st.session_state.get("_question_start_index", 0), len(st.session_state.messages))
+                     if question_mode else 0)
+    if message_start:
+        history_ui = ui_bottom_map.get(current_lang, ui_bottom_map["English"])
+        with st.expander(history_ui["full_log_title"], expanded=False):
+            for i, message in enumerate(st.session_state.messages[:message_start]):
+                show_message(i, message)
+    for i in range(message_start, len(st.session_state.messages)):
+        show_message(i, st.session_state.messages[i])
+
+    if len(st.session_state.messages) == 0 and not question_mode:
         st.caption(q_caption_map.get(current_lang, q_caption_map["English"]))
 
     # --------------------------------------------------
@@ -569,12 +593,12 @@ def render(current_lang, uploaded_file):
 
 
     # 是否已經有聊天紀錄
-    has_history = len(st.session_state.get("messages", [])) > 0
+    has_history = len(st.session_state.get("messages", [])) > message_start
 
     # 是否已經至少有一次 AI 回答
     has_ai_reply = any(
         m.get("role") in ["assistant", "model"]
-        for m in st.session_state.get("messages", [])
+        for m in st.session_state.get("messages", [])[message_start:]
     )
 
 
@@ -592,6 +616,9 @@ def render(current_lang, uploaded_file):
         )
     )
 
+
+    if question_mode and not has_history:
+        input_placeholder = guide_ui["ask"]
 
     # --------------------------------------------------
     # 顯示已記錄的地理資訊
@@ -659,7 +686,12 @@ def render(current_lang, uploaded_file):
                 st.session_state.conversation_finished = True
                 st.rerun()
 
-    if not st.session_state.conversation_finished and (prompt or uploaded_file):
+    elif st.button(guide_ui["continue_chat"], key="continue_conversation_btn", use_container_width=True):
+        st.session_state.conversation_finished = False
+        st.rerun()
+
+    attachment_submitted = st.session_state.pop("_main_attachment_submit", False)
+    if not st.session_state.conversation_finished and (prompt or (uploaded_file and attachment_submitted)):
         user_text = prompt if prompt else default_upload_msg_map.get(current_lang, "Please review this uploaded document.")
         
         if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_text:
@@ -684,7 +716,7 @@ def render(current_lang, uploaded_file):
                 is_first_input = len(st.session_state.messages) <= 2
 
                 # 只要有成功抓到 month 和 year 就觸發計算
-                if month and year and is_first_input:
+                if month and year and is_first_input and not question_mode:
                     try:
                         turn_65_year = year + 65
                         start_m = month - 3 if month > 3 else month - 3 + 12
@@ -703,7 +735,8 @@ def render(current_lang, uploaded_file):
                             user_text,
                             target_lang=current_lang,
                             img_data=uploaded_file,
-                            questionnaire_context=questionnaire_context
+                            questionnaire_context=questionnaire_context,
+                            question_mode=question_mode,
                         )
                 else:
                     # 如果不是問生日，就走原本呼叫 AI 聊天的邏輯
@@ -711,10 +744,11 @@ def render(current_lang, uploaded_file):
                         user_text,
                         target_lang=current_lang,
                         img_data=uploaded_file,
-                        questionnaire_context=questionnaire_context
+                        questionnaire_context=questionnaire_context,
+                        question_mode=question_mode,
                     )
                     tip_suffix = tip_suffix_map.get(current_lang, tip_suffix_map["English"])
-                    final_output = raw_response.strip() + tip_suffix
+                    final_output = raw_response.strip() + ("" if question_mode else tip_suffix)
 
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
@@ -880,6 +914,13 @@ def render(current_lang, uploaded_file):
         summary_lines.append("")
 
     short_summary_text = "\n".join(summary_lines).strip() + "\n"
+
+    guide.copy_summary(short_summary_text + "\n" + guide_ui["advice"]
+                       + "\nSHIP: https://www.shiphelp.org/", guide_ui)
+    with st.expander(guide_ui["share"]):
+        st.caption(guide_ui["copy_fallback"])
+        st.text_area(guide_ui["copy"], value=short_summary_text + "\n" + guide_ui["advice"]
+                     + "\nSHIP: https://www.shiphelp.org/", height=250)
 
     # --------------------------------------------------
     # 完整對話：TXT 與 PDF 各自使用適合的格式
@@ -1203,7 +1244,8 @@ def render(current_lang, uploaded_file):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 使用者滿意度回饋
-    product_feedback.render(current_lang)
+    guide.feedback(current_lang)
+    guide.ship(current_lang)
 
     # SHIP Prep
     st.markdown("<br>", unsafe_allow_html=True)
