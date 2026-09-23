@@ -35,6 +35,7 @@ def sanitize_ai_output(raw_text, target_lang="English"):
 
     # 擴增錨點清單，包含問候語與常見的 Markdown 大標題
     content_anchors = [
+        "[SUMMARY]",
         "### ", "Hello", "Hi!", "Welcome", "Here is", "To give you", 
         "您好", "你好", "為您整理", "系统已为您", "¡Hola", "Aquí tiene",
         "안녕하세요", "여기", "Path 1:", "Path 2:", "Option 1:"
