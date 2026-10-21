@@ -103,6 +103,14 @@ guide_labels = {
     }
 }
 
+enrollment_timing_map = {
+    "English": "**Your initial enrollment period (IEP): {start} to {end}**",
+    "繁體中文": "**您的初始申請期間（IEP）：{start} 至 {end}**",
+    "簡體中文": "**您的初始申请期间（IEP）：{start} 至 {end}**",
+    "Español": "**Su período de inscripción inicial (IEP): {start} a {end}**",
+    "한국어": "**최초 가입 기간(IEP): {start} ~ {end}**",
+}
+
 profile_loaded_map = {
     "English": "✅ Questionnaire data loaded",
     "繁體中文": "✅ 詢問單資料已載入",
@@ -350,52 +358,7 @@ ship_flow_map = {
 }
 
 
-new_assessment_map = {
-    "English": {
-        "btn": "➕ Start New Profile",
-        "caption": "Click to start a fresh assessment without mixing previous data.",
-        "title": "Start a new assessment?",
-        "message": "This will clear current answers and conversation data. Make sure you’ve downloaded or saved your 1-Page Summary first.",
-        "cancel": "Cancel",
-        "confirm": "Yes, Start Fresh",
-    },
 
-    "繁體中文": {
-        "btn": "➕ 開啟新評估",
-        "caption": "開始新的評估，避免與上一位申請人的資料混用。",
-        "title": "要開始新的評估嗎？",
-        "message": "這將清除目前的詢問單答案與對話資料。請先確認已下載或儲存 1-Page Summary。",
-        "cancel": "取消",
-        "confirm": "是，開始新評估",
-    },
-
-    "簡體中文": {
-        "btn": "➕ 开启新评估",
-        "caption": "开始新的评估，避免与上一位申请人的资料混用。",
-        "title": "要开始新的评估吗？",
-        "message": "这将清除目前的询问单答案与对话资料。请先确认已下载或保存 1-Page Summary。",
-        "cancel": "取消",
-        "confirm": "是，开始新评估",
-    },
-
-    "Español": {
-        "btn": "➕ Iniciar nueva evaluación",
-        "caption": "Inicie una evaluación nueva sin mezclar datos de otra persona.",
-        "title": "¿Iniciar una nueva evaluación?",
-        "message": "Esto borrará las respuestas y la conversación actuales. Asegúrese de haber descargado o guardado primero el resumen de 1 página.",
-        "cancel": "Cancelar",
-        "confirm": "Sí, empezar de nuevo",
-    },
-
-    "한국어": {
-        "btn": "➕ 새 평가 시작",
-        "caption": "이전 신청자의 정보와 섞이지 않도록 새로운 평가를 시작합니다.",
-        "title": "새 평가를 시작하시겠습니까?",
-        "message": "현재 설문 답변과 대화 내용이 삭제됩니다. 먼저 1페이지 요약을 저장하거나 다운로드했는지 확인해 주세요.",
-        "cancel": "취소",
-        "confirm": "예, 새로 시작",
-    },
-}
 
 m4_labels = {
     "English": {
@@ -989,10 +952,11 @@ profile_labels = {
         "caption": "Optional. Add coverage, goals, medications, and ZIP Code to help the system quickly understand the key points. You can use other features without completing this questionnaire.",
 
         "step_names": [
-            "Current Coverage",
-            "Goals & Notes",
-            "Medications & Location",
-            "Review Questionnaire",
+            "Basic information",
+            "Current coverage",
+            "Main goal & health notes",
+            "Prescriptions",
+            "Review questionnaire information",
         ],
 
         "progress": "Step {current} of {total} — {name}",
@@ -1002,8 +966,9 @@ profile_labels = {
         "target_self": "you",
         "target_other": "the person you are helping",
 
-        # Step 1
-        "step1_title": "### Step 1 — Current Medicare / Insurance Coverage",
+        # Steps 1–2
+        "step1_title": "### Step 1 — Basic information",
+        "step2_title": "### Step 2 — Current Medicare / Insurance Coverage",
         "step1_caption": "Please enter the current insurance information for {target}.",
         "coverage_label": "Current primary coverage",
         "premium_label": "Estimated monthly premium (USD $)",
@@ -1012,16 +977,16 @@ profile_labels = {
         "has_commercial": "Currently covered by employer / union group insurance",
         "has_low_income": "Medicaid / Extra Help / low-income assistance applies",
 
-        # Step 2
-        "step2_title": "### Step 2 — Main Goal & Health Notes",
+        # Step 3
+        "step3_title": "### Step 3 — Main Goal & Health Notes",
         "priority_label": "Primary goal",
         "priority_other_label": "Please describe your primary goal",
         "priority_other_placeholder": "Example: I want to avoid unnecessary premiums, but I am also concerned about a Part B late enrollment penalty.",
         "notes_label": "Health conditions or special considerations",
         "notes_placeholder": "Example: Cataract surgery is planned soon and I want to confirm whether the specialist is in-network.",
 
-        # Step 3
-        "step3_title": "### Step 3 — Medications & Healthcare Location",
+        # Step 4
+        "step4_title": "### Step 4 — Prescriptions",
         "zip_label": "Residential ZIP Code",
         "zip_placeholder": "e.g. 07430",
         "meds_label": "Current prescription medications",
@@ -1029,8 +994,8 @@ profile_labels = {
         "pharmacy_label": "Preferred pharmacy / hospital system",
         "pharmacy_placeholder": "e.g. CVS Pharmacy / Hackensack Meridian Health",
 
-        # Step 4
-        "step4_title": "### Step 4 — Review Questionnaire Information",
+        # Step 5
+        "step5_title": "### Step 5 — Review Questionnaire Information",
         "persona_label": "Questionnaire for",
         "persona_self": "Myself",
         "persona_other": "Someone I am helping",
@@ -1061,9 +1026,10 @@ profile_labels = {
         "caption": "選填。整理目前保險狀態、主要需求、用藥與 ZIP Code，幫助系統快速掌握重點；即使未填寫，也可以直接使用其他功能。",
 
         "step_names": [
+            "基本資訊",
             "目前保險狀態",
-            "主要目標與備註",
-            "用藥與所在地",
+            "主要目標與健康備註",
+            "處方藥",
             "確認詢問單資料",
         ],
 
@@ -1074,8 +1040,9 @@ profile_labels = {
         "target_self": "您",
         "target_other": "申請人",
 
-        # Step 1
-        "step1_title": "### Step 1 — 目前 Medicare / 醫療保險狀態",
+        # Steps 1–2
+        "step1_title": "### Step 1 — 基本資訊",
+        "step2_title": "### Step 2 — 目前 Medicare / 醫療保險狀態",
         "step1_caption": "請填寫【{target}】目前的保險狀態。",
         "coverage_label": "目前主要保險類型",
         "premium_label": "估計每月支付的保費 (USD $)",
@@ -1084,16 +1051,16 @@ profile_labels = {
         "has_commercial": "目前有雇主／工會團體醫療保險",
         "has_low_income": "符合 Medicaid / Extra Help / 低收入補助資格",
 
-        # Step 2
-        "step2_title": "### Step 2 — 主要目標與健康備註",
+        # Step 3
+        "step3_title": "### Step 3 — 主要目標與健康備註",
         "priority_label": "這次最主要的考量",
         "priority_other_label": "請描述這次最主要的考量",
         "priority_other_placeholder": "例如：不想多付不必要的保費，但也擔心延後 Part B 會有罰款。",
         "notes_label": "健康狀況或其他特殊考量",
         "notes_placeholder": "例如：近期有安排白內障手術，希望確認專科醫師是否在保險網路內。",
 
-        # Step 3
-        "step3_title": "### Step 3 — 處方藥與所在地",
+        # Step 4
+        "step4_title": "### Step 4 — 處方藥",
         "zip_label": "申請人居住地 ZIP Code",
         "zip_placeholder": "例如：07430",
         "meds_label": "目前常規服用的處方藥物",
@@ -1101,8 +1068,8 @@ profile_labels = {
         "pharmacy_label": "習慣使用的藥局／醫療院所體系",
         "pharmacy_placeholder": "例如：CVS Pharmacy / Hackensack Meridian Health",
 
-        # Step 4
-        "step4_title": "### Step 4 — 確認詢問單資料",
+        # Step 5
+        "step5_title": "### Step 5 — 確認詢問單資料",
         "persona_label": "資料對象",
         "persona_self": "本人",
         "persona_other": "協助代辦／他人",
@@ -1133,9 +1100,10 @@ profile_labels = {
         "caption": "选填。整理当前保险状态、主要需求、用药与 ZIP Code，帮助系统快速掌握重点；即使未填写，也可以直接使用其他功能。",
 
         "step_names": [
+            "基本信息",
             "目前保险状态",
-            "主要目标与备注",
-            "用药与所在地",
+            "主要目标与健康备注",
+            "处方药",
             "确认询问单资料",
         ],
 
@@ -1146,8 +1114,9 @@ profile_labels = {
         "target_self": "您",
         "target_other": "申请人",
 
-        # Step 1
-        "step1_title": "### Step 1 — 当前 Medicare / 医疗保险状态",
+        # Steps 1–2
+        "step1_title": "### Step 1 — 基本信息",
+        "step2_title": "### Step 2 — 当前 Medicare / 医疗保险状态",
         "step1_caption": "请填写【{target}】当前的保险状态。",
         "coverage_label": "当前主要保险类型",
         "premium_label": "预计每月支付的保费 (USD $)",
@@ -1156,16 +1125,16 @@ profile_labels = {
         "has_commercial": "目前有雇主／工会团体医疗保险",
         "has_low_income": "符合 Medicaid / Extra Help / 低收入补助资格",
 
-        # Step 2
-        "step2_title": "### Step 2 — 主要目标与健康备注",
+        # Step 3
+        "step3_title": "### Step 3 — 主要目标与健康备注",
         "priority_label": "本次最主要的考虑",
         "priority_other_label": "请描述本次最主要的考虑",
         "priority_other_placeholder": "例如：不想支付不必要的保费，但也担心延迟加入 Part B 会有罚款。",
         "notes_label": "健康状况或其他特殊考虑",
         "notes_placeholder": "例如：近期计划进行白内障手术，希望确认专科医生是否在保险网络内。",
 
-        # Step 3
-        "step3_title": "### Step 3 — 处方药与所在地",
+        # Step 4
+        "step4_title": "### Step 4 — 处方药",
         "zip_label": "申请人居住地 ZIP Code",
         "zip_placeholder": "例如：07430",
         "meds_label": "目前常规服用的处方药物",
@@ -1173,8 +1142,8 @@ profile_labels = {
         "pharmacy_label": "常用药房／医疗机构系统",
         "pharmacy_placeholder": "例如：CVS Pharmacy / Hackensack Meridian Health",
 
-        # Step 4
-        "step4_title": "### Step 4 — 确认询问单资料",
+        # Step 5
+        "step5_title": "### Step 5 — 确认询问单资料",
         "persona_label": "资料对象",
         "persona_self": "本人",
         "persona_other": "协助办理／他人",
@@ -1205,10 +1174,11 @@ profile_labels = {
         "caption": "Opcional. Añada cobertura, objetivos, medicamentos y código ZIP para ayudar al sistema a identificar rápidamente los puntos clave. Puede usar las demás funciones sin completar este cuestionario.",
 
         "step_names": [
+            "Información básica",
             "Cobertura actual",
-            "Objetivos y notas",
-            "Medicamentos y ubicación",
-            "Revisar cuestionario",
+            "Objetivo principal y notas de salud",
+            "Medicamentos recetados",
+            "Revisar datos del cuestionario",
         ],
 
         "progress": "Paso {current} de {total} — {name}",
@@ -1218,8 +1188,9 @@ profile_labels = {
         "target_self": "usted",
         "target_other": "la persona a quien está ayudando",
 
-        # Step 1
-        "step1_title": "### Paso 1 — Cobertura actual de Medicare / Seguro médico",
+        # Steps 1–2
+        "step1_title": "### Paso 1 — Información básica",
+        "step2_title": "### Paso 2 — Cobertura actual de Medicare / Seguro médico",
         "step1_caption": "Ingrese la información actual del seguro de {target}.",
         "coverage_label": "Cobertura principal actual",
         "premium_label": "Prima mensual estimada (USD $)",
@@ -1228,16 +1199,16 @@ profile_labels = {
         "has_commercial": "Actualmente tiene seguro grupal del empleador o sindicato",
         "has_low_income": "Aplica Medicaid / Extra Help / asistencia para bajos ingresos",
 
-        # Step 2
-        "step2_title": "### Paso 2 — Objetivo principal y notas de salud",
+        # Step 3
+        "step3_title": "### Paso 3 — Objetivo principal y notas de salud",
         "priority_label": "Objetivo principal",
         "priority_other_label": "Describa su principal objetivo o preocupación",
         "priority_other_placeholder": "Ejemplo: Quiero evitar pagar primas innecesarias, pero también me preocupa una penalización por inscripción tardía en la Parte B.",
         "notes_label": "Condiciones de salud o consideraciones especiales",
         "notes_placeholder": "Ejemplo: Tengo una cirugía de cataratas programada y deseo confirmar si el especialista está dentro de la red.",
 
-        # Step 3
-        "step3_title": "### Paso 3 — Medicamentos y ubicación médica",
+        # Step 4
+        "step4_title": "### Paso 4 — Medicamentos recetados",
         "zip_label": "Código postal (ZIP Code) de residencia",
         "zip_placeholder": "ej. 07430",
         "meds_label": "Medicamentos recetados actuales",
@@ -1245,8 +1216,8 @@ profile_labels = {
         "pharmacy_label": "Farmacia / sistema hospitalario preferido",
         "pharmacy_placeholder": "ej. CVS Pharmacy / Hackensack Meridian Health",
 
-        # Step 4
-        "step4_title": "### Paso 4 — Revisar datos del cuestionario",
+        # Step 5
+        "step5_title": "### Paso 5 — Revisar datos del cuestionario",
         "persona_label": "Cuestionario para",
         "persona_self": "Mí mismo/a",
         "persona_other": "Persona a quien estoy ayudando",
@@ -1277,9 +1248,10 @@ profile_labels = {
         "caption": "선택 사항입니다. 현재 보험, 주요 목표, 복용약 및 ZIP Code를 정리하면 시스템이 핵심 내용을 빠르게 파악하는 데 도움이 됩니다. 설문을 작성하지 않아도 다른 기능을 바로 사용할 수 있습니다.",
 
         "step_names": [
+            "기본 정보",
             "현재 보험 상태",
-            "주요 목표 및 메모",
-            "복용약 및 거주지",
+            "주요 목표 및 건강 관련 메모",
+            "처방약",
             "설문 정보 확인",
         ],
 
@@ -1290,8 +1262,9 @@ profile_labels = {
         "target_self": "본인",
         "target_other": "도움을 받고 있는 신청자",
 
-        # Step 1
-        "step1_title": "### Step 1 — 현재 Medicare / 의료보험 상태",
+        # Steps 1–2
+        "step1_title": "### Step 1 — 기본 정보",
+        "step2_title": "### Step 2 — 현재 Medicare / 의료보험 상태",
         "step1_caption": "【{target}】의 현재 보험 상태를 입력해 주세요.",
         "coverage_label": "현재 주요 보험 유형",
         "premium_label": "예상 월 보험료 (USD $)",
@@ -1300,16 +1273,16 @@ profile_labels = {
         "has_commercial": "현재 직장 / 노조 단체 의료보험 가입",
         "has_low_income": "Medicaid / Extra Help / 저소득 지원 대상",
 
-        # Step 2
-        "step2_title": "### Step 2 — 주요 목표 및 건강 관련 메모",
+        # Step 3
+        "step3_title": "### Step 3 — 주요 목표 및 건강 관련 메모",
         "priority_label": "가장 중요한 목표",
         "priority_other_label": "가장 중요한 목표나 우려 사항을 설명해 주세요",
         "priority_other_placeholder": "예: 불필요한 보험료는 피하고 싶지만 Part B 가입을 미룰 경우 지연 가입 벌금이 생길까 걱정됩니다.",
         "notes_label": "건강 상태 또는 특별 고려사항",
         "notes_placeholder": "예: 백내장 수술이 예정되어 있어 전문의가 보험 네트워크에 포함되는지 확인하고 싶습니다.",
 
-        # Step 3
-        "step3_title": "### Step 3 — 처방약 및 거주 지역",
+        # Step 4
+        "step4_title": "### Step 4 — 처방약",
         "zip_label": "거주지 ZIP Code",
         "zip_placeholder": "예: 07430",
         "meds_label": "현재 복용 중인 처방약",
@@ -1317,8 +1290,8 @@ profile_labels = {
         "pharmacy_label": "선호 약국 / 병원 시스템",
         "pharmacy_placeholder": "예: CVS Pharmacy / Hackensack Meridian Health",
 
-        # Step 4
-        "step4_title": "### Step 4 — 설문 정보 확인",
+        # Step 5
+        "step5_title": "### Step 5 — 설문 정보 확인",
         "persona_label": "설문 대상",
         "persona_self": "본인",
         "persona_other": "도움을 받고 있는 사람",
@@ -1446,10 +1419,10 @@ profile_priority_labels = {
 router_labels = {
     "English": {
         "nav_profile": "📝 Questionnaire Information",
-        "persona_title": "### Who is this Medicare consultation for?",
+        "persona_title": "### Who are you exploring for?",
         "persona_label": "Consultation target:",
-        "persona_self": "👤 I am the applicant",
-        "persona_helping": "👥 I am helping someone else / acting on their behalf",
+        "persona_self": "For Myself",
+        "persona_helping": "Helping a Parent / Spouse",
         "action_title": "### What would you like to do?",
         "profile_btn": "📝 Fill / Edit Questionnaire",
         "profile_caption": "Optional. Organize coverage, goals, medications, and ZIP Code so the system can quickly understand the key points.",
@@ -1463,8 +1436,8 @@ router_labels = {
         "nav_profile": "📝 詢問單資料",
         "persona_title": "### 這次是為誰進行 Medicare 諮詢？",
         "persona_label": "諮詢對象：",
-        "persona_self": "👤 我是申請人本人",
-        "persona_helping": "👥 我正在協助他人／代辦",
+        "persona_self": "為自己查詢",
+        "persona_helping": "協助家人/協助者",
         "action_title": "### 今天想進行什麼？",
         "profile_btn": "📝 填寫 / 修改詢問單資料",
         "profile_caption": "選填。整理保險狀態、主要需求、用藥與 ZIP Code，幫助系統快速掌握重點。",
@@ -1478,8 +1451,8 @@ router_labels = {
         "nav_profile": "📝 询问单资料",
         "persona_title": "### 这次是为谁进行 Medicare 咨询？",
         "persona_label": "咨询对象：",
-        "persona_self": "👤 我是申请人本人",
-        "persona_helping": "👥 我正在协助他人／代办",
+        "persona_self": "为自己查询",
+        "persona_helping": "协助家人/协助者",
         "action_title": "### 今天想进行什么？",
         "profile_btn": "📝 填写 / 修改询问单资料",
         "profile_caption": "选填。整理保险状态、主要需求、用药与 ZIP Code，帮助系统快速掌握重点。",
@@ -1491,10 +1464,10 @@ router_labels = {
     },
     "Español": {
         "nav_profile": "📝 Datos del cuestionario",
-        "persona_title": "### ¿Para quién es esta consulta de Medicare?",
-        "persona_label": "Persona consultada:",
-        "persona_self": "👤 Soy la persona solicitante",
-        "persona_helping": "👥 Estoy ayudando o actuando en nombre de otra persona",
+        "persona_title": "### ¿Para quién busca información sobre Medicare?",
+        "persona_label": "La consulta es para:",
+        "persona_self": "Para mí",
+        "persona_helping": "Ayudo a un familiar o a otra persona",
         "action_title": "### ¿Qué desea hacer?",
         "profile_btn": "📝 Completar / editar cuestionario",
         "profile_caption": "Opcional. Organice cobertura, objetivos, medicamentos y código ZIP para que el sistema identifique rápidamente los puntos clave.",
@@ -1508,8 +1481,8 @@ router_labels = {
         "nav_profile": "📝 설문 정보",
         "persona_title": "### 누구를 위한 Medicare 상담인가요?",
         "persona_label": "상담 대상:",
-        "persona_self": "👤 신청자 본인입니다",
-        "persona_helping": "👥 다른 사람을 돕거나 대리하고 있습니다",
+        "persona_self": "본인",
+        "persona_helping": "가족이나 다른 분을 대신해 문의",
         "action_title": "### 무엇을 하시겠습니까?",
         "profile_btn": "📝 설문 작성 / 수정",
         "profile_caption": "선택 사항입니다. 보험 상태, 주요 목표, 복용약 및 ZIP Code를 정리하여 시스템이 핵심 내용을 빠르게 파악하도록 도와줍니다.",
