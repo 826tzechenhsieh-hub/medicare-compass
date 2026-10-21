@@ -6,12 +6,11 @@ import json
 import html
 from uuid import uuid4
 from core.translations import (
-    guide_labels, q_caption_map, welcome_guide_map,
-    input_placeholder_first_map, input_placeholder_followup_map,
-    default_upload_msg_map, spinner_msg_map, timeline_template_map,
+    upload_label_map,
+    default_upload_msg_map, spinner_msg_map,
     tip_suffix_map, summary_title_map, ui_bottom_map, official_links_map,
-    location_tracker_map, journey_buttons_map, ship_import_map,
-    end_chat_btn_map, profile_loaded_map
+    location_tracker_map, ship_import_map,
+    end_chat_btn_map, profile_loaded_map, enrollment_timing_map
 )
 from core.ai_engine import generate_clean_response, extract_ship_fields
 from core.response_cleaner import clean_response
@@ -21,6 +20,7 @@ from core.bilingual_output import (
     get_cached_bilingual,
 )
 from modules import product_feedback
+from core.flow_translations import flow_labels
 
 # --- 新增的日期動態解析函數 (Task 4.3) ---
 def extract_birth_month_year(text):
@@ -141,6 +141,18 @@ def calculate_summary_timeline(month, year):
         "iep_start": f"{start_m:02d}/01/{start_y}",
         "iep_end": f"{end_m:02d}/{end_day:02d}/{end_y}",
     }
+
+
+def build_enrollment_timing_intro(current_lang):
+    """Use the confirmed birth month/year and the existing timeline calculation."""
+    data = st.session_state.get("profile_data", {})
+    if not data.get("birth_month") or not data.get("birth_year"):
+        return ""
+    timeline = calculate_summary_timeline(data["birth_month"], data["birth_year"])
+    start_month, _, start_year = timeline["iep_start"].split("/")
+    end_month, _, end_year = timeline["iep_end"].split("/")
+    template = enrollment_timing_map.get(current_lang, enrollment_timing_map["English"])
+    return template.format(start=f"{start_month}/{start_year}", end=f"{end_month}/{end_year}")
 
 
 def build_key_decision_points(text, max_points=6):
@@ -368,7 +380,8 @@ def build_questionnaire_context():
     不加入聊天紀錄，也不修改 profile_data。
     """
 
-    if not st.session_state.get("profile_completed", False):
+    if (st.session_state.get("entry_route") in ("direct", "switch")
+            or not st.session_state.get("profile_completed", False)):
         return ""
 
     data = st.session_state.get("profile_data", {})
@@ -377,6 +390,7 @@ def build_questionnaire_context():
         return ""
 
     coverage_map = {
+        "unknown": "Unknown / user is not sure",
         "original_medicare": "Original Medicare",
         "medicare_advantage": "Medicare Advantage",
         "part_d": "Medicare Part D",
@@ -385,6 +399,7 @@ def build_questionnaire_context():
     }
 
     priority_map = {
+        "unknown": "Unknown / user is not sure",
         "lower_premium": "Lower monthly fixed premium costs",
         "lower_risk": "Lower out-of-pocket catastrophic risk",
         "broad_network": "Keep broad doctor / specialist access",
@@ -396,16 +411,15 @@ def build_questionnaire_context():
     lines = [
         f"Consultation target: "
         f"{'self' if st.session_state.get('persona', 'self') == 'self' else 'someone else'}",
-
-        f"Current coverage type: "
-        f"{coverage_map.get(data.get('coverage_code'), 'Not provided')}",
-
-        f"Monthly premium: "
-        f"{'Not provided' if premium is None else f'${premium}'}",
-
-        f"Primary priority: "
-        f"{priority_map.get(data.get('priority_code'), 'Not provided')}",
     ]
+    if data.get("zip_code"):
+        lines.append(f"ZIP Code: {data['zip_code']}")
+    if data.get("birth_month") and data.get("birth_year"):
+        lines.append(f"Birth month/year: {data['birth_month']:02d}/{data['birth_year']}")
+    lines.extend([
+        f"Current coverage type: {coverage_map.get(data.get('coverage_code'), 'Not provided')}",
+        f"Monthly premium: {'Not provided' if premium is None else f'${premium}'}",
+    ])
 
     if data.get("has_part_ab"):
         lines.append(
@@ -423,20 +437,17 @@ def build_questionnaire_context():
             "Medicaid / Extra Help / low-income assistance: selected."
         )
 
+    if data.get("coverage_uncertain"):
+        lines.append("Additional coverage information: Unknown / user is not sure.")
+
+    lines.append(f"Primary priority: {priority_map.get(data.get('priority_code'), 'Not provided')}")
+    if data.get("priority_code") == "other" and data.get("priority_other"):
+        lines.append(f"User-described primary priority: {data['priority_other']}")
+
     if data.get("health_notes"):
         lines.append(
             f"Health / special considerations: {data['health_notes']}"
         )
-
-    if data.get("zip_code"):
-        lines.append(
-            f"ZIP Code: {data['zip_code']}"
-        )
-
-    if st.session_state.get("guide_journey"):
-        lines.append(f"Exploration journey: {st.session_state['guide_journey']}")
-    if data.get("priority_code") == "timing":
-        lines.append("Primary priority: understanding enrollment timing; individual facts require confirmation.")
 
     if data.get("medications"):
         lines.append(
@@ -448,81 +459,16 @@ def build_questionnaire_context():
             f"Preferred pharmacy / health system: {data['pharmacy']}"
         )
 
+    lines.append("Unknown or blank answers remain unconfirmed. Do not infer coverage, assistance eligibility, premiums, or a goal from them.")
+
     return "\n".join(lines)
 
 def render(current_lang, uploaded_file):
 
-    from modules import guide
-    from core.guide_text import text as guide_text
-    guide_ui = guide_text(current_lang)
-    question_mode = st.session_state.get("main_presentation") == "question"
-
     questionnaire_context = build_questionnaire_context()
 
-    top_container = st.container()
-
-    if question_mode:
-        st.subheader(guide_ui["ask"])
-        st.caption(guide_ui["ask_hint"])
-    else:
-        with top_container:
-
-            # --- 歡迎卡片 (Welcome Banner) 開始 ---
-            expander_title = "👋 Welcome / 歡迎 / Bienvenido / 환영합니다"
-        
-            # 根據側邊欄選定的語言讀取內容，若無則預設英文
-            wd = welcome_guide_map.get(current_lang, welcome_guide_map["English"])
-        
-            with st.expander(expander_title, expanded=True):
-                st.markdown(f"""
-                <div class="welcome-banner-card">
-                    <h4>{wd['greeting']}</h4>
-                    <p><strong>{wd['step1']} → {wd['step2']} → {wd['step3']}</strong></p>
-                    <p style="margin-bottom: 0;"><em>{wd['hint']}</em></p>
-                </div>
-                """, unsafe_allow_html=True)
-            # --- 歡迎卡片 (Welcome Banner) 結束 ---
-
-            if questionnaire_context:
-                loaded_text = profile_loaded_map.get(
-                    current_lang,
-                    profile_loaded_map["English"]
-                )
-
-                st.success(loaded_text)
-     
-            # Task 3.3: 3 步驟用戶旅程快捷按鈕 (多語言版)
-            jb = journey_buttons_map.get(current_lang, journey_buttons_map["English"])
-        
-            st.markdown("<br>", unsafe_allow_html=True)
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                if st.button(jb["btn1"], use_container_width=True):
-                    st.session_state.auto_submit = jb["prompt1"] # <--- 改成 auto_submit
-                    st.rerun()
-
-            with col2:
-                if st.button(jb["btn2"], use_container_width=True):
-                    st.session_state.auto_submit = jb["prompt2"] # <--- 改成 auto_submit
-                    st.rerun()
-
-            with col3:
-                if st.button(jb["btn3"], use_container_width=True):
-                    st.session_state.auto_submit = jb["prompt3"] # <--- 改成 auto_submit
-                    st.rerun()
-
-            g_ui = guide_labels.get(current_lang, guide_labels["English"])
-            with st.expander(g_ui["btn_text"], expanded=False):
-                st.markdown(g_ui["guide_title"])
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.info(g_ui["p_ab"])
-                    st.warning(g_ui["p_c"])
-                with col2:
-                    st.success(g_ui["p_d"])
-                    st.error(g_ui["medigap"])
-            st.markdown("---")
+    if questionnaire_context:
+        st.success(profile_loaded_map.get(current_lang, profile_loaded_map["English"]))
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -536,7 +482,18 @@ def render(current_lang, uploaded_file):
     if "saved_user_input" not in st.session_state:
         st.session_state.saved_user_input = ""
 
-    def show_message(i, message):
+    # Keep uploads in the conversation, outside the simplified sidebar.
+    if not st.session_state.conversation_finished:
+        with st.expander(upload_label_map.get(current_lang, upload_label_map["English"])):
+            attachment = st.file_uploader(
+                upload_label_map.get(current_lang, upload_label_map["English"]),
+                type=["png", "jpg", "jpeg", "pdf"], key="conversation_attachment",
+            )
+            if st.button(default_upload_msg_map.get(current_lang, default_upload_msg_map["English"]),
+                         key="review_attachment", disabled=attachment is None):
+                uploaded_file = {"mime_type": attachment.type, "data": attachment.getvalue()}
+
+    for i, message in enumerate(st.session_state.messages):
         if message["role"] == "user":
             st.markdown(f'<div id="message-{i}" class="chat-anchor"></div>', unsafe_allow_html=True)
         with st.chat_message(message["role"]):
@@ -544,19 +501,6 @@ def render(current_lang, uploaded_file):
                 st.markdown(clean_response(message["content"]))
             else:
                 st.markdown(message["content"])
-
-    message_start = (min(st.session_state.get("_question_start_index", 0), len(st.session_state.messages))
-                     if question_mode else 0)
-    if message_start:
-        history_ui = ui_bottom_map.get(current_lang, ui_bottom_map["English"])
-        with st.expander(history_ui["full_log_title"], expanded=False):
-            for i, message in enumerate(st.session_state.messages[:message_start]):
-                show_message(i, message)
-    for i in range(message_start, len(st.session_state.messages)):
-        show_message(i, st.session_state.messages[i])
-
-    if len(st.session_state.messages) == 0 and not question_mode:
-        st.caption(q_caption_map.get(current_lang, q_caption_map["English"]))
 
     # --------------------------------------------------
     # 對話輸入區
@@ -574,7 +518,7 @@ def render(current_lang, uploaded_file):
 
 
     # --------------------------------------------------
-    # Quick Start 三個快捷按鈕
+    # 已確認的詢問單：只在進入對話時自動送出一次
     # --------------------------------------------------
     elif (
         "auto_submit" in st.session_state
@@ -593,32 +537,19 @@ def render(current_lang, uploaded_file):
 
 
     # 是否已經有聊天紀錄
-    has_history = len(st.session_state.get("messages", [])) > message_start
+    has_history = len(st.session_state.get("messages", [])) > 0
 
     # 是否已經至少有一次 AI 回答
     has_ai_reply = any(
         m.get("role") in ["assistant", "model"]
-        for m in st.session_state.get("messages", [])[message_start:]
+        for m in st.session_state.get("messages", [])
     )
 
 
-    # 第一次顯示 Birth Month/Year & State
-    # 之後顯示原本設定好的 Follow-up Question
-    input_placeholder = (
-        input_placeholder_followup_map.get(
-            current_lang,
-            input_placeholder_followup_map["English"]
-        )
-        if has_history
-        else input_placeholder_first_map.get(
-            current_lang,
-            input_placeholder_first_map["English"]
-        )
-    )
+    # Direct entry asks for context; guided entry already has the questionnaire.
+    flow = flow_labels(current_lang)
+    input_placeholder = flow["followup"] if has_history or questionnaire_context else flow["initial"]
 
-
-    if question_mode and not has_history:
-        input_placeholder = guide_ui["ask"]
 
     # --------------------------------------------------
     # 顯示已記錄的地理資訊
@@ -686,12 +617,7 @@ def render(current_lang, uploaded_file):
                 st.session_state.conversation_finished = True
                 st.rerun()
 
-    elif st.button(guide_ui["continue_chat"], key="continue_conversation_btn", use_container_width=True):
-        st.session_state.conversation_finished = False
-        st.rerun()
-
-    attachment_submitted = st.session_state.pop("_main_attachment_submit", False)
-    if not st.session_state.conversation_finished and (prompt or (uploaded_file and attachment_submitted)):
+    if not st.session_state.conversation_finished and (prompt or uploaded_file):
         user_text = prompt if prompt else default_upload_msg_map.get(current_lang, "Please review this uploaded document.")
         
         if not st.session_state.messages or st.session_state.messages[-1]["content"] != user_text:
@@ -711,44 +637,21 @@ def render(current_lang, uploaded_file):
         with st.chat_message("assistant", avatar="👵"):
             sp_msg = spinner_msg_map.get(current_lang, "Analyzing...")
             with st.spinner(sp_msg):
-                # 🚀 Task 4.3 實作：呼叫新的動態解析函數，取代原本單調的 Regex
-                month, year = extract_birth_month_year(user_text)
-                is_first_input = len(st.session_state.messages) <= 2
-
-                # 只要有成功抓到 month 和 year 就觸發計算
-                if month and year and is_first_input and not question_mode:
-                    try:
-                        turn_65_year = year + 65
-                        start_m = month - 3 if month > 3 else month - 3 + 12
-                        start_y = turn_65_year if month > 3 else turn_65_year - 1
-                        end_m = month + 3 if month <= 9 else month + 3 - 12
-                        end_y = turn_65_year if month <= 9 else turn_65_year + 1
-                        
-                        tmpl = timeline_template_map.get(current_lang, timeline_template_map["English"])
-                        final_output = tmpl.format(
-                            birth_m_name=calendar.month_name[month], turn_65_year=turn_65_year,
-                            start_m_name=calendar.month_name[start_m], start_y=start_y,
-                            end_m_name=calendar.month_name[end_m], end_y=end_y, end_day=calendar.monthrange(end_y, end_m)[1]
-                        )
-                    except Exception:
-                        final_output = generate_clean_response(
-                            user_text,
-                            target_lang=current_lang,
-                            img_data=uploaded_file,
-                            questionnaire_context=questionnaire_context,
-                            question_mode=question_mode,
-                        )
-                else:
-                    # 如果不是問生日，就走原本呼叫 AI 聊天的邏輯
-                    raw_response = generate_clean_response(
-                        user_text,
-                        target_lang=current_lang,
-                        img_data=uploaded_file,
-                        questionnaire_context=questionnaire_context,
-                        question_mode=question_mode,
-                    )
-                    tip_suffix = tip_suffix_map.get(current_lang, tip_suffix_map["English"])
-                    final_output = raw_response.strip() + ("" if question_mode else tip_suffix)
+                # Prepend timing only to the first reply after questionnaire review.
+                timing_intro = ""
+                if questionnaire_context and not any(
+                    message["role"] in ("model", "assistant")
+                    for message in st.session_state.messages
+                ):
+                    timing_intro = build_enrollment_timing_intro(current_lang)
+                raw_response = generate_clean_response(
+                    user_text, target_lang=current_lang, img_data=uploaded_file,
+                    questionnaire_context=questionnaire_context,
+                )
+                tip_suffix = tip_suffix_map.get(current_lang, tip_suffix_map["English"])
+                final_output = raw_response.strip() + tip_suffix
+                if timing_intro:
+                    final_output = timing_intro + "\n\n---\n\n" + final_output
 
                 st.markdown(final_output)
                 st.session_state.messages.append({"role": "model", "content": final_output})
@@ -827,6 +730,9 @@ def render(current_lang, uploaded_file):
     birth_month, birth_year = find_latest_birth_from_messages(
         st.session_state.messages
     )
+    if not birth_month and questionnaire_context:
+        data = st.session_state.get("profile_data", {})
+        birth_month, birth_year = data.get("birth_month"), data.get("birth_year")
 
     timeline_data = None
     if birth_month and birth_year:
@@ -914,13 +820,6 @@ def render(current_lang, uploaded_file):
         summary_lines.append("")
 
     short_summary_text = "\n".join(summary_lines).strip() + "\n"
-
-    guide.copy_summary(short_summary_text + "\n" + guide_ui["advice"]
-                       + "\nSHIP: https://www.shiphelp.org/", guide_ui)
-    with st.expander(guide_ui["share"]):
-        st.caption(guide_ui["copy_fallback"])
-        st.text_area(guide_ui["copy"], value=short_summary_text + "\n" + guide_ui["advice"]
-                     + "\nSHIP: https://www.shiphelp.org/", height=250)
 
     # --------------------------------------------------
     # 完整對話：TXT 與 PDF 各自使用適合的格式
@@ -1244,8 +1143,7 @@ def render(current_lang, uploaded_file):
     st.markdown("<br>", unsafe_allow_html=True)
 
     # 使用者滿意度回饋
-    guide.feedback(current_lang)
-    guide.ship(current_lang)
+    product_feedback.render(current_lang)
 
     # SHIP Prep
     st.markdown("<br>", unsafe_allow_html=True)

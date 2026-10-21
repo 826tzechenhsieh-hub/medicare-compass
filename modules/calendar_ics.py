@@ -2,8 +2,12 @@ import streamlit as st
 import datetime
 from datetime import timedelta
 from core.translations import m4_labels
+from core.flow_translations import flow_labels
 
 def render(current_lang):
+    if st.button(flow_labels(current_lang)["back_ship"], key="calendar_back_ship"):
+        st.session_state["_pending_app_mode"] = "SHIP_PREP"
+        st.rerun()
     l4 = m4_labels.get(current_lang, m4_labels["English"])
     st.markdown(l4["title"])
     st.caption(l4["caption"])
@@ -11,13 +15,16 @@ def render(current_lang):
 
     col1, col2 = st.columns(2)
     with col1:
-        appt_date = st.date_input(l4["date_label"], datetime.date.today() + timedelta(days=14))
+        appt_date = st.date_input(l4["date_label"], datetime.date.today() + timedelta(days=14),
+                                  key="calendar_date", persist_state="session")
     with col2:
-        appt_time = st.time_input(l4["time_label"], datetime.time(10, 0))
+        appt_time = st.time_input(l4["time_label"], datetime.time(10, 0),
+                                  key="calendar_time", persist_state="session")
 
-    location = st.text_input(l4["location_label"], l4["location_placeholder"])
+    location = st.text_input(l4["location_label"], placeholder=l4["location_placeholder"],
+                             key="calendar_location", persist_state="session")
 
-    if st.button(l4["btn_generate"], type="primary"):
+    if st.button(l4["btn_generate"], type="primary", key="calendar_generate"):
         dt_start = datetime.datetime.combine(appt_date, appt_time)
         dt_end = dt_start + timedelta(hours=1)
 
@@ -38,11 +45,18 @@ END:VALARM
 END:VEVENT
 END:VCALENDAR"""
 
+        st.session_state["calendar_result"] = {
+            "date": appt_date, "time": appt_time, "location": location,
+            "content": ics_content,
+        }
+
+    saved = st.session_state.get("calendar_result", {})
+    if saved and (saved["date"], saved["time"], saved["location"]) == (appt_date, appt_time, location):
         st.download_button(
             label=l4["btn_download"],
-            data=ics_content,
+            data=saved["content"],
             file_name="ship_appointment.ics",
             mime="text/calendar",
-            use_container_width=True,
+            key="calendar_download", width="stretch",
         )
         st.success(l4["success_msg"])

@@ -1,5 +1,7 @@
 """Global floating feedback entry and dialog."""
 
+from pathlib import Path
+
 import streamlit as st
 
 from core.feedback_translations import get_feedback_ui
@@ -8,13 +10,14 @@ from core.translations import m1_text, m2_text, m3_text, m4_text, router_labels
 
 
 STATE = "user_feedback_state"
+DRAG_SCRIPT = (Path(__file__).resolve().parents[1] / "assets" / "feedback_drag.js").read_text(encoding="utf-8-sig")
 
 
 def render_form(current_lang, page, page_label, *, rerun_scope="app"):
     ui = get_feedback_ui(current_lang)
     if draft(STATE).get("saved"):
         st.success(ui["saved"])
-        if st.button(ui["close"], key="user_feedback_close", use_container_width=True):
+        if st.button(ui["close"], key="user_feedback_close", width="stretch"):
             st.rerun()
         return
     st.caption(f"{ui['page']}: {page_label}")
@@ -33,7 +36,7 @@ def render_form(current_lang, page, page_label, *, rerun_scope="app"):
     st.caption(ui["rating_hint"])
     feedback = field(STATE, "feedback", st.text_area, ui["feedback"], max_chars=2000, height=140)
     st.caption(ui["privacy"])
-    if st.button(ui["submit"], key="user_feedback_submit", type="primary", use_container_width=True):
+    if st.button(ui["submit"], key="user_feedback_submit", type="primary", width="stretch"):
         if category is None or not feedback.strip():
             st.warning(ui["required"])
         elif submit(STATE, "User Feedback", {
@@ -60,9 +63,11 @@ def render(current_lang, page):
         render_form(current_lang, page, page_label, rerun_scope="fragment")
 
     with st.container(key="global_feedback_launcher"):
-        if st.button(ui["launcher"], key="global_feedback_open", use_container_width=True):
+        if st.button(ui["launcher"], key="global_feedback_open", width="stretch"):
             if draft(STATE).get("saved"):
                 st.session_state[STATE] = {}
                 for name in ("category", "rating", "feedback"):
                     st.session_state.pop(f"_{STATE}_{name}", None)
             feedback_dialog()
+
+    st.html(f"<script>{DRAG_SCRIPT}</script>", unsafe_allow_javascript=True)

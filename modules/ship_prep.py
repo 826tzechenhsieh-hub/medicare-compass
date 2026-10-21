@@ -2,6 +2,7 @@ import html
 import json
 
 import streamlit as st
+from core.flow_translations import flow_labels
 
 from core.translations import (
     m3_labels,
@@ -104,7 +105,8 @@ def _get_profile_ship_payload(current_lang):
         "medications": "",
     }
 
-    if not st.session_state.get("profile_completed", False):
+    if (st.session_state.get("entry_route") in ("direct", "switch")
+            or not st.session_state.get("profile_completed", False)):
         return empty_payload
 
     data = st.session_state.get("profile_data", {})
@@ -318,6 +320,11 @@ def _build_ship_document_markdown(result, l3):
 
 
 def render(current_lang):
+    flow = flow_labels(current_lang)
+    previous_mode = "SWITCH_ASSISTANT" if st.session_state.get("entry_route") == "switch" else "MAIN_AI"
+    if st.button(flow["back_switch"] if previous_mode == "SWITCH_ASSISTANT" else flow["back_chat"], key="ship_back"):
+        st.session_state["_pending_app_mode"] = previous_mode
+        st.rerun()
     l3 = m3_labels.get(current_lang, m3_labels["English"])
 
     ship_flow = ship_flow_map.get(
@@ -396,46 +403,53 @@ def render(current_lang):
     # --------------------------------------------------
     # SHIP 原生五欄
     # --------------------------------------------------
-    with st.form("ship_prep_form"):
+    for key, initial_value in (
+        ("ship_draft_zip", auto_zip), ("ship_draft_cost", auto_premium),
+        ("ship_draft_plan", auto_plan), ("ship_draft_concern", auto_concern),
+        ("ship_draft_meds", auto_meds),
+    ):
+        st.session_state.setdefault(key, str(initial_value) if initial_value is not None else "")
+    # Live draft fields retain edits across language changes and downstream pages.
+    with st.container(border=True):
         col1, col2 = st.columns(2)
 
         with col1:
             zip_code = st.text_input(
                 l3["zip_label"],
-                value=auto_zip,
                 placeholder=l3.get("zip_placeholder", ""),
+                key="ship_draft_zip", persist_state="session",
             )
 
         with col2:
             monthly_cost = st.text_input(
                 l3["cost_label"],
-                value=auto_premium,
                 placeholder=l3.get("cost_placeholder", ""),
+                key="ship_draft_cost", persist_state="session",
             )
 
         current_plan = st.text_input(
             l3["plan_label"],
-            value=auto_plan,
             placeholder=l3["plan_placeholder"],
+            key="ship_draft_plan", persist_state="session",
         )
 
         primary_concern = st.text_area(
             l3["concern_label"],
-            value=auto_concern,
             placeholder=l3["concern_placeholder"],
             height=150,
+            key="ship_draft_concern", persist_state="session",
         )
 
         meds = st.text_area(
             l3["meds_label"],
-            value=auto_meds,
             placeholder=l3["meds_placeholder"],
             height=170,
+            key="ship_draft_meds", persist_state="session",
         )
 
-        submitted = st.form_submit_button(
+        submitted = st.button(
             l3["btn_label"],
-            use_container_width=True,
+            key="ship_generate", width="stretch", type="primary",
         )
 
     # --------------------------------------------------
@@ -557,6 +571,7 @@ def render(current_lang):
         # English：直接使用英文原稿
         # --------------------------------------------------
         export_document = ship_document_markdown
+        use_bilingual_export = False
 
         if supports_bilingual(current_lang):
             bilingual_ship = None
@@ -584,6 +599,21 @@ def render(current_lang):
                     current_lang,
                 )
 
+            if not bilingual_ship and st.button(flow["retry_bilingual"], key="ship_retry_bilingual", width="stretch"):
+                try:
+                    with st.spinner("Generating bilingual version..."):
+                        bilingual_ship = generate_bilingual_version(
+                            source_text=ship_document_markdown,
+                            current_lang=current_lang, cache_name="ship_prep",
+                        )
+                    if bilingual_ship:
+                        st.session_state["ship_prep_bilingual_result"] = {
+                            "source": ship_document_markdown, "language": current_lang,
+                            "content": bilingual_ship,
+                        }
+                except Exception as error:
+                    st.error(f"Unable to generate bilingual version: {error}")
+
             if bilingual_ship:
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown("### 🌐 Bilingual Preview")
@@ -596,6 +626,7 @@ def render(current_lang):
                     )
 
                 export_document = bilingual_ship
+                use_bilingual_export = True
 
         # --------------------------------------------------
         # 匯出按鈕
@@ -611,7 +642,7 @@ def render(current_lang):
                 data=export_document,
                 file_name=(
                     "medicare_ship_prep_bilingual.txt"
-                    if supports_bilingual(current_lang)
+                    if use_bilingual_export
                     else "medicare_ship_prep.txt"
                 ),
                 mime="text/plain",
@@ -625,7 +656,7 @@ def render(current_lang):
                 "🖨️ Print / PDF",
                 (
                     f"{ship_document_title} - Bilingual"
-                    if supports_bilingual(current_lang)
+                    if use_bilingual_export
                     else ship_document_title
                 ),
             )
@@ -634,6 +665,8 @@ def render(current_lang):
     # SHIP Official Website + Appointment Reminder
     # 放在文件產出之後，流程比較順
     # --------------------------------------------------
+    if not isinstance(saved_result, dict):
+        return
     st.write("")
 
     col_ship, col_calendar = st.columns(2)
