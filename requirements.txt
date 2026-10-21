@@ -1,3 +1,0 @@
-streamlit>=1.45,<2
-google-generativeai
-gspread>=6.2,<7
