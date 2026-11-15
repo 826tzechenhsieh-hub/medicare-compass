@@ -80,16 +80,31 @@ for language, labels in {
     )))
 
 
+for language, labels in {
+    "English": ("Client / Other", "🔄 Reset / Clear Session"),
+    "繁體中文": ("客戶／其他人", "🔄 重新開始／重置"),
+    "簡體中文": ("客户／其他人", "🔄 重新开始／重置"),
+    "Español": ("Cliente / Otra persona", "🔄 Reiniciar / Borrar sesión"),
+    "한국어": ("고객 / 기타", "🔄 다시 시작 / 세션 초기화"),
+}.items():
+    FLOW_LABELS[language]["client_other"], FLOW_LABELS[language]["reset"] = labels
+
+
 def flow_labels(language):
     return FLOW_LABELS.get(language, FLOW_LABELS["English"])
 
 
+def persona_options(language):
+    ui = flow_labels(language)
+    return {"self": ui["self"], "helping_others": ui["other"], "client_other": ui["client_other"]}
+
+
 SWITCH_NEXT = {
-    "English": "Continue below to prepare your SHIP summary. Your selected switching reason will be filled in; you can review and complete the remaining information.",
-    "繁體中文": "接著按下方按鈕填寫 SHIP 準備單。您選擇的更換原因會帶入痛點欄位，其餘資料請自行填寫並確認。",
-    "簡體中文": "接着按下方按钮填写 SHIP 准备单。您选择的更换原因会填入痛点字段，其余资料请自行填写并确认。",
-    "Español": "Continúe abajo para preparar su resumen SHIP. Se incluirá el motivo seleccionado; revise y complete los demás datos.",
-    "한국어": "아래 버튼으로 SHIP 준비표를 작성하세요. 선택한 변경 이유가 입력되며 나머지 정보는 직접 작성하고 확인하세요.",
+    "English": "Continue to SHIP preparation. Your switching reason and any Step 2 answer will carry over.",
+    "繁體中文": "接著填寫 SHIP 準備單。您選擇的更換原因及已作答的步驟 2 答案會一併帶入。",
+    "簡體中文": "接着填写 SHIP 准备单。您选择的更换原因及已作答的步骤 2 答案会一并带入。",
+    "Español": "Continúe a la preparación para SHIP. Se incluirán el motivo del cambio y la respuesta al paso 2, si lo contestó.",
+    "한국어": "SHIP 준비표로 계속하세요. 변경 이유와 2단계에서 선택한 답변이 함께 입력됩니다.",
 }
 
 

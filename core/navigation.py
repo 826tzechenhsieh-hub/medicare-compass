@@ -47,6 +47,13 @@ def choose_persona(persona):
     st.session_state["selected_app_mode"] = None
 
 
+def reset_session():
+    preferences = {key: st.session_state[key] for key in ("selected_language", "font_size")}
+    st.session_state.clear()
+    st.session_state.update(preferences)
+    st.session_state["_scroll_to_top"] = True
+
+
 def init_navigation():
     st.session_state.setdefault("selected_language", "English")
     st.session_state.setdefault("font_size", 19)
