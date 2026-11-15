@@ -5,6 +5,7 @@ import streamlit as st
 from core.flow_translations import flow_labels
 
 from core.translations import (
+    m2_labels,
     m3_labels,
     profile_priority_labels,
     ship_flow_map,
@@ -307,6 +308,7 @@ def _build_ship_document_markdown(result, l3):
         "",
         result.get("primary_concern") or "—",
         "",
+        *([result["switch_move_response"], ""] if result.get("switch_move_response") else []),
         f"## {l3['meds_label']}",
         "",
         result.get("meds") or "—",
@@ -326,6 +328,12 @@ def render(current_lang):
         st.session_state["_pending_app_mode"] = previous_mode
         st.rerun()
     l3 = m3_labels.get(current_lang, m3_labels["English"])
+    move_response = ""
+    if previous_mode == "SWITCH_ASSISTANT":
+        move_answer = st.session_state.get("ship_switch_move_answer")
+        if move_answer is not None:
+            switch_labels = m2_labels.get(current_lang, m2_labels["English"])
+            move_response = f"{switch_labels['move_question']} {switch_labels['yes_no'][move_answer]}"
 
     ship_flow = ship_flow_map.get(
         current_lang,
@@ -439,6 +447,8 @@ def render(current_lang):
             height=150,
             key="ship_draft_concern", persist_state="session",
         )
+        if move_response:
+            st.caption(move_response)
 
         meds = st.text_area(
             l3["meds_label"],
@@ -462,6 +472,7 @@ def render(current_lang):
             "current_plan": str(current_plan or "").strip(),
             "primary_concern": str(primary_concern or "").strip(),
             "meds": str(meds or "").strip(),
+            "switch_move_response": move_response,
         }
 
         # 先存起來，避免點 Download / Print 後 rerun 讓 Preview 消失
@@ -544,6 +555,7 @@ def render(current_lang):
         safe_concern = _safe_html_text(
             saved_result.get("primary_concern")
         ) or "—"
+        safe_move_response = _safe_html_text(saved_result.get("switch_move_response"))
 
         safe_meds = _safe_html_text(
             saved_result.get("meds")
@@ -558,6 +570,7 @@ def render(current_lang):
                 <p><b>💵 {html.escape(l3['cost_label'])}:</b> {safe_cost}</p>
                 <p><b>🪪 {html.escape(l3['plan_label'])}:</b> {safe_plan}</p>
                 <p><b>❓ {html.escape(l3['concern_label'])}:</b><br>{safe_concern}</p>
+                {f'<p>{safe_move_response}</p>' if safe_move_response else ''}
                 <p><b>💊 {html.escape(l3['meds_label'])}:</b><br>{safe_meds}</p>
                 <hr>
                 <p style="font-size: 0.85rem; color: #64748b; margin-bottom:0;">{html.escape(l3['footer_note'])}</p>

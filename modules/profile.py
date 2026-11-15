@@ -91,7 +91,7 @@ def build_initial_question(lang):
         additional.append(UNSURE_LABELS[lang]["unknown"])
     premium = data.get("monthly_premium")
     items = [
-        (ui["persona_label"], ui["persona_self"] if st.session_state.get("persona") == "self" else ui["persona_other"]),
+        (ui["persona_label"], applicant_label(lang, ui)),
         (ui["zip_summary"], data.get("zip_code") or "—"),
         (flow["birth"], f"{data['birth_month']:02d}/{data['birth_year']}"),
         (ui["coverage_summary"], profile_options(lang, "coverage").get(data.get("coverage_code"), "—")),
@@ -362,18 +362,21 @@ def render_step_4(lang, ui):
 # Step 5 — Review
 # ==================================================
 
+def applicant_label(lang, ui):
+    persona = st.session_state.get("persona", "self")
+    return {
+        "self": ui["persona_self"],
+        "helping_others": ui["persona_other"],
+        "client_other": flow_labels(lang)["client_other"],
+    }[persona]
+
+
 def render_step_5(lang, ui):
     data = st.session_state.profile_data
 
     st.markdown(ui["step5_title"])
 
-    persona = st.session_state.get("persona", "self")
-
-    persona_display = (
-        ui["persona_other"]
-        if persona == "helping_others"
-        else ui["persona_self"]
-    )
+    persona_display = applicant_label(lang, ui)
 
     coverage_display = profile_options(lang, "coverage").get(
         data.get("coverage_code"),

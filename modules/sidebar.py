@@ -1,7 +1,8 @@
-"""Language, accessible text sizes, trust notice, and information base only."""
+"""Session reset, language, accessible text sizes, and trust information."""
 import streamlit as st
 from core.config import MEDICARE_INFO_YEAR
 from core.flow_translations import flow_labels
+from core.navigation import reset_session
 from core.translations import legal_caption_map, header_labels
 
 TEXT_SIZES = ((19, "A Standard"), (22, "A+ Large"), (26, "A++ Extra"))
@@ -13,6 +14,8 @@ def render():
                      key="selected_language")
         language = st.session_state["selected_language"]
         ui = flow_labels(language)
+        st.button(ui["reset"], key="sidebar_reset_session", width="stretch",
+                  on_click=reset_session)
         st.divider()
         st.markdown("### Text size")
         for size, label in TEXT_SIZES:

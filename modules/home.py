@@ -1,6 +1,6 @@
 """Welcome content and the two-stage entry flow."""
 import streamlit as st
-from core.flow_translations import flow_labels
+from core.flow_translations import flow_labels, persona_options
 from core.navigation import choose_persona, start_route
 from core.translations import welcome_guide_map, guide_labels
 
@@ -29,16 +29,17 @@ def render_welcome(language):
 
 def render(language):
     ui = flow_labels(language)
+    personas = persona_options(language)
     if st.session_state["entry_stage"] == "welcome":
         render_welcome(language)
-        st.subheader(ui["who"])
-        for value, label in (("self", ui["self"]), ("helping_others", ui["other"])):
-            if st.button(label, key=f"entry_persona_{value}", width="stretch"):
-                choose_persona(value)
-                st.rerun()
+        persona = st.selectbox(ui["who"], list(personas), index=None,
+                               format_func=personas.__getitem__, key="entry_persona")
+        if persona is not None:
+            choose_persona(persona)
+            st.rerun()
     else:
         st.subheader(ui["today"])
-        st.caption(ui["self"] if st.session_state["persona"] == "self" else ui["other"])
+        st.caption(personas[st.session_state["persona"]])
         for route in ("guided", "switch", "direct", "unsure"):
             if st.button(ui[route], key=f"entry_{route}", width="stretch",
                          type="primary" if route == "guided" else "secondary"):
